@@ -1,7 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+import expertsData from '@/lib/experts-knowledge.json';
 
 type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
+
+// 医院知识库（来自熊猫群专家信息汇总）
+const KNOWLEDGE_BASE = expertsData;
+
+// 生成科室推荐的prompt
+const generateDepartmentPrompt = () => {
+  const hospitals = KNOWLEDGE_BASE.hospitals.map(h => {
+    const expertsList = h.experts.slice(0, 5).map(e => 
+      `    - ${e.name}（${e.title}）-${e.expertise.substring(0, 50)}...`
+    ).join('\n');
+    
+    return `### ${h.name}（${h.city}）
+- 地区：${h.region}
+- 专家数量：${h.expertCount}位
+- 重点专家：
+${expertsList}`;
+  }).join('\n\n');
+
+  return `## 🏥 环节二：科室推荐
+
+### 你的职责
+根据患者的症状和可能的疾病类型，**严格引用知识库中的专家信息**，推荐合适的就诊科室和医院。
+
+### ⚠️ 重要约束
+**必须严格引用下方知识库中的医院和专家信息，不得超出知识库范围推荐，也不得编造医院或专家信息。**
+
+### 知识库来源
+**数据来源**：熊猫群专家信息汇总（人工复核20260406）
+- 涵盖医院：${KNOWLEDGE_BASE.meta.totalHospitals}家
+- 专家总数：${KNOWLEDGE_BASE.meta.totalExperts}位
+- 覆盖城市：${KNOWLEDGE_BASE.meta.cities}个
+- 地区分布：华北、华东、华中、华南、东北、西北、西南
+
+### 知识库中的医院和专家
+
+${hospitals}
+
+### 科室推荐原则
+1. **首次就诊**：根据症状部位推荐（如乳腺→乳腺外科，肺部→胸外科/肿瘤内科）
+2. **确诊后治疗**：根据肿瘤类型推荐知识库中对应科室的专家
+   - 肿瘤内科：化疗、靶向治疗、免疫治疗
+   - 肿瘤外科：手术切除
+   - 放疗科：放射治疗
+
+### 推荐格式
+当推荐医院和专家时，必须：
+1. **明确标注来源**：说明该医院/专家来自知识库
+2. **提供挂号渠道**：根据知识库中的信息推荐挂号方式
+3. **不夸大宣传**：只描述知识库中已有的信息
+
+### 输出格式
+1. 推荐科室及理由（引用知识库中的科室分类）
+2. 知识库中的推荐医院（必须从上方列表中选择）
+3. 相关专家信息（必须引用知识库中的专家）
+4. 挂号建议（使用知识库中的挂号渠道信息）
+5. 引导到下一环节"治疗相关"`;
+};
 
 const STAGE_PROMPTS: Record<Stage, string> = {
   symptom: `## 📋 环节一：症状自查
@@ -31,41 +89,7 @@ const STAGE_PROMPTS: Record<Stage, string> = {
 4. 建议记录的信息（如：症状持续时间、诱因、缓解方式）
 5. 引导到下一环节"科室推荐"`,
 
-  department: `## 🏥 环节二：科室推荐
-
-### 你的职责
-根据症状和可能的疾病类型，推荐合适的就诊科室和医院。
-
-### 推荐依据（严格遵循以下指南）
-- **2024 CSCO指南**：中国临床肿瘤学会诊疗指南
-- **2026 NCCN指南**：美国国立综合癌症网络指南
-
-### 科室推荐原则
-1. **首次就诊**：根据症状部位推荐（如乳腺→乳腺外科，肺部→胸外科/肿瘤内科）
-2. **确诊后治疗**：根据肿瘤类型推荐专科
-   - 肿瘤内科：化疗、靶向治疗、免疫治疗
-   - 肿瘤外科：手术切除
-   - 放疗科：放射治疗
-   - 介入科：介入治疗（射频消融、栓塞等）
-   - 疼痛科：癌痛管理
-   - 中医科：辅助治疗
-
-### 医院推荐原则
-1. **优先级**：
-   - 国家级肿瘤专科医院（如中国医学科学院肿瘤医院）
-   - 省级肿瘤专科医院
-   - 省会城市大三甲医院肿瘤中心
-   - 地市级三甲医院肿瘤科
-2. **推荐信息**：
-   - 医院等级和专科优势
-   - 相关科室和专家（基于知识库）
-   - 预约挂号方式
-
-### 输出格式
-1. 推荐科室及理由
-2. 适合的医院类型（2-3家代表性医院）
-3. 就诊准备建议（需要的资料、注意事项）
-4. 引导到下一环节"治疗相关"`,
+  department: generateDepartmentPrompt(),
 
   treatment: `## 💊 环节三：治疗相关
 
