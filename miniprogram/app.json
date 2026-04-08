@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/agreement/agreement"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#4A90E2",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "肿瘤就医决策助手",
+    "backgroundColor": "#F8F9FA"
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}

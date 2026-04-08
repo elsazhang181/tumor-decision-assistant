@@ -1,0 +1,49 @@
+<view class="container">
+  <!-- 加载中状态 -->
+  <view wx:if="{{isLoading}}" class="loading-container">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">正在加载...</text>
+  </view>
+
+  <!-- 隐私协议弹窗 -->
+  <view wx:if="{{showPrivacyModal}}" class="modal-overlay">
+    <view class="modal-content">
+      <text class="modal-title">隐私保护提示</text>
+      <scroll-view scroll-y class="modal-text">
+        <text user-select="true">
+在使用本小程序之前，请您仔细阅读并同意以下隐私政策：
+
+【信息收集】
+本小程序不会主动收集您的个人信息。所有数据处理均在您的设备本地完成。
+
+【H5页面数据】
+当您使用小程序内的H5页面时，该页面的数据处理遵循其自身的隐私政策。
+
+【Cookie使用】
+H5页面可能使用Cookie来改善用户体验，具体请参阅H5页面的隐私政策。
+
+【联系我们】
+如果您对本隐私政策有任何疑问，请通过小程序内的客服入口联系我们。
+
+【政策更新】
+我们可能会不时更新本隐私政策，更新后的版本将在此处公布。
+
+点击"同意"即表示您已阅读并理解上述内容，并同意按照本隐私政策处理您的信息。
+        </text>
+      </scroll-view>
+      <view class="modal-buttons">
+        <button class="modal-btn modal-btn-secondary" bindtap="onPrivacyDecline">不同意</button>
+        <button class="modal-btn modal-btn-primary" bindtap="onPrivacyAgree">我已阅读并同意</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- WebView主区域 -->
+  <web-view 
+    wx:if="{{!isLoading && !showPrivacyModal}}"
+    src="{{webviewUrl}}" 
+    bindload="onWebviewLoad"
+    binderror="onWebviewError"
+    bindmessage="onWebviewMessage"
+  ></web-view>
+</view>

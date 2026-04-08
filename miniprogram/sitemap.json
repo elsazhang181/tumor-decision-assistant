@@ -1,0 +1,7 @@
+{
+  "desc": "关于本小程序及其功能的规则，文档地址 https://developers.weixin.qq.com/miniprogram/dev/framework/sitemap.html",
+  "rules": [{
+    "action": "allow",
+    "page": "*"
+  }]
+}

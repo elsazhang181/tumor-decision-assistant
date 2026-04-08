@@ -1,0 +1,23 @@
+<view class="container">
+  <scroll-view scroll-y class="content">
+    <text class="title">隐私政策</text>
+    <text class="text">
+更新日期：2024年
+
+【信息收集】
+本小程序不会主动收集您的个人信息。所有数据处理均在您的设备本地完成。
+
+【H5页面数据】
+当您使用小程序内的H5页面时，该页面的数据处理遵循其自身的隐私政策。
+
+【Cookie使用】
+H5页面可能使用Cookie来改善用户体验。
+
+【联系我们】
+如果您有任何疑问，请通过小程序内的客服入口联系我们。
+
+【政策更新】
+我们可能会不时更新本隐私政策。
+    </text>
+  </scroll-view>
+</view>

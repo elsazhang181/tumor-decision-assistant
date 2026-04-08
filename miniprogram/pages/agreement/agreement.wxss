@@ -1,0 +1,22 @@
+.container {
+  padding: 40rpx;
+}
+
+.content {
+  height: calc(100vh - 80rpx);
+}
+
+.title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: bold;
+  margin-bottom: 40rpx;
+  text-align: center;
+}
+
+.text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 2;
+  color: #666;
+}
