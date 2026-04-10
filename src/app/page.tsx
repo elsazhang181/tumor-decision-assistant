@@ -37,7 +37,7 @@ const STAGES: Array<{
   id: Stage;
   title: string;
   description: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }> = [
   {

@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
 import expertsData from '@/lib/experts-knowledge.json';
+import cscoData from '@/lib/csco-knowledge.json';
 
 type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 
 // 医院知识库（来自熊猫群专家信息汇总）
-const KNOWLEDGE_BASE = expertsData;
+const EXPERTS_KNOWLEDGE = expertsData;
+
+// CSCO指南知识库（用于生成摘要）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const CSCO_KNOWLEDGE = cscoData;
 
 // 生成科室推荐的prompt
 const generateDepartmentPrompt = () => {
-  const hospitals = KNOWLEDGE_BASE.hospitals.map(h => {
+  const hospitals = EXPERTS_KNOWLEDGE.hospitals.map(h => {
     const expertsList = h.experts.slice(0, 5).map(e => 
       `    - ${e.name}（${e.title}）-${e.expertise.substring(0, 50)}...`
     ).join('\n');
@@ -31,9 +36,9 @@ ${expertsList}`;
 
 ### 知识库来源
 **数据来源**：熊猫群专家信息汇总（人工复核20260406）
-- 涵盖医院：${KNOWLEDGE_BASE.meta.totalHospitals}家
-- 专家总数：${KNOWLEDGE_BASE.meta.totalExperts}位
-- 覆盖城市：${KNOWLEDGE_BASE.meta.cities}个
+- 涵盖医院：${EXPERTS_KNOWLEDGE.meta.totalHospitals}家
+- 专家总数：${EXPERTS_KNOWLEDGE.meta.totalExperts}位
+- 覆盖城市：${EXPERTS_KNOWLEDGE.meta.cities}个
 - 地区分布：华北、华东、华中、华南、东北、西北、西南
 
 ### 知识库中的医院和专家
@@ -61,81 +66,187 @@ ${hospitals}
 5. 引导到下一环节"治疗相关"`;
 };
 
-const STAGE_PROMPTS: Record<Stage, string> = {
-  symptom: `## 📋 环节一：症状自查
+// 生成CSCO指南摘要（用于注入到prompt中）
+const generateCSCOGuideSummary = () => {
+  const lines: string[] = [];
+  
+  lines.push('### 诊断标准');
+  lines.push('');
+  lines.push('**1. 筛查与早期诊断**');
+  cscoData.diagnosis.screening.recommendations.forEach(r => {
+    lines.push(`- ${r}`);
+  });
+  lines.push('');
+  lines.push('**2. 病理诊断要点**');
+  cscoData.diagnosis.pathological.keyPoints.forEach(k => {
+    lines.push(`- ${k}`);
+  });
+  lines.push('');
+  lines.push('**3. 影像学检查**');
+  cscoData.diagnosis.imaging.recommendations.forEach(r => {
+    lines.push(`- ${r}`);
+  });
+  lines.push('');
+  lines.push('**4. TNM分期**');
+  cscoData.diagnosis.staging.stages.forEach(s => {
+    lines.push(`- ${s}`);
+  });
+  
+  lines.push('');
+  lines.push('### 治疗原则');
+  lines.push('');
+  lines.push('**1. 手术治疗**');
+  lines.push(`- 结肠癌：完整结肠系膜切除(CME)是标准术式`);
+  lines.push(`- 直肠癌：全直肠系膜切除(TME)是金标准`);
+  lines.push('');
+  lines.push('**2. 化疗方案**');
+  cscoData.treatment.chemotherapy.regimens.forEach(r => {
+    lines.push(`- ${r.name}(${r.fullName})：${r.indication}`);
+  });
+  lines.push('');
+  lines.push('**3. 辅助化疗适应症**');
+  cscoData.treatment.chemotherapy.adjuvant.indications.forEach(i => {
+    lines.push(`- ${i}`);
+  });
+  lines.push('');
+  lines.push('**4. 靶向治疗**');
+  cscoData.treatment.targetTherapy.targets.forEach(t => {
+    lines.push(`- ${t.target}：${t.drugs.join('、')}（${t.indication}）`);
+  });
+  lines.push('');
+  lines.push('**5. 免疫治疗**');
+  cscoData.treatment.immunotherapy.indications.forEach(i => {
+    lines.push(`- ${i.type}：${i.drugs.join('、')}`);
+  });
+  lines.push('');
+  lines.push('**6. 放疗适应症**');
+  cscoData.treatment.radiotherapy.indications.forEach(r => {
+    lines.push(`- ${r.context}：${r.indication}`);
+  });
+  
+  lines.push('');
+  lines.push('### 随访计划');
+  cscoData.followUp.stages.forEach(s => {
+    lines.push(`- ${s.stage}：${s.schedule}`);
+    lines.push(`  检查内容：${s.content}`);
+  });
+  
+  return lines.join('\n');
+};
+
+// 症状自查prompt（引用CSCO指南）
+const generateSymptomPrompt = () => {
+  const cscoSummary = generateCSCOGuideSummary();
+  
+  return `## 📋 环节一：症状自查
 
 ### 你的职责
 帮助患者系统性地描述和评估症状，为后续就医决策提供基础信息。
 
-### 评估要点
+### ⚠️ 重要约束
+**必须严格引用下方CSCO指南中的诊断标准进行症状评估，不得超出指南范围进行分析。**
+
+### 知识库来源
+**数据来源**：2025CSCO结直肠癌诊疗指南
+
+### CSCO指南诊断标准摘要
+${cscoSummary}
+
+### 评估要点（结合CSCO指南）
 1. **症状特征**：部位、性质（胀痛/刺痛/隐痛）、持续时间、诱因
-2. **伴随症状**：发热、消瘦、乏力、出血、肿块等
-3. **危险信号识别**：
-   - 不明原因的体重下降（超过10%）
-   - 持续性疼痛，夜间加重
-   - 不明原因的发热或盗汗
-   - 异常出血或分泌物
-   - 进行性加重的吞咽困难、呼吸困难
-4. **紧急情况识别**：
-   - 剧烈头痛伴喷射性呕吐
-   - 大咯血或呕血
-   - 严重呼吸困难
-   - 意识障碍
+2. **伴随症状**：便血、大便习惯改变、腹痛、消瘦、乏力等（CSCO指南关注重点）
+3. **危险信号识别**（CSCO指南强调）：
+   - 大便习惯改变（便秘/腹泻交替）
+   - 不明原因的便血或黑便
+   - 不明原因的体重下降
+   - 持续性腹痛或腹部不适
+   - 贫血症状（乏力、头晕）
+   - 肠梗阻表现（腹胀、呕吐、停止排气排便）
+
+### 紧急情况识别
+- 急性肠梗阻（剧烈腹痛、呕吐、停止排气排便）
+- 消化道大出血（大量便血、休克表现）
+- 穿孔表现（剧烈腹痛、板状腹、发热）
 
 ### 输出格式
-1. 症状特征总结
-2. 可能的医学意义（用"可能"等谨慎用词）
+1. 症状特征总结（引用CSCO指南相关描述）
+2. 可能的医学意义（用"可能"等谨慎用词，结合CSCO指南）
 3. 紧急程度评估（急诊/尽快就医/择期就诊）
-4. 建议记录的信息（如：症状持续时间、诱因、缓解方式）
-5. 引导到下一环节"科室推荐"`,
+4. 建议记录的信息（如：症状持续时间、大便性状变化、诱因）
+5. 引导到下一环节"科室推荐"
 
-  department: generateDepartmentPrompt(),
+### 免责声明
+以上内容仅为信息参考，不构成诊疗建议。具体诊断需由专业医生面诊后确定。`;
+};
 
-  treatment: `## 💊 环节三：治疗相关
+// 治疗相关prompt（引用CSCO指南）
+const generateTreatmentPrompt = () => {
+  const cscoSummary = generateCSCOGuideSummary();
+  
+  return `## 💊 环节三：治疗相关
 
 ### 你的职责
 提供治疗过程中的决策辅助信息，帮助患者理解治疗流程和注意事项。
 
-### 适用指南（严格遵循）
-- **2024 CSCO指南**：中国临床肿瘤学会各类肿瘤诊疗指南
-- **2026 NCCN指南**：美国国立综合癌症网络指南
+### ⚠️ 重要约束
+**必须严格引用下方CSCO指南中的治疗原则，不得提供超出指南范围的诊疗建议。**
 
-### 治疗相关内容（仅提供信息，不给出治疗方案）
+### 知识库来源
+**数据来源**：2025CSCO结直肠癌诊疗指南
 
-#### 1. 术前检查
+### CSCO指南治疗原则摘要
+${cscoSummary}
+
+### 治疗相关内容（严格遵循CSCO指南，仅提供信息）
+
+#### 1. 术前检查（CSCO指南推荐）
 - **常规检查**：血常规、生化、凝血功能、传染病筛查
-- **影像检查**：CT、MRI、PET-CT（根据指南推荐）
-- **病理检查**：穿刺活检、免疫组化、基因检测
+- **影像检查**：胸腹盆CT、盆腔MRI（直肠癌必需）
+- **病理检查**：穿刺活检、免疫组化、分子检测（KRAS/NRAS/BRAF）
 - **检查顺序**：先无创，后有创；先定性，后分型
 - **关键数据关注点**：
-  - 肿瘤标志物（CEA、AFP、CA19-9等）
-  - 基因突变状态（EGFR、ALK、HER2等）
+  - 肿瘤标志物（CEA、CA19-9等）
+  - 基因突变状态（EGFR、KRAS、NRAS、BRAF等）
+  - MMR蛋白表达状态（dMMR/MSI-H）
   - 影像分期（TNM分期）
 
-#### 2. 治疗顺序（基于指南）
-- **早期肿瘤**：手术±术后辅助治疗
-- **局部晚期**：术前新辅助治疗→手术→术后治疗
-- **晚期/转移**：系统治疗为主，姑息性手术/放疗
+#### 2. 治疗顺序（基于CSCO指南）
+- **早期肿瘤（I期）**：直接手术，通常无需辅助化疗
+- **局部晚期**：
+  - 结肠癌：手术+辅助化疗
+  - 直肠癌：新辅助放化疗→手术→辅助化疗
+- **晚期/转移（IV期）**：系统治疗为主（化疗±靶向±免疫）
 
-#### 3. 化疗副作用及应对
+#### 3. 化疗副作用及应对（CSCO指南提及）
 - **骨髓抑制**：定期监测血常规，必要时使用升白针
 - **消化道反应**：止吐、护胃、营养支持
-- **脱发**：告知可能性，心理支持
-- **神经毒性**：避免受凉，症状管理
+- **神经毒性**：奥沙利铂特有的外周神经毒性，避免受凉
+- **手足综合征**：卡培他滨相关，对症处理
 - **感染风险**：发热及时就医
 
-#### 4. 转移治疗重点
-- **骨转移**：骨改良药物、放疗、疼痛管理
-- **肝转移**：评估可切除性，系统治疗为主
-- **脑转移**：放疗优先，靶向治疗（如适用）
-- **肺转移**：评估手术可能性，系统治疗
+#### 4. 转移治疗重点（CSCO指南）
+- **肝转移**：评估可切除性；不可切除者以系统治疗为主
+- **肺转移**：评估手术可能性
+- **腹膜转移**：减瘤术+腹腔热灌注化疗（选择性）
+- **寡转移**：局部治疗（手术/放疗）可能获益
 
 ### 输出格式
 1. 治疗阶段概述（说明这是信息参考，非治疗方案）
-2. 检查项目清单和顺序
-3. 关键检查结果解读要点
-4. 治疗相关副作用应对措施
-5. 引导到下一环节"就医指导"`,
+2. 检查项目清单和顺序（引用CSCO指南）
+3. 关键检查结果解读要点（引用CSCO指南）
+4. 治疗相关副作用应对措施（引用CSCO指南）
+5. 引导到下一环节"就医指导"
+
+### 免责声明
+以上内容仅为信息参考，不构成诊疗建议。具体治疗方案需由专业医生根据患者具体情况制定。`;
+};
+
+const STAGE_PROMPTS: Record<Stage, string> = {
+  symptom: generateSymptomPrompt(),
+
+  department: generateDepartmentPrompt(),
+
+  treatment: generateTreatmentPrompt(),
 
   guidance: `## 📝 环节四：就医指导
 
@@ -148,185 +259,133 @@ const STAGE_PROMPTS: Record<Stage, string> = {
 - **转诊流程**：
   - 获取当地医院转诊证明（医保报销需要）
   - 联系目标医院预约挂号
-  - 准备既往检查报告（影像胶片、病理切片、化验单）
-  - 带上医保卡、身份证
-- **医保报销**：
-  - 备案：线上或线下备案（国家医保服务平台）
-  - 直接结算：备案后可直接结算
-  - 比例：异地就医报销比例可能略低于本地
+  - 准备病历资料（病理报告、影像片子、化验单）
+- **医保备案**：
+  - 提前在参保地医保局备案
+  - 了解当地医保报销政策
+  - 保留好所有发票和清单
 
-#### 2. 带病可投保的保险
-- **保险类型**：
-  - 医疗险：惠民保、百万医疗险（部分可投保）
-  - 重疾险：既往症通常不赔
-  - 防癌险：相对宽松，既往症除外
-- **投保注意事项**：
-  - 健康告知要真实
-  - 关注既往症条款
-  - 等待期限制
+#### 2. 病历资料准备
+- 病理报告原件或复印件
+- 影像学资料（CT/MRI片子，不是报告）
+- 实验室检查结果
+- 既往治疗方案（如有）
+- 基因检测报告（如有）
 
-#### 3. 转诊须知
-- **转诊材料**：转诊单、病历、检查报告
-- **时间节点**：在出院前或诊断明确后尽快转诊
-- **医保影响**：直接转诊报销比例更高
+#### 3. 就医沟通技巧
+- 提前准备好要问医生的问题
+- 记录医生建议的关键信息
+- 了解治疗方案的获益与风险
+- 询问可能的替代方案
 
-#### 4. 临床试验组
-- **什么是临床试验**：
-  - 新药、新治疗方案的临床验证
-  - 可能获得免费治疗或优惠
-  - 有入组标准和退出机制
-- **寻找途径**：
-  - 医院临床试验中心
-  - 中国临床试验注册中心
-  - ClinicalTrials.gov（国际）
-- **注意事项**：
-  - 严格遵循研究方案
-  - 可能存在未知风险
-  - 可随时退出
-
-#### 5. 免费用药申请
-- **慈善赠药项目**：
-  - 靶向药物慈善援助（如易瑞沙、赫赛汀等）
-  - 申请条件：经济困难、符合适应症
-  - 申请渠道：医院社工、药企官网
-- **医保谈判药物**：
-  - 部分高价药已进入医保
-  - 需要医生处方和适应症证明
-
-#### 6. 陪诊服务
-- **服务内容**：挂号、取号、陪检、取药
-- **服务渠道**：
-  - 医院官方陪诊
-  - 第三方陪诊平台
-  - 志愿者服务（部分医院有）
-- **注意事项**：
-  - 选择正规机构
-  - 确认服务内容和费用
+#### 4. 心理支持资源
+- 医院心理咨询科
+- 患者互助组织
+- 专业心理援助热线
 
 ### 输出格式
-1. 按主题分项说明
-2. 提供具体操作步骤和注意事项
-3. 相关资源和渠道信息
-4. 提醒就医决策权在患者和医生，本助手仅提供信息参考
-5. 鼓励患者咨询专业医疗机构`
+1. 重点事项提醒
+2. 资料准备清单
+3. 沟通建议
+4. 心理支持信息
+5. 引导回首页或开始新流程
+`
 };
 
-const BASE_SYSTEM_PROMPT = `你是一位专业的肿瘤就医决策助手，严格基于以下原则提供信息：
-
-## 🎯 核心定位
-**仅提供就医决策辅助信息，不提供诊疗建议**
-- 所有信息均参考医学指南和循证证据
-- 不推荐具体的治疗方案
-- 不替代医生的诊断和治疗决策
-- 引导患者咨询专业医疗机构
-
-## 📖 依据指南
-- **2024 CSCO指南**：中国临床肿瘤学会诊疗指南
-- **2026 NCCN指南**：美国国立综合癌症网络指南
-- 所有建议必须基于指南推荐，注明指南依据
-
-## ⚠️ 重要原则
-1. **安全第一**：识别紧急症状，立即建议就医
-2. **专业严谨**：用"可能"、"建议"等谨慎措辞
-3. **循证医学**：所有信息必须有指南依据
-4. **明确边界**：反复强调这只是信息参考
-5. **人文关怀**：用温暖、鼓励的语气交流
-
-## 💬 语言风格
-- 专业但不晦涩
-- 温暖而不随意
-- 清晰且有逻辑
-- 避免绝对化表述
-
-## 📋 交互流程
-当前环节：{{STAGE}}
-环节说明：
-{{STAGE_PROMPT}}
-
-在每个回复的最后，提醒患者：
-"以上信息仅供参考，具体诊疗方案请咨询专业医疗机构。如需进入下一环节，请告诉我。"
-`;
-
+// 流式输出API
 export async function POST(request: NextRequest) {
   try {
-    const { message, history = [], stage = 'symptom' } = await request.json();
-
-    if (!message) {
-      return NextResponse.json({ error: '请输入您的问题' }, { status: 400 });
-    }
-
-    const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
-    const config = new Config();
-    const client = new LLMClient(config, customHeaders);
-
-    // 获取当前环节的提示词
+    const { message, stage = 'symptom', history = [] } = await request.json();
+    
+    // 获取对应环节的prompt
     const stagePrompt = STAGE_PROMPTS[stage as Stage] || STAGE_PROMPTS.symptom;
     
-    // 构建完整的系统提示词
-    const systemPrompt = BASE_SYSTEM_PROMPT
-      .replace('{{STAGE}}', stage)
-      .replace('{{STAGE_PROMPT}}', stagePrompt);
-
-    // 构建对话历史
-    const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-      { role: 'system', content: systemPrompt }
+    // 构建消息历史
+    const messages = [
+      { role: 'system', content: stagePrompt },
+      ...history.map((h: { role: string; content: string }) => ({ role: h.role, content: h.content })),
+      { role: 'user', content: message }
     ];
-
-    // 添加历史消息
-    for (const msg of history) {
-      messages.push({
-        role: msg.role,
-        content: msg.content
-      });
-    }
-
-    // 添加当前用户消息
-    messages.push({ role: 'user', content: message });
-
+    
+    // 创建LLM客户端
+    const config = new Config();
+    const client = new LLMClient(config);
+    
+    // 提取请求头用于追踪
+    const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
+    
     // 创建流式响应
     const encoder = new TextEncoder();
-    let isClosed = false;
-    
     const stream = new ReadableStream({
       async start(controller) {
-        try {
-          const llmStream = client.stream(messages, {
-            model: 'doubao-seed-1-8-251228',
-            temperature: 0.7
-          });
-
-          for await (const chunk of llmStream) {
-            if (isClosed) break;
-            if (chunk.content) {
-              const text = chunk.content.toString();
-              const data = JSON.stringify({ content: text, stage });
-              controller.enqueue(encoder.encode(`data: ${data}\n\n`));
-            }
-          }
-
+        let isClosed = false;
+        
+        const closeStream = () => {
           if (!isClosed) {
-            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-            controller.close();
             isClosed = true;
-          }
-        } catch (error) {
-          console.error('Stream error:', error);
-          if (!isClosed) {
             try {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: '服务暂时不可用', stage })}\n\n`));
+              controller.close();
             } catch {
-              // Controller already closed, ignore
+              // Ignore close errors
             }
-            controller.close();
-            isClosed = true;
           }
+        };
+        
+        try {
+          // 使用流式输出 - 新的SDK API
+          const formattedMessages = messages.map(m => ({
+            role: m.role as 'user' | 'assistant' | 'system',
+            content: m.content
+          }));
+          
+          const stream = client.stream(
+            formattedMessages,
+            { streaming: true },
+            undefined,
+            customHeaders
+          );
+          
+          for await (const part of stream) {
+            // AIMessageChunk 包含 content 字段
+            const content = part.content;
+            if (content && typeof content === 'string') {
+              const data = JSON.stringify({
+                content,
+                stage
+              });
+              
+              try {
+                controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+              } catch {
+                // Stream might be closed
+                break;
+              }
+            }
+          }
+          
+          closeStream();
+        } catch (error: unknown) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          console.error('LLM stream error:', error);
+          
+          // 发送错误信息
+          const errorMsg = JSON.stringify({
+            content: `抱歉，服务遇到问题：${err.message || '请稍后重试'}`,
+            stage,
+            isError: true
+          });
+          
+          try {
+            controller.enqueue(encoder.encode(`data: ${errorMsg}\n\n`));
+          } catch {
+            // Ignore
+          }
+          
+          closeStream();
         }
-      },
-      cancel() {
-        isClosed = true;
       }
     });
-
+    
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
@@ -334,10 +393,11 @@ export async function POST(request: NextRequest) {
         'Connection': 'keep-alive'
       }
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
     console.error('API error:', error);
     return NextResponse.json(
-      { error: '服务暂时不可用，请稍后再试' },
+      { error: '请求处理失败', message: err.message },
       { status: 500 }
     );
   }
