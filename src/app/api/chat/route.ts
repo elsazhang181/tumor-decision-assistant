@@ -3,7 +3,6 @@ import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
 import expertsData from '@/lib/experts-knowledge.json';
 import cscoData from '@/lib/csco-knowledge.json';
 import insuranceData from '@/lib/insurance-knowledge.json';
-import relatedData from '@/lib/related-questions.json';
 
 type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 
@@ -11,53 +10,6 @@ type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 const EXPERTS_KNOWLEDGE = expertsData;
 const CSCO_KNOWLEDGE = cscoData;
 const INSURANCE_KNOWLEDGE = insuranceData;
-const RELATED_QUESTIONS = relatedData;
-
-// ============== 关联问题匹配函数 ==============
-function findRelatedQuestions(message: string, stage: Stage): string[] {
-  const msgLower = message.toLowerCase();
-  
-  // 1. 先精确匹配主问题
-  for (const mapping of RELATED_QUESTIONS.questionMappings) {
-    if (msgLower.includes(mapping.mainQuestion.toLowerCase())) {
-      return mapping.relatedQuestions;
-    }
-    // 模糊匹配关键词
-    for (const keyword of mapping.keywords) {
-      if (msgLower.includes(keyword.toLowerCase())) {
-        return mapping.relatedQuestions;
-      }
-    }
-  }
-  
-  // 2. 按环节返回默认关联问题
-  const stageQuestions = RELATED_QUESTIONS.stageMappings[stage];
-  if (stageQuestions) {
-    // 随机返回3-5个
-    const count = Math.min(3 + Math.floor(Math.random() * 2), stageQuestions.length);
-    const shuffled = [...stageQuestions].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
-  }
-  
-  return [];
-}
-
-// ============== 关联问题模板 ==============
-function generateRelatedQuestionsHTML(questions: string[], stage: Stage): string {
-  if (questions.length === 0) return '';
-  
-  const questionButtons = questions.map(q => 
-    `<button onclick="sendRelatedQuestion('${q.replace(/'/g, "\\'")}')" class="px-3 py-1.5 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full border border-blue-200 transition-colors">${q}</button>`
-  ).join('');
-  
-  return `
-<div class="mt-4 pt-4 border-t border-gray-200">
-  <div class="text-sm text-gray-600 mb-2">💡 您可能还想了解：</div>
-  <div class="flex flex-wrap gap-2">
-    ${questionButtons}
-  </div>
-</div>`;
-}
 
 // ============== 官方信息来源 ==============
 const OFFICIAL_SOURCES = `
@@ -659,22 +611,6 @@ export async function POST(request: NextRequest) {
               } catch {
                 break;
               }
-            }
-          }
-          
-          // 回答完成后，发送关联问题
-          const relatedQuestions = findRelatedQuestions(message, stage as Stage);
-          if (relatedQuestions.length > 0) {
-            const relatedHTML = generateRelatedQuestionsHTML(relatedQuestions, stage as Stage);
-            const relatedData = JSON.stringify({
-              content: relatedHTML,
-              stage,
-              isRelatedQuestions: true
-            });
-            try {
-              controller.enqueue(encoder.encode(`data: ${relatedData}\n\n`));
-            } catch {
-              // Ignore
             }
           }
           
