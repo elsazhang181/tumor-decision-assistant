@@ -133,6 +133,16 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // 暴露sendRelatedQuestion函数供关联问题按钮调用
+  useEffect(() => {
+    (window as unknown as { sendRelatedQuestion: (q: string) => void }).sendRelatedQuestion = (question: string) => {
+      sendMessage(question);
+    };
+    return () => {
+      delete (window as unknown as { sendRelatedQuestion?: (q: string) => void }).sendRelatedQuestion;
+    };
+  }, [messages, isLoading]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -424,9 +434,16 @@ export default function Home() {
                               : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
                           }`}
                         >
-                          <div className="whitespace-pre-wrap text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
-                            {message.content}
-                          </div>
+                          {message.content.includes('<button') ? (
+                            <div 
+                              className="whitespace-pre-wrap text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none"
+                              dangerouslySetInnerHTML={{ __html: message.content }}
+                            />
+                          ) : (
+                            <div className="whitespace-pre-wrap text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                              {message.content}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
