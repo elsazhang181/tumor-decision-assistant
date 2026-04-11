@@ -80,6 +80,7 @@ const WELCOME_MESSAGES: Record<Stage, string> = {
 • 🔍 系统性评估症状特征
 • ⚠️ 识别紧急危险信号
 • 📝 整理关键信息供就诊参考
+• 📋 **生成医患沟通提问清单**（帮您整理见医生时要问的问题）
 
 请描述您的症状（部位、性质、持续时间等），例如："右侧乳房有一个不痛的肿块，发现约2周了..."`,
 
@@ -89,6 +90,7 @@ const WELCOME_MESSAGES: Record<Stage, string> = {
 • 🎯 匹配合适的就诊科室
 • 🏥 推荐权威医院（引用熊猫群专家信息库）
 • 📋 列出就诊准备清单
+• 📝 **生成医患沟通提问清单**（帮您问清楚诊断和检查安排）
 
 ⚠️ 提醒：仅提供决策辅助信息，不涉及具体诊疗方案。
 
@@ -101,6 +103,7 @@ const WELCOME_MESSAGES: Record<Stage, string> = {
 • 🔄 标准治疗顺序（基于CSCO/NCCN指南）
 • 💊 化疗副作用及应对措施
 • 🎯 转移治疗重点
+• 📋 **生成治疗沟通提问清单**（帮您了解方案选择和注意事项）
 
 ⚠️ 提醒：仅提供决策辅助信息，不涉及具体诊疗方案，具体治疗请咨询主治医生。
 
@@ -115,6 +118,7 @@ const WELCOME_MESSAGES: Record<Stage, string> = {
 • 💰 经济压力应对
 • 🔬 临床试验组信息
 • 👥 陪诊服务介绍
+• 📋 **生成综合就医提问清单**（帮您全面准备就诊）
 
 ⚠️ 提醒：以上信息仅供参考，不构成任何医疗或法律建议。
 
@@ -284,12 +288,12 @@ export default function Home() {
                   肿瘤就医决策助手
                 </h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  全程闭环 · 专业决策辅助
+                  知识库检索 · 医患沟通 · 全程决策辅助
                 </p>
               </div>
             </div>
             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
-              <Lock className="mr-1 h-3 w-3" />
+              <Shield className="mr-1 h-3 w-3" />
               仅辅助决策，不替代诊疗
             </Badge>
           </div>
