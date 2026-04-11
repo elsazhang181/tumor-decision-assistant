@@ -1,0 +1,91 @@
+{
+  "citation_settings": {
+    "enabled": true,
+    "description": "开启引用来源显示，增强患者信任"
+  },
+  "source_labels": [
+    {
+      "type": "CSCO指南",
+      "format": "【CSCO指南2025】",
+      "example": "【CSCO指南2025】肝转移灶R0切除是唯一潜在治愈手段",
+      "priority": 1,
+      "description": "中国临床肿瘤学会诊疗指南"
+    },
+    {
+      "type": "NCCN指南",
+      "format": "【NCCN指南2026】",
+      "example": "【NCCN指南2026】推荐贝伐单抗用于晚期肠癌",
+      "priority": 2,
+      "description": "美国国立综合癌症网络指南（国际参考）"
+    },
+    {
+      "type": "专家共识",
+      "format": "【专家共识】",
+      "example": "【专家共识】转化治疗窗口期2-6个月",
+      "priority": 3,
+      "description": "专业学会发布的专家共识"
+    },
+    {
+      "type": "医院官方",
+      "format": "【来源：XX医院官网】",
+      "example": "【来源：北京大学肿瘤医院官网】肝胆胰外科专家出诊信息",
+      "priority": 4,
+      "description": "医院官方网站信息"
+    },
+    {
+      "type": "政府机构",
+      "format": "【来源：国家卫健委】",
+      "example": "【来源：国家卫健委】癌症防治核心信息",
+      "priority": 5,
+      "description": "政府官方网站信息"
+    },
+    {
+      "type": "医保局",
+      "format": "【来源：国家医保局】",
+      "example": "【来源：国家医保局】异地就医备案政策",
+      "priority": 6,
+      "description": "国家医疗保障局官网信息"
+    },
+    {
+      "type": "知识库-专家",
+      "format": "【知识库：熊猫群】",
+      "example": "【知识库：熊猫群】推荐专家：张教授，擅长肝转移手术",
+      "priority": 7,
+      "description": "肿瘤专家信息汇总知识库"
+    },
+    {
+      "type": "知识库-保险",
+      "format": "【知识库：保险】",
+      "example": "【知识库：保险】惠民保投保要点：既往症可报销",
+      "priority": 8,
+      "description": "带病投保保险知识库"
+    }
+  ],
+  "citation_rules": {
+    "data_statistics": {
+      "required": true,
+      "description": "涉及数据/统计时必须标注来源"
+    },
+    "treatment_guidelines": {
+      "required": true,
+      "description": "涉及治疗方案时必须标注指南依据"
+    },
+    "hospital_experts": {
+      "required": true,
+      "description": "涉及医院/专家时必须标注知识库来源"
+    },
+    "insurance_content": {
+      "required": true,
+      "description": "涉及保险内容时必须标注保险知识库来源"
+    },
+    "general_medical": {
+      "required": false,
+      "description": "通用医学知识可标注'综合医学文献'"
+    }
+  },
+  "disclaimer": {
+    "required": true,
+    "position": "end",
+    "content": "以上信息仅供参考，不能替代专业医生的诊断和治疗。如有不适，请尽快就医；具体治疗方案请遵医嘱。"
+  }
+}
