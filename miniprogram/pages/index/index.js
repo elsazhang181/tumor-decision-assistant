@@ -19,10 +19,9 @@ Page({
     let targetUrl = options.url || '';
     
     // 如果没有传递URL，使用默认的H5地址
-    // ⚠️ 请将此地址替换为您部署的H5应用地址
     if (!targetUrl) {
-      // 开发环境使用本地地址，生产环境使用您的公网地址
-      targetUrl = 'https://your-h5-domain.com'; // ⚠️ 替换为您的实际地址
+      // ⚠️ 请替换为您部署的H5应用地址
+      targetUrl = 'https://116bfa2a-8982-46ac-b0ee-51f2cb6b1139.dev.coze.site';
     }
     
     // 检查URL是否以https开头
