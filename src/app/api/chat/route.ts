@@ -2,17 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
 import expertsData from '@/lib/experts-knowledge.json';
 import cscoData from '@/lib/csco-knowledge.json';
+import insuranceData from '@/lib/insurance-knowledge.json';
 
-type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
+type Stage = 'symptom' | 'department' | 'treatment' | 'guidance' | 'insurance';
 
 // 医院知识库（来自熊猫群专家信息汇总）
 const EXPERTS_KNOWLEDGE = expertsData;
 
-// CSCO指南知识库（用于生成摘要）
+// CSCO指南知识库
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CSCO_KNOWLEDGE = cscoData;
 
-// 生成科室推荐的prompt
+// 保险知识库
+const INSURANCE_KNOWLEDGE = insuranceData;
+
+// ============== 科室推荐 prompt ==============
 const generateDepartmentPrompt = () => {
   const hospitals = EXPERTS_KNOWLEDGE.hospitals.map(h => {
     const expertsList = h.experts.slice(0, 5).map(e => 
@@ -66,7 +70,7 @@ ${hospitals}
 5. 引导到下一环节"治疗相关"`;
 };
 
-// 生成CSCO指南摘要（用于注入到prompt中）
+// ============== CSCO指南摘要生成 ==============
 const generateCSCOGuideSummary = () => {
   const lines: string[] = [];
   
@@ -134,7 +138,7 @@ const generateCSCOGuideSummary = () => {
   return lines.join('\n');
 };
 
-// 症状自查prompt（引用CSCO指南）
+// ============== 症状自查 prompt ==============
 const generateSymptomPrompt = () => {
   const cscoSummary = generateCSCOGuideSummary();
   
@@ -179,7 +183,7 @@ ${cscoSummary}
 以上内容仅为信息参考，不构成诊疗建议。具体诊断需由专业医生面诊后确定。`;
 };
 
-// 治疗相关prompt（引用CSCO指南）
+// ============== 治疗相关 prompt ==============
 const generateTreatmentPrompt = () => {
   const cscoSummary = generateCSCOGuideSummary();
   
@@ -241,14 +245,61 @@ ${cscoSummary}
 以上内容仅为信息参考，不构成诊疗建议。具体治疗方案需由专业医生根据患者具体情况制定。`;
 };
 
-const STAGE_PROMPTS: Record<Stage, string> = {
-  symptom: generateSymptomPrompt(),
+// ============== 保险相关 prompt ==============
+const generateInsurancePrompt = () => {
+  const insuranceTypes = Object.entries(INSURANCE_KNOWLEDGE.insuranceTypes).map(([name, info]) => {
+    return `${name}：${info.description}；特点：${info.features.join('；')}`;
+  }).join('\n');
 
-  department: generateDepartmentPrompt(),
+  const tumorAdvice = INSURANCE_KNOWLEDGE.tumorAdvice;
+  
+  return `## 🛡️ 环节五：保险相关
 
-  treatment: generateTreatmentPrompt(),
+### 你的职责
+根据患者的病情和经济状况，提供保险相关的决策辅助信息，帮助患者了解带病投保的选项和注意事项。
 
-  guidance: `## 📝 环节四：就医指导
+### ⚠️ 重要约束
+**必须严格引用下方保险知识库中的内容，不得超出知识库范围提供保险建议。**
+
+### 知识库来源
+**数据来源**：带病投保最新保险知识库
+
+### 保险类型概述
+${insuranceTypes}
+
+### 惠民保产品
+${INSURANCE_KNOWLEDGE.huiminProducts.description}；特点：${INSURANCE_KNOWLEDGE.huiminProducts.features.join('；')}；适用人群：${INSURANCE_KNOWLEDGE.huiminProducts.applicable.join('；')}
+
+### 核保知识
+基础核保知识：${INSURANCE_KNOWLEDGE.underwriting.basics.join('；')}
+肿瘤相关核保：${INSURANCE_KNOWLEDGE.underwriting.tumorRelated.join('；')}
+
+### 肿瘤患者投保建议
+投保优先级：${tumorAdvice.投保优先级.join('；')}
+康复后投保：${tumorAdvice.康复后投保.join('；')}
+复查要求：${tumorAdvice.复查要求.join('；')}
+
+### 理赔知识
+报案流程：${INSURANCE_KNOWLEDGE.claims.报案流程.join('；')}
+注意事项：${INSURANCE_KNOWLEDGE.claims.注意事项.join('；')}
+
+### 常见问答
+${INSURANCE_KNOWLEDGE.faq.map((item: { q: string; a: string }, index: number) => `Q${index + 1}: ${item.q} A: ${item.a}`).join('；')}
+
+### 输出格式
+1. 根据患者情况推荐适合的保险类型
+2. 说明投保优先级和建议
+3. 提供投保注意事项
+4. 解答常见保险问题
+5. 引导回首页或开始新流程
+
+### 免责声明
+以上保险信息仅供参考，具体保险产品和投保条件请咨询保险公司或专业保险经纪人。`;
+};
+
+// ============== 就医指导 prompt ==============
+const generateGuidancePrompt = () => {
+  return `## 📝 环节四：就医指导
 
 ### 你的职责
 提供就医过程中的实用指导，帮助患者顺利就医。
@@ -288,33 +339,36 @@ const STAGE_PROMPTS: Record<Stage, string> = {
 2. 资料准备清单
 3. 沟通建议
 4. 心理支持信息
-5. 引导回首页或开始新流程
-`
+5. 引导到保险相关环节`;
 };
 
-// 流式输出API
+// ============== 所有环节 prompts ==============
+const STAGE_PROMPTS: Record<Stage, string> = {
+  symptom: generateSymptomPrompt(),
+  department: generateDepartmentPrompt(),
+  treatment: generateTreatmentPrompt(),
+  guidance: generateGuidancePrompt(),
+  insurance: generateInsurancePrompt(),
+};
+
+// ============== API 路由 ==============
 export async function POST(request: NextRequest) {
   try {
     const { message, stage = 'symptom', history = [] } = await request.json();
     
-    // 获取对应环节的prompt
     const stagePrompt = STAGE_PROMPTS[stage as Stage] || STAGE_PROMPTS.symptom;
     
-    // 构建消息历史
     const messages = [
       { role: 'system', content: stagePrompt },
       ...history.map((h: { role: string; content: string }) => ({ role: h.role, content: h.content })),
       { role: 'user', content: message }
     ];
     
-    // 创建LLM客户端
     const config = new Config();
     const client = new LLMClient(config);
     
-    // 提取请求头用于追踪
     const customHeaders = HeaderUtils.extractForwardHeaders(request.headers);
     
-    // 创建流式响应
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -332,21 +386,19 @@ export async function POST(request: NextRequest) {
         };
         
         try {
-          // 使用流式输出 - 新的SDK API
           const formattedMessages = messages.map(m => ({
             role: m.role as 'user' | 'assistant' | 'system',
             content: m.content
           }));
           
-          const stream = client.stream(
+          const responseStream = client.stream(
             formattedMessages,
             { streaming: true },
             undefined,
             customHeaders
           );
           
-          for await (const part of stream) {
-            // AIMessageChunk 包含 content 字段
+          for await (const part of responseStream) {
             const content = part.content;
             if (content && typeof content === 'string') {
               const data = JSON.stringify({
@@ -357,7 +409,6 @@ export async function POST(request: NextRequest) {
               try {
                 controller.enqueue(encoder.encode(`data: ${data}\n\n`));
               } catch {
-                // Stream might be closed
                 break;
               }
             }
@@ -368,7 +419,6 @@ export async function POST(request: NextRequest) {
           const err = error instanceof Error ? error : new Error(String(error));
           console.error('LLM stream error:', error);
           
-          // 发送错误信息
           const errorMsg = JSON.stringify({
             content: `抱歉，服务遇到问题：${err.message || '请稍后重试'}`,
             stage,
