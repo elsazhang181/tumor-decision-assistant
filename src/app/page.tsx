@@ -98,31 +98,28 @@ const WELCOME_MESSAGES: Record<Stage, string> = {
 
   treatment: `## 💊 第三步：治疗相关
 
-根据指南提供以下信息供参考：
+请告诉我您想了解的治疗相关问题，我将帮助您：
 • 📝 术前检查清单和关键数据解读
 • 🔄 标准治疗顺序（基于CSCO/NCCN指南）
 • 💊 化疗副作用及应对措施
-• 🎯 转移治疗重点
-• 📋 **生成治疗沟通提问清单**（帮您了解方案选择和注意事项）
+• 📋 **生成医患沟通提问清单**
 
-⚠️ 提醒：仅提供决策辅助信息，不涉及具体诊疗方案，具体治疗请咨询主治医生。
+⚠️ 仅提供决策辅助信息，不涉及具体诊疗方案。
 
-您想了解哪方面？例如："术前需要做哪些检查？"`,
+请描述您想了解的内容，例如："术前需要做哪些检查？"`,
 
   guidance: `## 📝 第四步：就医指导
 
-为您的就医过程提供完整指导：
+请告诉我您想了解的就医相关问题，我将帮助您：
 • 🗺️ 异地就医流程和医保报销
 • 🛡️ 带病投保和保险相关
 • 📄 转诊须知和材料准备
 • 💰 经济压力应对
-• 🔬 临床试验组信息
-• 👥 陪诊服务介绍
-• 📋 **生成综合就医提问清单**（帮您全面准备就诊）
+• 📋 **生成医患沟通提问清单**
 
-⚠️ 提醒：以上信息仅供参考，不构成任何医疗或法律建议。
+⚠️ 以上信息仅供参考，不构成任何医疗或法律建议。
 
-您想了解哪方面？例如："异地就医需要准备什么？"`
+请描述您想了解的内容，例如："异地就医需要准备什么？"`,
 };
 
 // ============== 上下文类型定义 ==============
@@ -267,8 +264,22 @@ export default function Home() {
     guidance: []
   });
 
+  // 使用 ref 跟踪初始化状态
+  const initializedRef = useRef<Record<Stage, boolean>>({
+    symptom: false,
+    department: false,
+    treatment: false,
+    guidance: false
+  });
+
   // 初始化当前环节的消息
   useEffect(() => {
+    // 避免重复初始化
+    if (initializedRef.current[currentStage]) {
+      return;
+    }
+    initializedRef.current[currentStage] = true;
+    
     const history = stageMessages[currentStage];
     
     if (history.length > 0) {
@@ -288,7 +299,7 @@ export default function Home() {
         stage: currentStage
       }]);
     }
-  }, [currentStage, stageMessages]); // 依赖 currentStage 和 stageMessages
+  }, [currentStage]); // 只依赖 currentStage
 
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
