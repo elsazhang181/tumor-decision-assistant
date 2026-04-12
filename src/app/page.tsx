@@ -596,13 +596,13 @@ export default function Home() {
                           )}
                         </div>
                         <div
-                          className={`max-w-[85%] rounded-2xl px-5 py-4 ${
+                          className={`max-w-[85%] rounded-xl px-4 py-3 ${
                             message.role === 'user'
                               ? 'bg-blue-500 text-white'
                               : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
                           }`}
                         >
-                          <div className="whitespace-pre-wrap text-base leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                          <div className="whitespace-pre-wrap text-sm leading-normal prose prose-xs dark:prose-invert max-w-none">
                             {message.content}
                           </div>
                         </div>
