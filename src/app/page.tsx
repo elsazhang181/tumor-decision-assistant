@@ -286,6 +286,7 @@ export default function Home() {
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
 
+    // 添加用户消息
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -294,13 +295,17 @@ export default function Home() {
       stage: currentStage
     };
 
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    // 构建历史消息（使用最新的消息列表，包含用户消息）
+    const currentMessages = [...messages, userMessage];
+    setMessages(currentMessages);
     setInput('');
     setIsLoading(true);
 
-    // 构建历史消息（包含所有之前环节的消息）
-    const historyMessages = messages.map(m => ({ role: m.role, content: m.content }));
+    // 构建发送给API的历史消息（过滤掉欢迎消息，只保留真实对话）
+    const historyMessages = currentMessages
+      .filter(m => !m.content.includes('您好！我是您的') && !m.content.includes('第一步') && !m.content.includes('第二步') && !m.content.includes('第三步') && !m.content.includes('第四步'))
+      .filter(m => !m.content.includes('【前序环节摘要】'))
+      .map(m => ({ role: m.role, content: m.content }));
 
     // 构建完整上下文（包含所有已完成环节的结论）
     const fullContext = {
