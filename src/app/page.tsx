@@ -105,7 +105,7 @@ const WELCOME_MESSAGES: Record<Stage, string> = {
 
 请告诉我您想了解的治疗相关问题，我将帮助您：
 • 📝 术前检查清单和关键数据解读
-• 🔄 标准治疗顺序（基于CSCO/NCCN指南）
+• 🔄 标准治疗顺序（基于2025 CSCO结直肠癌诊疗指南）
 • 💊 化疗副作用及应对措施
 • 📋 **生成医患沟通提问清单**
 
@@ -691,10 +691,7 @@ export default function Home() {
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline" className="text-xs">
-                      📖 2024 CSCO指南
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      2026 NCCN指南
+                      📖 2025 CSCO结直肠癌诊疗指南
                     </Badge>
                   </div>
                 </div>
