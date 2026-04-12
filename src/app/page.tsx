@@ -536,8 +536,8 @@ export default function Home() {
         {/* Chat Area */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg h-[calc(100vh-280px)] min-h-[500px]">
-              <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg h-[calc(100vh-220px)] min-h-[500px] flex flex-col">
+              <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 py-3 flex-shrink-0">
                 <CardTitle className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-blue-500" />
@@ -569,7 +569,7 @@ export default function Home() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0 flex flex-col h-[calc(100%-70px)]">
+              <CardContent className="p-0 flex flex-col flex-1 min-h-0">
                 <ScrollArea className="flex-1 p-4" ref={scrollRef}>
                   <div className="space-y-4">
                     {messages.map((message) => (
@@ -621,9 +621,9 @@ export default function Home() {
                     )}
                   </div>
                 </ScrollArea>
-
+	
                 {/* Input Area */}
-                <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-900">
+                <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
                   <div className="flex gap-3">
                     <Input
                       ref={inputRef}
