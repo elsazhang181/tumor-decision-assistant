@@ -478,12 +478,13 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-4 max-w-6xl">
-        {/* Stage Navigation */}
-        <div className="mb-4">
+      <main className="container mx-auto px-2 md:px-4 py-2 md:py-4 max-w-6xl">
+        {/* Stage Navigation - Mobile Optimized */}
+        <div className="mb-2 md:mb-4">
           <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
+            <CardContent className="p-2 md:p-4">
+              {/* Desktop: horizontal layout */}
+              <div className="hidden md:flex items-center justify-between">
                 {STAGES.map((stage, index) => {
                   const isCompleted = completedStages.includes(stage.id);
                   const isCurrent = currentStage === stage.id;
@@ -501,7 +502,7 @@ export default function Home() {
                             : 'bg-gray-50 dark:bg-slate-700/50 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                       >
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                           isCurrent
                             ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white'
                             : isCompleted
@@ -532,92 +533,147 @@ export default function Home() {
                   );
                 })}
               </div>
+              
+              {/* Mobile: compact vertical stacked layout */}
+              <div className="md:hidden">
+                {/* Current stage indicator */}
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <div className="flex items-center gap-2">
+                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo?.color} text-white`}>
+                      {currentStageInfo && <currentStageInfo.icon className="h-3.5 w-3.5" />}
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {currentStageInfo?.title}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        步骤 {STAGES.findIndex(s => s.id === currentStage) + 1}/{STAGES.length}
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-900/30">
+                    {completedStages.length}/{STAGES.length} 完成
+                  </Badge>
+                </div>
+                
+                {/* Stage pills - horizontal scrollable */}
+                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                  {STAGES.map((stage, index) => {
+                    const isCompleted = completedStages.includes(stage.id);
+                    const isCurrent = currentStage === stage.id;
+                    const Icon = stage.icon;
+                    
+                    return (
+                      <button
+                        key={stage.id}
+                        onClick={() => handleStageChange(stage.id)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all text-xs whitespace-nowrap ${
+                          isCurrent 
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
+                            : isCompleted
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700'
+                            : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600'
+                        }`}
+                      >
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-3 w-3" />
+                        ) : (
+                          <span className="h-4 w-4 flex items-center justify-center rounded-full bg-white/20 text-[10px] font-bold">
+                            {index + 1}
+                          </span>
+                        )}
+                        <span>{stage.title}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Chat Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Chat Area - Mobile Optimized */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 md:gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col" style={{ height: 'calc(100vh - 80px)' }}>
-              <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 py-3 flex-shrink-0">
-                <CardTitle className="flex items-center justify-between text-base">
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col" style={{ height: 'calc(100vh - 140px)' }}>
+              <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 py-2 md:py-3 px-3 flex-shrink-0">
+                <CardTitle className="flex items-center justify-between text-sm md:text-base">
                   <div className="flex items-center gap-2">
-                    <MessageCircle className="h-5 w-5 text-blue-500" />
-                    <span>{currentStageInfo?.title}</span>
-                    <Badge variant="secondary" className="text-xs">
+                    <MessageCircle className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
+                    <span className="text-sm md:text-base">{currentStageInfo?.title}</span>
+                    <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
                       {STAGES.findIndex(s => s.id === currentStage) + 1}/{STAGES.length}
                     </Badge>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 md:gap-2">
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={handlePrevStage}
                       disabled={currentStage === 'symptom'}
-                      className="h-8"
+                      className="h-7 md:h-8 px-1 md:px-2 text-xs"
                     >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      上一环节
+                      <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                      <span className="hidden md:inline">上一环节</span>
                     </Button>
                     <Button
                       size="sm"
                       onClick={handleNextStage}
                       disabled={currentStage === 'guidance'}
-                      className="h-8 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                      className="h-7 md:h-8 px-1 md:px-2 text-xs bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                     >
-                      下一环节
-                      <ChevronRight className="h-4 w-4 ml-1" />
+                      <span className="hidden md:inline">下一环节</span>
+                      <ChevronRight className="h-3 w-3 md:h-4 md:w-4 md:ml-1" />
                     </Button>
                   </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
-                <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
-                    <div className="space-y-4">
+                <div className="flex-1 overflow-y-auto p-2 md:p-4" ref={scrollRef}>
+                    <div className="space-y-3 md:space-y-4">
                     {messages.map((message) => (
                       <div
                         key={message.id}
-                        className={`flex gap-3 ${
+                        className={`flex gap-2 md:gap-3 ${
                           message.role === 'user' ? 'flex-row-reverse' : ''
                         }`}
                       >
                         <div
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                          className={`flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full ${
                             message.role === 'user'
                               ? 'bg-blue-500 text-white'
                               : 'bg-gradient-to-br from-teal-500 to-blue-500 text-white'
                           }`}
                         >
                           {message.role === 'user' ? (
-                            <User className="h-5 w-5" />
+                            <User className="h-4 w-4 md:h-5 md:w-5" />
                           ) : (
-                            <Bot className="h-5 w-5" />
+                            <Bot className="h-4 w-4 md:h-5 md:w-5" />
                           )}
                         </div>
                         <div
-                          className={`max-w-[85%] rounded-xl px-4 py-3 ${
+                          className={`max-w-[88%] md:max-w-[85%] rounded-xl px-3 py-2 md:px-4 md:py-3 ${
                             message.role === 'user'
                               ? 'bg-blue-500 text-white'
                               : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
                           }`}
                         >
-                          <div className="whitespace-pre-wrap text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none">
+                          <div className="whitespace-pre-wrap text-xs md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none">
                             {message.content}
                           </div>
                         </div>
                       </div>
                     ))}
                     {isLoading && messages[messages.length - 1]?.role === 'user' && (
-                      <div className="flex gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-blue-500 text-white">
-                          <Bot className="h-5 w-5" />
+                      <div className="flex gap-2 md:gap-3">
+                        <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-blue-500 text-white">
+                          <Bot className="h-4 w-4 md:h-5 md:w-5" />
                         </div>
-                        <div className="bg-gray-100 dark:bg-slate-700 rounded-2xl px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        <div className="bg-gray-100 dark:bg-slate-700 rounded-2xl px-3 py-2 md:px-4 md:py-3">
+                          <div className="flex items-center gap-1.5 md:gap-2">
+                            <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }}></div>
                           </div>
                         </div>
                       </div>
@@ -625,21 +681,23 @@ export default function Home() {
                   </div>
                 </div>
 	
-                {/* Input Area */}
-                <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
-                  <div className="flex gap-3">
+                {/* Input Area - Mobile optimized */}
+                <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-2 md:p-3 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
+                  <div className="flex gap-2">
                     <Input
                       ref={inputRef}
+                      type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder={`请描述${currentStageInfo?.title}相关内容...`}
-                      className="flex-1 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                      placeholder="输入您的问题..."
                       disabled={isLoading}
+                      className="flex-1 text-sm md:text-base"
                     />
                     <Button 
                       type="submit" 
                       disabled={!input.trim() || isLoading}
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                      size="icon"
                     >
                       <Send className="h-4 w-4" />
                     </Button>
@@ -649,8 +707,8 @@ export default function Home() {
             </Card>
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-3">
+          {/* Sidebar - Hidden on mobile */}
+          <div className="hidden lg:block lg:col-span-1 space-y-3">
             <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 py-3">
                 <CardTitle className="text-sm font-semibold">本环节可帮助您</CardTitle>
