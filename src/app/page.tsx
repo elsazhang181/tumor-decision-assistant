@@ -534,30 +534,10 @@ export default function Home() {
                 })}
               </div>
               
-              {/* Mobile: compact vertical stacked layout */}
+              {/* Mobile: vertical stacked layout with description */}
               <div className="md:hidden">
-                {/* Current stage indicator */}
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <div className="flex items-center gap-2">
-                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo?.color} text-white`}>
-                      {currentStageInfo && <currentStageInfo.icon className="h-3.5 w-3.5" />}
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {currentStageInfo?.title}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        步骤 {STAGES.findIndex(s => s.id === currentStage) + 1}/{STAGES.length}
-                      </div>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-900/30">
-                    {completedStages.length}/{STAGES.length} 完成
-                  </Badge>
-                </div>
-                
-                {/* Stage pills - horizontal scrollable */}
-                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                {/* Stage grid - 2x2 layout with icon+title+description */}
+                <div className="grid grid-cols-2 gap-2">
                   {STAGES.map((stage, index) => {
                     const isCompleted = completedStages.includes(stage.id);
                     const isCurrent = currentStage === stage.id;
@@ -567,22 +547,33 @@ export default function Home() {
                       <button
                         key={stage.id}
                         onClick={() => handleStageChange(stage.id)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all text-xs whitespace-nowrap ${
+                        className={`flex flex-col items-center p-3 rounded-xl transition-all ${
                           isCurrent 
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
+                            ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-lg'
                             : isCompleted
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700'
-                            : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600'
+                            ? 'bg-green-50 dark:bg-green-900/30 border-2 border-green-400 dark:border-green-600'
+                            : 'bg-gray-50 dark:bg-slate-700/50 border-2 border-gray-200 dark:border-slate-600'
                         }`}
                       >
-                        {isCompleted ? (
-                          <CheckCircle2 className="h-3 w-3" />
-                        ) : (
-                          <span className="h-4 w-4 flex items-center justify-center rounded-full bg-white/20 text-[10px] font-bold">
-                            {index + 1}
-                          </span>
-                        )}
-                        <span>{stage.title}</span>
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-full mb-2 ${
+                          isCurrent
+                            ? 'bg-white/20'
+                            : isCompleted
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-300 dark:bg-slate-600 text-gray-600 dark:text-gray-300'
+                        }`}>
+                          {isCompleted ? (
+                            <CheckCircle2 className="h-5 w-5" />
+                          ) : (
+                            <Icon className="h-5 w-5" />
+                          )}
+                        </div>
+                        <div className={`text-sm font-semibold text-center ${isCurrent ? 'text-white' : isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                          {stage.title}
+                        </div>
+                        <div className={`text-[10px] text-center mt-1 line-clamp-2 ${isCurrent ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {stage.description}
+                        </div>
                       </button>
                     );
                   })}
@@ -595,7 +586,7 @@ export default function Home() {
         {/* Chat Area - Mobile Optimized */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 md:gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col" style={{ height: 'calc(100vh - 140px)' }}>
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 py-2 md:py-3 px-3 flex-shrink-0">
                 <CardTitle className="flex items-center justify-between text-sm md:text-base">
                   <div className="flex items-center gap-2">
@@ -703,6 +694,55 @@ export default function Home() {
                     </Button>
                   </div>
                 </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Mobile: Help info below chat */}
+          <div className="lg:hidden space-y-3">
+            {/* 本环节可帮助您 */}
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  {currentStageInfo && (
+                    <>
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
+                        <currentStageInfo.icon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {currentStageInfo.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {currentStageInfo.description}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
+                  <ul className="space-y-1">
+                    {currentStageInfo?.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span className="text-blue-500 mt-0.5">•</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 免责声明 */}
+            <Card className="border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800/50">
+              <CardContent className="p-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <strong className="block mb-0.5 text-gray-700 dark:text-gray-300">就医决策辅助声明</strong>
+                    本助手不提供疾病诊断、治疗方案制定、药品处方或医疗决策替代，所有回答仅供参考，不能替代专业医生的面诊判断。
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
