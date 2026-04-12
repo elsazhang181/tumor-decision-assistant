@@ -536,7 +536,7 @@ export default function Home() {
         {/* Chat Area */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg h-[calc(100vh-280px)] min-h-[500px]">
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg" style={{ height: '600px', minHeight: '500px' }}>
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
                 <CardTitle className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2">
@@ -569,8 +569,8 @@ export default function Home() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0 flex flex-col h-[calc(100%-70px)]">
-                <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+              <CardContent className="p-0 flex flex-col !p-0" style={{ height: 'calc(100% - 60px)' }}>
+                <ScrollArea className="flex-1 p-4 min-h-0" ref={scrollRef} style={{ flex: 1, minHeight: 0 }}>
                   <div className="space-y-4">
                     {messages.map((message) => (
                       <div
@@ -623,8 +623,8 @@ export default function Home() {
                 </ScrollArea>
 
                 {/* Input Area */}
-                <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-900">
-                  <div className="flex gap-3">
+                <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-900 shrink-0">
+                  <form onSubmit={handleSubmit} className="flex gap-3">
                     <Input
                       ref={inputRef}
                       value={input}
@@ -640,8 +640,8 @@ export default function Home() {
                     >
                       <Send className="h-4 w-4" />
                     </Button>
-                  </div>
-                </form>
+                  </form>
+                </div>
               </CardContent>
             </Card>
           </div>
