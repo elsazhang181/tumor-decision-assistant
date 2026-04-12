@@ -508,7 +508,7 @@ export default function Home() {
                             : 'bg-gray-50 dark:bg-slate-700/50 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                       >
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
                           isCurrent
                             ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white'
                             : isCompleted
@@ -546,7 +546,7 @@ export default function Home() {
         {/* Chat Area */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg h-[calc(100vh-220px)] flex flex-col overflow-hidden">
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col" style={{ height: 'calc(100vh - 100px)' }}>
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 py-3 flex-shrink-0">
                 <CardTitle className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2">
@@ -581,7 +581,7 @@ export default function Home() {
               </CardHeader>
               <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
-                  <div className="space-y-4">
+                    <div className="space-y-4">
                     {messages.map((message) => (
                       <div
                         key={message.id}
@@ -590,26 +590,26 @@ export default function Home() {
                         }`}
                       >
                         <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
                             message.role === 'user'
                               ? 'bg-blue-500 text-white'
                               : 'bg-gradient-to-br from-teal-500 to-blue-500 text-white'
                           }`}
                         >
                           {message.role === 'user' ? (
-                            <User className="h-4 w-4" />
+                            <User className="h-5 w-5" />
                           ) : (
-                            <Bot className="h-4 w-4" />
+                            <Bot className="h-5 w-5" />
                           )}
                         </div>
                         <div
-                          className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                          className={`max-w-[85%] rounded-2xl px-5 py-4 ${
                             message.role === 'user'
                               ? 'bg-blue-500 text-white'
                               : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
                           }`}
                         >
-                          <div className="whitespace-pre-wrap text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                          <div className="whitespace-pre-wrap text-base leading-relaxed prose prose-sm dark:prose-invert max-w-none">
                             {message.content}
                           </div>
                         </div>
@@ -618,7 +618,7 @@ export default function Home() {
                     {isLoading && messages[messages.length - 1]?.role === 'user' && (
                       <div className="flex gap-3">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-blue-500 text-white">
-                          <Bot className="h-4 w-4" />
+                          <Bot className="h-5 w-5" />
                         </div>
                         <div className="bg-gray-100 dark:bg-slate-700 rounded-2xl px-4 py-3">
                           <div className="flex items-center gap-2">
@@ -633,7 +633,7 @@ export default function Home() {
                 </div>
 	
                 {/* Input Area */}
-                <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
+                <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
                   <div className="flex gap-3">
                     <Input
                       ref={inputRef}
@@ -667,7 +667,7 @@ export default function Home() {
                   <div className="flex items-start gap-3">
                     {currentStageInfo && (
                       <>
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
                           <currentStageInfo.icon className="h-4 w-4" />
                         </div>
                         <div>
