@@ -711,17 +711,19 @@ export default function Home() {
                     />
                   </div>
                 </div>
+
+                {/* 免责声明 */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <div className="flex items-start gap-2 text-[10px] text-gray-500 dark:text-gray-400">
+                    <AlertCircle className="h-3 w-3 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="block mb-0.5">就医决策辅助声明</strong>
+                      本助手不提供疾病诊断、治疗方案制定、药品处方或医疗决策替代，所有回答仅供参考，不能替代专业医生的面诊判断。
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-
-            {/* Disclaimer */}
-            <div className="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3">
-              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div className="text-xs text-amber-800 dark:text-amber-200">
-                <strong className="block mb-1">重要声明：</strong>
-                本助手仅提供就医决策辅助信息，所有内容仅供参考。具体诊疗方案请咨询专业医疗机构。
-              </div>
-            </div>
           </div>
         </div>
       </main>
