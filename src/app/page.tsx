@@ -370,14 +370,8 @@ export default function Home() {
         }
       }
       
-      // 收到完整回答后，提取关键结论保存到上下文
-      const conclusion = extractConclusion(assistantContent);
-      if (conclusion) {
-        setStageConclusions(prev => ({
-          ...prev,
-          [currentStage]: conclusion
-        }));
-      }
+      // 注意：关键结论会在环节切换时自动携带到下一个环节
+      // 不再在此处自动保存，避免覆盖对话内容
     } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [...prev, {
