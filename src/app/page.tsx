@@ -539,7 +539,7 @@ export default function Home() {
         {/* Chat Area */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col" style={{ height: 'calc(100vh - 100px)' }}>
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col" style={{ height: 'calc(100vh - 80px)' }}>
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 py-3 flex-shrink-0">
                 <CardTitle className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2">
@@ -651,20 +651,56 @@ export default function Home() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 p-4">
-              <div className="space-y-3">
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
+              <CardHeader className="border-b border-gray-200 dark:border-gray-700 py-3">
+                <CardTitle className="text-sm font-semibold">本环节可帮助您</CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 space-y-3">
+                {/* 模块图标和描述 */}
+                <div className="flex items-center gap-3">
+                  {currentStageInfo && (
+                    <>
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
+                        <currentStageInfo.icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {currentStageInfo.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {currentStageInfo.description}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                
+                {/* 功能列表 */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <ul className="space-y-1.5">
+                    {currentStageInfo?.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span className="text-blue-500 mt-0.5">•</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
                 {/* 依据指南 */}
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    📖 2024 CSCO指南
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    2026 NCCN指南
-                  </Badge>
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="text-xs">
+                      📖 2024 CSCO指南
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      2026 NCCN指南
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* 完成进度 */}
-                <div>
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-gray-500">完成进度</span>
                     <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -678,7 +714,7 @@ export default function Home() {
                     />
                   </div>
                 </div>
-              </div>
+              </CardContent>
             </Card>
 
             {/* Disclaimer */}
