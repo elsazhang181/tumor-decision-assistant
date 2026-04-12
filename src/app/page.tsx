@@ -217,33 +217,25 @@ function extractConclusion(answer: string): string {
 function generateWelcomeWithContext(context: Partial<ConversationContext>, targetStage: Stage): string {
   const baseWelcome = WELCOME_MESSAGES[targetStage];
   
-  // 构建上下文提示
+  // 构建上下文提示（不显示标题，更自然）
   const contextParts: string[] = [];
   
   if (context?.previousStages?.symptom) {
-    contextParts.push(`📋 症状自查结果：${context.previousStages.symptom}`);
+    contextParts.push(`您之前提到：${context.previousStages.symptom}`);
   }
   if (context?.previousStages?.department) {
-    contextParts.push(`🏥 科室匹配结果：${context.previousStages.department}`);
+    contextParts.push(`根据科室匹配：${context.previousStages.department}`);
   }
   if (context?.previousStages?.treatment) {
-    contextParts.push(`💊 治疗相关信息：${context.previousStages.treatment}`);
+    contextParts.push(`关于治疗建议：${context.previousStages.treatment}`);
   }
   
   if (contextParts.length === 0) {
     return baseWelcome;
   }
   
-  const contextHeader = `
----
-
-**【前序环节摘要】**
-${contextParts.join('\n')}
-
----
-`;
-  
-  // 在欢迎消息开头添加上下文
+  // 在欢迎消息开头添加上下文（简洁格式）
+  const contextHeader = contextParts.join('\n') + '\n\n';
   return contextHeader + baseWelcome;
 }
 
@@ -268,20 +260,35 @@ export default function Home() {
     }
   }, [messages]);
 
+  const [stageMessages, setStageMessages] = useState<Record<Stage, Message[]>>({
+    symptom: [],
+    department: [],
+    treatment: [],
+    guidance: []
+  });
+
+  // 初始化当前环节的消息
   useEffect(() => {
-    // 初始化欢迎消息（包含上下文）
-    const welcomeMsg = generateWelcomeWithContext(
-      { previousStages: stageConclusions },
-      currentStage
-    );
-    setMessages([{
-      id: 'welcome',
-      role: 'assistant',
-      content: welcomeMsg,
-      timestamp: new Date(),
-      stage: currentStage
-    }]);
-  }, [currentStage, stageConclusions]);
+    const history = stageMessages[currentStage];
+    
+    if (history.length > 0) {
+      // 有历史消息，加载历史
+      setMessages(history);
+    } else {
+      // 无历史消息，显示欢迎消息
+      const welcomeMsg = generateWelcomeWithContext(
+        { previousStages: stageConclusions },
+        currentStage
+      );
+      setMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        content: welcomeMsg,
+        timestamp: new Date(),
+        stage: currentStage
+      }]);
+    }
+  }, [currentStage, stageMessages]); // 依赖 currentStage 和 stageMessages
 
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
@@ -383,6 +390,13 @@ export default function Home() {
       }]);
     } finally {
       setIsLoading(false);
+      // 保存当前环节的消息到历史
+      if (messages.length > 0) {
+        setStageMessages(prev => ({
+          ...prev,
+          [currentStage]: messages
+        }));
+      }
     }
   };
 
@@ -394,6 +408,27 @@ export default function Home() {
   const handleStageChange = (stage: Stage) => {
     if (stage === currentStage) return;
     
+    // 先保存当前环节的消息和结论
+    setStageMessages(prev => ({
+      ...prev,
+      [currentStage]: messages
+    }));
+    
+    // 从当前环节的对话中提取结论保存
+    const assistantResponses = messages
+      .filter(m => m.role === 'assistant' && !m.content.includes('您好！我是您的'))
+      .map(m => m.content);
+    
+    if (assistantResponses.length > 0) {
+      const conclusion = extractConclusion(assistantResponses[assistantResponses.length - 1]);
+      if (conclusion) {
+        setStageConclusions(prev => ({
+          ...prev,
+          [currentStage]: conclusion
+        }));
+      }
+    }
+    
     // 标记当前环节为完成
     setCompletedStages(prev => {
       const newCompleted = [...prev];
@@ -402,24 +437,6 @@ export default function Home() {
       }
       return newCompleted;
     });
-    
-    // 从当前环节的对话中提取结论保存
-    const currentMessages = messages.filter(m => m.stage === currentStage);
-    if (currentMessages.length > 1) {
-      const assistantResponses = currentMessages
-        .filter(m => m.role === 'assistant' && !m.content.includes('您好！我是您的'))
-        .map(m => m.content);
-      
-      if (assistantResponses.length > 0) {
-        const conclusion = extractConclusion(assistantResponses[assistantResponses.length - 1]);
-        if (conclusion) {
-          setStageConclusions(prev => ({
-            ...prev,
-            [currentStage]: conclusion
-          }));
-        }
-      }
-    }
     
     // 切换到新环节
     setCurrentStage(stage);
