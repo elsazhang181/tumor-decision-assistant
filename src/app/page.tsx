@@ -40,34 +40,39 @@ const STAGES: Array<{
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
+  features: string[];
 }> = [
   {
     id: 'symptom',
     title: '症状自查',
     description: '系统评估症状，识别危险信号',
     icon: Stethoscope,
-    color: 'from-blue-500 to-blue-600'
+    color: 'from-blue-500 to-blue-600',
+    features: ['系统性评估症状特征', '识别紧急危险信号', '整理关键信息供就诊参考', '生成医患沟通提问清单']
   },
   {
     id: 'department',
     title: '科室推荐',
     description: '推荐科室和医院，提供就医准备',
     icon: Hospital,
-    color: 'from-purple-500 to-purple-600'
+    color: 'from-purple-500 to-purple-600',
+    features: ['匹配合适的就诊科室', '推荐权威医院', '列出就诊准备清单', '生成医患沟通提问清单']
   },
   {
     id: 'treatment',
     title: '治疗相关',
     description: '治疗流程、检查要点、副作用应对',
     icon: Activity,
-    color: 'from-orange-500 to-orange-600'
+    color: 'from-orange-500 to-orange-600',
+    features: ['术前检查清单和数据解读', '标准治疗顺序', '化疗副作用应对', '生成医患沟通提问清单']
   },
   {
     id: 'guidance',
     title: '就医指导',
-    description: '异地就诊、保险、临床试验等',
+    description: '异地就医、医保报销、转诊指导',
     icon: FileText,
-    color: 'from-green-500 to-green-600'
+    color: 'from-green-500 to-green-600',
+    features: ['异地就医流程指导', '医保报销政策', '转诊须知和材料准备', '生成综合就医提问清单']
   }
 ];
 
@@ -217,30 +222,9 @@ function extractConclusion(answer: string): string {
   return firstPart.replace(/\n/g, ' ').trim();
 }
 
-// ============== 生成环节欢迎消息（包含上下文） ==============
-function generateWelcomeWithContext(context: Partial<ConversationContext>, targetStage: Stage): string {
-  const baseWelcome = WELCOME_MESSAGES[targetStage];
-  
-  // 构建简短的上下文提示
-  const contextParts: string[] = [];
-  
-  if (context?.previousStages?.symptom && context.previousStages.symptom.length > 5) {
-    contextParts.push(`您之前提到：${context.previousStages.symptom.substring(0, 50)}`);
-  }
-  if (context?.previousStages?.department && context.previousStages.department.length > 5) {
-    contextParts.push(`科室匹配：${context.previousStages.department.substring(0, 50)}`);
-  }
-  if (context?.previousStages?.treatment && context.previousStages.treatment.length > 5) {
-    contextParts.push(`治疗相关：${context.previousStages.treatment.substring(0, 50)}`);
-  }
-  
-  if (contextParts.length === 0) {
-    return baseWelcome;
-  }
-  
-  // 简洁格式
-  const contextHeader = contextParts.join('\n') + '\n\n---\n\n';
-  return contextHeader + baseWelcome;
+// ============== 生成环节欢迎消息 ==============
+function generateWelcomeMessage(targetStage: Stage): string {
+  return WELCOME_MESSAGES[targetStage];
 }
 
 export default function Home() {
@@ -294,10 +278,7 @@ export default function Home() {
       setMessages(history);
     } else {
       // 无历史消息，显示欢迎消息
-      const welcomeMsg = generateWelcomeWithContext(
-        { previousStages: stageConclusions },
-        currentStage
-      );
+      const welcomeMsg = generateWelcomeMessage(currentStage);
       setMessages([{
         id: 'welcome',
         role: 'assistant',
@@ -679,7 +660,7 @@ export default function Home() {
           <div className="lg:col-span-1">
             <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
               <CardHeader className="border-b border-gray-200 dark:border-gray-700">
-                <CardTitle className="text-sm font-semibold">环节说明</CardTitle>
+                <CardTitle className="text-sm font-semibold">本环节可帮助您</CardTitle>
               </CardHeader>
               <CardContent className="p-4">
                 <div className="space-y-4">
@@ -701,35 +682,46 @@ export default function Home() {
                     )}
                   </div>
                   
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
-                      📖 依据指南
-                    </h4>
-                    <div className="space-y-1">
-                      <Badge variant="outline" className="text-[10px] w-full justify-start">
-                        2024 CSCO指南
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] w-full justify-start">
-                        2026 NCCN指南
-                      </Badge>
-                    </div>
+                  <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <ul className="space-y-2">
+                      {currentStageInfo?.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
+                </div>
+                
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
+                    📖 依据指南
+                  </h4>
+                  <div className="space-y-1">
+                    <Badge variant="outline" className="text-[10px] w-full justify-start">
+                      2024 CSCO指南
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px] w-full justify-start">
+                      2026 NCCN指南
+                    </Badge>
+                  </div>
+                </div>
 
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <h4 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
-                      📌 完成进度
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
-                          style={{ width: `${((completedStages.length + (completedStages.includes(currentStage) ? 0 : 0.5)) / STAGES.length) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {Math.round(((completedStages.length + (completedStages.includes(currentStage) ? 0 : 0.5)) / STAGES.length) * 100)}%
-                      </span>
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
+                    📌 完成进度
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
+                        style={{ width: `${((completedStages.length + (completedStages.includes(currentStage) ? 0 : 0.5)) / STAGES.length) * 100}%` }}
+                      />
                     </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {Math.round(((completedStages.length + (completedStages.includes(currentStage) ? 0 : 0.5)) / STAGES.length) * 100)}%
+                    </span>
                   </div>
                 </div>
               </CardContent>
