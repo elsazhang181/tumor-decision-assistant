@@ -277,15 +277,8 @@ export default function Home() {
       // 有历史消息，加载历史
       setMessages(history);
     } else {
-      // 无历史消息，显示欢迎消息
-      const welcomeMsg = generateWelcomeMessage(currentStage);
-      setMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: welcomeMsg,
-        timestamp: new Date(),
-        stage: currentStage
-      }]);
+      // 无历史消息，显示空界面（让用户直接输入）
+      setMessages([]);
     }
   }, [currentStage]); // 只依赖 currentStage
 
@@ -657,78 +650,39 @@ export default function Home() {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
-              <CardHeader className="border-b border-gray-200 dark:border-gray-700">
-                <CardTitle className="text-sm font-semibold">本环节可帮助您</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    {currentStageInfo && (
-                      <>
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
-                          <currentStageInfo.icon className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {currentStageInfo.title}
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {currentStageInfo.description}
-                          </p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  
-                  <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <ul className="space-y-2">
-                      {currentStageInfo?.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
-                          <span className="text-blue-500 mt-0.5">•</span>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                
-                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <h4 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
-                    📖 依据指南
-                  </h4>
-                  <div className="space-y-1">
-                    <Badge variant="outline" className="text-[10px] w-full justify-start">
-                      2024 CSCO指南
-                    </Badge>
-                    <Badge variant="outline" className="text-[10px] w-full justify-start">
-                      2026 NCCN指南
-                    </Badge>
-                  </div>
+          <div className="lg:col-span-1 space-y-3">
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 p-4">
+              <div className="space-y-3">
+                {/* 依据指南 */}
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    📖 2024 CSCO指南
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    2026 NCCN指南
+                  </Badge>
                 </div>
 
-                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <h4 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
-                    📌 完成进度
-                  </h4>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
-                        style={{ width: `${((completedStages.length + (completedStages.includes(currentStage) ? 0 : 0.5)) / STAGES.length) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {Math.round(((completedStages.length + (completedStages.includes(currentStage) ? 0 : 0.5)) / STAGES.length) * 100)}%
+                {/* 完成进度 */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-500">完成进度</span>
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      {completedStages.length}/{STAGES.length}
                     </span>
                   </div>
+                  <div className="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
+                      style={{ width: `${(completedStages.length / STAGES.length) * 100}%` }}
+                    />
+                  </div>
                 </div>
-              </CardContent>
+              </div>
             </Card>
 
             {/* Disclaimer */}
-            <div className="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4">
+            <div className="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3">
               <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="text-xs text-amber-800 dark:text-amber-200">
                 <strong className="block mb-1">重要声明：</strong>
