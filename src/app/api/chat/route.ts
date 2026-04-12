@@ -554,12 +554,17 @@ const STAGE_PROMPTS: Record<Stage, string> = {
 // ============== API 路由 ==============
 export async function POST(request: NextRequest) {
   try {
-    const { message, stage = 'symptom', history = [] } = await request.json();
+    const { message, stage = 'symptom', history = [], context } = await request.json();
     
     const stagePrompt = STAGE_PROMPTS[stage as Stage] || STAGE_PROMPTS.symptom;
     
+    // 如果有上下文，添加到 system prompt 中
+    const contextPrompt = context?.summary 
+      ? `\n\n## 前序上下文信息\n${context.summary}\n\n请结合以上上下文信息，提供更精准的回答。`
+      : '';
+    
     const messages = [
-      { role: 'system', content: stagePrompt },
+      { role: 'system', content: stagePrompt + contextPrompt },
       ...history.map((h: { role: string; content: string }) => ({ role: h.role, content: h.content })),
       { role: 'user', content: message }
     ];

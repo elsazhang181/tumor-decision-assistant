@@ -124,12 +124,81 @@ const WELCOME_MESSAGES: Record<Stage, string> = {
 
 您想了解哪方面？例如："异地就医需要准备什么？"`
 };
+
+// ============== 上下文类型定义 ==============
+interface ConversationContext {
+  // 症状自查环节收集的信息
+  symptoms?: string;
+  symptomAnalysis?: string;
+  urgencyLevel?: string;
+  
+  // 科室匹配环节收集的信息
+  suspectedCondition?: string;
+  recommendedDepartments?: string[];
+  recommendedHospitals?: string[];
+  
+  // 治疗相关环节收集的信息
+  treatmentStage?: string;
+  keyExaminations?: string[];
+  
+  // 就医指导环节收集的信息
+  insuranceInfo?: string;
+  guidanceNotes?: string[];
+  
+  // 对话摘要（跨环节传递的关键信息）
+  summary?: string;
+}
+
+// ============== 提取上下文的函数 ==============
+function extractContextFromMessages(messages: Message[], fromStage: Stage): Partial<ConversationContext> {
+  const context: Partial<ConversationContext> = {};
+  
+  // 收集该环节之前的对话摘要
+  const relevantMessages = messages.filter(m => m.stage === fromStage);
+  if (relevantMessages.length > 1) {
+    // 提取用户问题
+    const userMessages = relevantMessages.filter(m => m.role === 'user').map(m => m.content);
+    // 提取助手回答（排除欢迎消息）
+    const assistantResponses = relevantMessages
+      .filter(m => m.role === 'assistant' && !m.content.includes('您好！我是您的'))
+      .map(m => m.content);
+    
+    if (userMessages.length > 0) {
+      context.summary = `【前序对话摘要】\n患者问题：${userMessages.join('；')}\n\n关键结论：${assistantResponses.slice(-1)[0]?.substring(0, 500) || '无'}`;
+    }
+  }
+  
+  return context;
+}
+
+// ============== 生成上下文传递消息 ==============
+function generateContextMessage(context: Partial<ConversationContext>, targetStage: Stage): string {
+  if (!context || !context.summary) return '';
+  
+  const stageNames: Record<Stage, string> = {
+    symptom: '症状自查',
+    department: '科室匹配',
+    treatment: '治疗相关',
+    guidance: '就医指导'
+  };
+  
+  return `
+【从${stageNames[context.symptoms ? '症状自查' : targetStage]}环节继承的上下文】
+
+${context.summary}
+
+---
+现在进入【${stageNames[targetStage]}】环节，请结合以上上下文继续提供帮助。
+`;
+}
+
 export default function Home() {
   const [currentStage, setCurrentStage] = useState<Stage>('symptom');
   const [completedStages, setCompletedStages] = useState<Stage[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationContext, setConversationContext] = useState<Partial<ConversationContext>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -161,9 +230,31 @@ export default function Home() {
       stage: currentStage
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    // 在添加用户消息后提取上下文
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput('');
     setIsLoading(true);
+
+    // 从之前的消息中提取上下文
+    const extractedContext = extractContextFromMessages(updatedMessages, currentStage);
+    
+    // 构建包含上下文的完整历史
+    const contextMessage = generateContextMessage(conversationContext, currentStage);
+    const fullHistory = contextMessage 
+      ? [
+          ...updatedMessages.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
+          { role: 'system' as const, content: contextMessage },
+          { role: 'user' as const, content: content.trim() }
+        ]
+      : updatedMessages.map(m => ({ role: m.role, content: m.content }));
+
+    // 保存当前环节的上下文
+    const newContext = {
+      ...conversationContext,
+      ...extractedContext
+    };
+    setConversationContext(newContext);
 
     try {
       const response = await fetch('/api/chat', {
@@ -171,8 +262,9 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: content.trim(),
-          history: messages.map(m => ({ role: m.role, content: m.content })),
-          stage: currentStage
+          history: fullHistory,
+          stage: currentStage,
+          context: newContext
         })
       });
 
@@ -253,6 +345,14 @@ export default function Home() {
       return newCompleted;
     });
     
+    // 提取当前环节的上下文并保存
+    const currentContext = extractContextFromMessages(messages, currentStage);
+    setConversationContext(prev => ({
+      ...prev,
+      ...currentContext
+    }));
+    
+    // 切换到新环节
     setCurrentStage(stage);
     inputRef.current?.focus();
   };
