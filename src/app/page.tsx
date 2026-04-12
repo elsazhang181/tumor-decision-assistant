@@ -602,7 +602,7 @@ export default function Home() {
                               : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
                           }`}
                         >
-                          <div className="whitespace-pre-wrap text-sm leading-normal prose prose-xs dark:prose-invert max-w-none">
+                          <div className="whitespace-pre-wrap text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none">
                             {message.content}
                           </div>
                         </div>
