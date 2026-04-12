@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
 import expertsData from '@/lib/experts-knowledge.json';
+import cscoData from '@/lib/csco-knowledge.json';
 import insuranceData from '@/lib/insurance-knowledge.json';
 
 type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 
 // ============== 知识库定义 ==============
 const EXPERTS_KNOWLEDGE = expertsData;
+const CSCO_KNOWLEDGE = cscoData;
 const INSURANCE_KNOWLEDGE = insuranceData;
 
 // ============== 官方信息来源 ==============
@@ -82,45 +84,36 @@ const CITATION_SETTINGS = `
 如有不适，请尽快就医；具体治疗方案请遵医嘱。
 `;
 
-// ============== 通用输出格式模板（精简版） ==============
-const OUTPUT_FORMAT = `
-### 【输出格式 - 禁止输出欢迎消息，必须完整输出以下所有部分】
+// ============== 医患沟通提问清单模板 ==============
+const QUESTION_LIST_TEMPLATE = `
+### 📋 医患沟通提问清单生成规则
 
----
-**【🔴紧急程度】**：急诊/尽快就医/择期就诊
+针对患者的问题，生成一份"与医生高效沟通必备提问清单"，格式如下：
 
-**【一句话结论】**：最核心的判断（不超过20字）
+**【必问问题】**（就诊时必须向医生确认的核心问题）
+1. 我的[肿瘤类型]目前处于什么分期？
+2. 针对我的情况，国内外指南推荐的标准治疗方案是什么？
+3. 这个治疗方案的预期效果如何？有哪些可能的副作用？
+4. 如果选择这个方案，需要多长时间？需要住院吗？
+5. 有没有其他可选方案？各自的利弊是什么？
 
-**【👀通俗解释】**：
-用最简单的话解释这个问题，让患者能听懂（2-3句话，可用比喻）
+**【检查确认】**（需要提前准备的检查结果）
+- 病理报告（含分子分型）
+- 影像学片子（CT/MRI/PET-CT）
+- 血肿瘤标志物（CEA、CA19-9等）
+- 基因检测报告（如有）
 
-**【📋需要与医生沟通的重点】**：
-1. [问题1]
-2. [问题2]
-3. [问题3]
+**【记录要点】**（就诊时记录的关键信息）
+- 医生的诊断结论和依据
+- 推荐的检查/治疗方案
+- 下一步行动和时间安排
+- 需要家属配合的事项
 
-**【📋医患沟通提问清单】**：
-**必问问题：**
-1. [必问1]
-2. [必问2]
-3. [必问3]
-
-**检查确认：**
-- [需要准备的检查]
-
-**追问建议：**
-- [可追问的问题]
-
-**【📌医生诊断后要关注的重点】**：
-- [诊断后需要确认的信息]
-- [治疗方案需要确认的信息]
-- [重要时间节点]
-
-**【下一步】**：建议进入【XX环节】
-
----`;
-
-
+**【追问建议】**（如有疑问可进一步追问）
+- 这个方案的费用大概是多少？医保能报销吗？
+- 如果效果不好，有没有备选方案？
+- 治疗期间生活上需要注意什么？
+`;
 
 // ============== 免责声明 ==============
 const DISCLAIMER = `
@@ -240,137 +233,312 @@ const LIVER_METASTASIS_QA_TEMPLATE = `
 □ 术前是否需要转化治疗
 `;
 
-// ============== 症状自查 prompt（精简版） ==============
+// ============== CSCO指南摘要生成 ==============
+const generateCSCOGuideSummary = () => {
+  const lines: string[] = [];
+  
+  lines.push('### 诊断标准');
+  cscoData.diagnosis.screening.recommendations.forEach(r => {
+    lines.push(`- ${r}`);
+  });
+  
+  lines.push('### 病理诊断要点');
+  cscoData.diagnosis.pathological.keyPoints.forEach(k => {
+    lines.push(`- ${k}`);
+  });
+  
+  lines.push('### 影像学检查');
+  cscoData.diagnosis.imaging.recommendations.forEach(r => {
+    lines.push(`- ${r}`);
+  });
+  
+  lines.push('### TNM分期');
+  cscoData.diagnosis.staging.stages.forEach(s => {
+    lines.push(`- ${s}`);
+  });
+  
+  lines.push('### 化疗方案');
+  cscoData.treatment.chemotherapy.regimens.forEach(r => {
+    lines.push(`- ${r.name}(${r.fullName})：${r.indication}`);
+  });
+  
+  lines.push('### 辅助化疗适应症');
+  cscoData.treatment.chemotherapy.adjuvant.indications.forEach(i => {
+    lines.push(`- ${i}`);
+  });
+  
+  lines.push('### 靶向治疗');
+  cscoData.treatment.targetTherapy.targets.forEach(t => {
+    lines.push(`- ${t.target}：${t.drugs.join('、')}（${t.indication}）`);
+  });
+  
+  lines.push('### 免疫治疗');
+  cscoData.treatment.immunotherapy.indications.forEach(i => {
+    lines.push(`- ${i.type}：${i.drugs.join('、')}`);
+  });
+  
+  lines.push('### 放疗适应症');
+  cscoData.treatment.radiotherapy.indications.forEach(r => {
+    lines.push(`- ${r.context}：${r.indication}`);
+  });
+  
+  lines.push('### 随访计划');
+  cscoData.followUp.stages.forEach(s => {
+    lines.push(`- ${s.stage}：${s.schedule}；检查内容：${s.content}`);
+  });
+  
+  return lines.join('\n');
+};
+
+// ============== 症状自查 prompt ==============
 const generateSymptomPrompt = () => {
-  return `## 📋 症状自查
+  const cscoSummary = generateCSCOGuideSummary();
+  
+  return `## 📋 环节一：症状自查
 
-### 职责
-帮助患者评估症状紧急程度，指导就医方向。
+### 你的职责
+帮助患者系统性描述和评估症状，为后续就医决策提供关键信息。
 
-### 约束
-- 不能诊断，只能说"建议检查"
-- 不给具体治疗方案
-- 通俗易懂，不说专业术语
+### ⚠️ 核心约束
+1. **必须综合检索知识库**：先检索CSCO指南，再检索专家知识库，最后综合回答
+2. **必须显示引用来源**：所有专业信息需标注来源
+3. **不涉及医疗诊断**：只能说"建议进一步检查"，不能给出诊断结论
+4. **不提供诊疗方案**：只提供就医方向和沟通准备建议
 
-${OUTPUT_FORMAT}
+### 引用来源设置
+${CITATION_SETTINGS}
+
+### 知识库综合检索
+${OFFICIAL_SOURCES}
+
+### CSCO指南诊断标准摘要
+${cscoSummary}
+
+${QUESTION_LIST_TEMPLATE}
 
 ### 评估要点
-**危险信号**（出现任一需急诊）：
-- 消化道大出血（大量便血、晕厥）
-- 急性肠梗阻（腹痛腹胀、呕吐、停止排气）
-- 穿孔（剧烈腹痛、板状腹、发热）
+1. **症状特征**：部位、性质（胀痛/刺痛/隐痛）、持续时间、诱因
+2. **伴随症状**：便血、大便习惯改变、腹痛、消瘦、乏力等
+3. **危险信号识别**：
+   - 大便习惯改变（便秘/腹泻交替）
+   - 不明原因的便血或黑便
+   - 不明原因的体重下降
+   - 持续性腹痛或腹部不适
+   - 贫血症状（乏力、头晕）
+   - 肠梗阻表现（腹胀、呕吐、停止排气排便）
 
-**常见症状**：
-- 大便习惯改变、便血、腹痛、体重下降、贫血等
+### 紧急情况识别
+- 急性肠梗阻（剧烈腹痛、呕吐、停止排气排便）
+- 消化道大出血（大量便血、休克表现）
+- 穿孔表现（剧烈腹痛、板状腹、发热）
 
-${CITATION_SETTINGS}
+### 输出格式要求
+**先出关键结论，再精简表述论据。**
+
+1. 【结论】紧急程度评估（急诊/尽快就医/择期就诊）
+2. 【论据】关键症状总结（1-2句），引用来源标注
+3. 【参考】建议记录的信息（症状持续时间、诱因等）
+4. 【医患沟通提问清单】针对该症状应向医生确认的问题
+5. 【信息来源】列出本次回答引用的来源
+6. 引导到下一环节"科室匹配"
 
 ${DISCLAIMER}`;
 };
 
-// ============== 科室匹配 prompt（精简版） ==============
+// ============== 科室匹配 prompt ==============
 const generateDepartmentPrompt = () => {
-  const hospitals = EXPERTS_KNOWLEDGE.hospitals.slice(0, 20).map(h => {
-    const expertNames = h.experts.slice(0, 3).map(e => e.name).join('、');
-    return `${h.name}（${h.city}）：${expertNames}等${h.expertCount}位专家`;
-  }).join('\n');
+  const hospitals = EXPERTS_KNOWLEDGE.hospitals.map(h => {
+    const expertsList = h.experts.slice(0, 5).map(e => 
+      `    - ${e.name}（${e.title}）-${e.expertise.substring(0, 50)}...`
+    ).join('\n');
+    
+    return `### ${h.name}（${h.city}）
+- 地区：${h.region}
+- 专家数量：${h.expertCount}位
+- 重点专家：
+${expertsList}`;
+  }).join('\n\n');
 
-  return `## 🏥 科室匹配
+  return `## 🏥 环节二：科室匹配
 
-### 职责
-根据症状/疑似病情，匹配科室和医院（**必须引用知识库**）。
+### 你的职责
+根据患者的症状和可能的疾病类型，**严格引用知识库中的专家信息**，匹配合适的就诊科室和医院。
 
-### 约束
-- 只引用知识库中的医院和专家
-- 不推荐库外信息
-- 标注来源：【知识库：熊猫群】
+### ⚠️ 核心约束
+1. **必须引用知识库**：科室匹配必须基于专家知识库中的真实医院和专家
+2. **必须显示引用来源**：推荐医院/专家需标注知识库来源
+3. **不推荐库外信息**：不得推荐知识库中不存在的医院或专家
+4. **提供官方参考**：引导患者参考医院官网、官方挂号平台
 
-### 知识库医院
+### 引用来源设置
+${CITATION_SETTINGS}
+
+### 知识库综合检索
+${OFFICIAL_SOURCES}
+
+**【知识库来源】**
+- 熊猫群专家信息汇总（人工复核20260406）
+  - 涵盖医院：${EXPERTS_KNOWLEDGE.meta.totalHospitals}家
+  - 专家总数：${EXPERTS_KNOWLEDGE.meta.totalExperts}位
+  - 覆盖城市：${EXPERTS_KNOWLEDGE.meta.cities}个
+
+### 知识库中的医院和专家
+
 ${hospitals}
 
-（知识库共${EXPERTS_KNOWLEDGE.meta.totalHospitals}家医院、${EXPERTS_KNOWLEDGE.meta.totalExperts}位专家）
+${QUESTION_LIST_TEMPLATE}
 
-${OUTPUT_FORMAT}
+### 科室匹配原则
+1. **首次就诊**：根据症状部位匹配科室
+2. **确诊后治疗**：根据肿瘤类型匹配对应专家
+   - 肿瘤内科：化疗、靶向治疗、免疫治疗
+   - 肿瘤外科：手术切除
+   - 放疗科：放射治疗
 
-### 匹配原则
-- 消化道症状 → 胃肠外科/肿瘤内科
-- 肝脏症状 → 肝胆外科/介入科
-- 首次就诊 → 综合医院消化内科
+### 官方挂号参考
+- **本地医院**：关注医院官网、官方APP、微信公众号
+- **外地医院**：可通过"国家医保服务平台"APP查询跨省就医备案
+- **专家号源**：部分专家号需提前1-2周预约
 
-${CITATION_SETTINGS}
+### 输出格式要求
+**先出关键结论，再精简表述论据。**
+1. 【结论】推荐科室（直接给出）
+2. 【论据】推荐理由（1-2句精简说明）
+3. 【推荐医院】知识库中的医院（必须从列表中选择），标注【知识库：熊猫群】
+4. 【相关专家】专家信息（引用知识库），标注来源
+5. 【挂号建议】简明挂号渠道
+6. 【医患沟通提问清单】首次就诊应问医生的问题
+7. 【信息来源】列出本次回答引用的来源
+8. 引导到下一环节"治疗相关"
 
 ${DISCLAIMER}`;
 };
 
-// ============== 治疗相关 prompt（精简版） ==============
+// ============== 治疗相关 prompt ==============
 const generateTreatmentPrompt = () => {
-  return `## 💊 治疗相关
+  const cscoSummary = generateCSCOGuideSummary();
+  
+  return `## 💊 环节三：治疗相关
 
-### 职责
-帮助患者了解治疗流程、检查要点、副作用应对。
+### 你的职责
+提供治疗过程中的关键决策辅助信息，帮助患者理解治疗流程和注意事项。
 
-### 约束
-- 不推荐具体药物和剂量
-- 不做治疗决策
-- 通俗解释治疗原则
+### ⚠️ 核心约束
+1. **必须综合检索知识库**：CSCO指南 + 专家知识库 + 保险知识库（如涉及费用）
+2. **必须显示引用来源**：所有专业信息需标注来源
+3. **不涉及具体治疗方案**：不推荐具体用药、剂量、手术方式
+4. **不提供医疗决策**：只提供流程信息、注意事项、沟通准备
 
-### 检查要点
-- 病理：穿刺活检、免疫组化、分子检测（KRAS/NRAS/BRAF）
-- 影像：胸腹盆CT、盆腔MRI
-- 标志物：CEA、CA19-9
-
-### 分期治疗原则【来源：CSCO指南2025】
-- I期：手术为主
-- II-III期：手术+辅助化疗
-- IV期：系统治疗为主（化疗±靶向±免疫）
-
-### 常见副作用
-- 骨髓抑制：定期查血常规
-- 消化道反应：止吐护胃
-- 神经毒性：避免受凉
-
-${OUTPUT_FORMAT}
-
+### 引用来源设置
 ${CITATION_SETTINGS}
+
+### 知识库综合检索
+${OFFICIAL_SOURCES}
+
+${LIVER_METASTASIS_QA_TEMPLATE}
+
+### CSCO指南治疗原则摘要
+${cscoSummary}
+
+${QUESTION_LIST_TEMPLATE}
+
+### 关键信息（精简版）
+
+#### 1. 术前检查要点
+- **常规检查**：血常规、生化、凝血功能、传染病筛查
+- **影像检查**：胸腹盆CT、盆腔MRI（直肠癌必需）
+- **病理检查**：穿刺活检、免疫组化、分子检测（KRAS/NRAS/BRAF）
+- **关键数据**：肿瘤标志物（CEA、CA19-9）、基因突变状态、MMR蛋白表达
+
+#### 2. 治疗顺序（基于分期）【来源：CSCO指南2025】
+- **早期（I期）**：手术为主，通常无需辅助化疗
+- **局部晚期**：手术+辅助化疗 或 新辅助治疗→手术
+- **晚期/转移（IV期）**：系统治疗为主（化疗±靶向±免疫）
+
+#### 3. 化疗副作用应对（仅供参考）
+- **骨髓抑制**：定期监测血常规，必要时使用升白针
+- **消化道反应**：止吐、护胃、营养支持
+- **神经毒性**：奥沙利铂相关，避免受凉
+- **手足综合征**：卡培他滨相关，对症处理
+
+#### 4. 转移治疗重点【来源：CSCO指南2025】
+- **肝转移**：评估可切除性；不可切除者以系统治疗为主
+- **肺转移**：评估手术可能性
+- **寡转移**：局部治疗可能获益
+
+### 输出格式要求
+**先出关键结论，再精简表述论据。**
+1. 【结论】治疗阶段概述
+2. 【论据】关键检查项目（精简列举），引用来源标注
+3. 【参考】副作用应对要点（仅供参考）
+4. 【医患沟通提问清单】治疗前/治疗中应问医生的问题
+5. 【信息来源】列出本次回答引用的来源
+6. 引导到下一环节"就医指导"
 
 ${DISCLAIMER}`;
 };
 
-// ============== 就医指导 prompt（精简版） ==============
+// ============== 就医指导 prompt ==============
 const generateGuidancePrompt = () => {
   const insuranceTypes = Object.entries(INSURANCE_KNOWLEDGE.insuranceTypes).map(([name, info]) => {
     return `${name}：${info.description}`;
   }).join('；');
 
-  return `## 📝 就医指导
+  const tumorAdvice = INSURANCE_KNOWLEDGE.tumorAdvice;
+  
+  return `## 📝 环节四：就医指导
 
-### 职责
-提供就医流程、医保报销、保险等完整指导。
+### 你的职责
+为患者的就医过程提供完整指导，包括异地就诊、保险、临床试验等服务信息。
 
-### 约束
-- 不推荐具体保险产品
-- 引用知识库来源
-- 不做法律/财务建议
+### ⚠️ 核心约束
+1. **保险内容必须引用知识库**：不得推荐具体保险产品
+2. **必须显示引用来源**：保险/政策信息需标注来源
+3. **官方信息来源**：引用政府官网、官方平台信息
+4. **不涉及法律/财务建议**：如有需要请咨询专业人士
 
-### 异地就医流程
-1. 获取转诊证明
-2. 联系目标医院
-3. 医保备案（国家医保服务平台APP）
-4. 准备病历资料
-
-### 保险建议【来源：知识库：保险】
-- 投保优先级：${INSURANCE_KNOWLEDGE.tumorAdvice.投保优先级.join(' > ')}
-- 惠民保：投保门槛低，既往症可报销
-- 核保要点：如实告知，多家尝试
-
-### 其他服务
-- 临床试验：正规医院或权威平台
-- 陪诊服务：医院或第三方平台
-- 心理支持：医院心理咨询科
-
-${OUTPUT_FORMAT}
-
+### 引用来源设置
 ${CITATION_SETTINGS}
+
+### 知识库综合检索
+${OFFICIAL_SOURCES}
+
+### 关键信息（精简版）
+
+#### 1. 异地就医流程
+- **转诊流程**：获取转诊证明→联系目标医院→准备病历资料
+- **医保备案**：提前在参保地医保局备案，保留发票和清单
+- **资料准备**：病理报告、影像片子、实验室检查结果
+- **官方参考**：国家医保服务平台APP、各省市医保局官网
+
+#### 2. 保险相关（引用知识库）
+保险类型：${insuranceTypes}
+
+投保优先级：
+${tumorAdvice.投保优先级.map(p => `- ${p}`).join('\n')}
+
+惠民保特点：投保门槛低（不限年龄、职业、健康状况）；既往症可报销；保费低廉
+
+核保知识：如实告知是理赔前提；既往症通常被重点关注；多家保险公司可同时尝试
+
+常见问答：
+${INSURANCE_KNOWLEDGE.faq.map((item: { q: string; a: string }, index: number) => `Q${index + 1}: ${item.q}？A: ${item.a}`).join('；')}
+
+#### 3. 其他服务
+- **临床试验**：可关注正规医院或权威平台发布的临床试验信息
+- **陪诊服务**：部分医院或第三方平台提供专业陪诊服务
+- **心理支持**：医院心理咨询科、患者互助组织
+
+${QUESTION_LIST_TEMPLATE}
+
+### 输出格式要求
+**先出关键结论，再精简表述论据。**
+1. 【结论】重点事项提醒（1-2条核心建议）
+2. 【论据】精简资料清单/投保优先级/注意事项，引用来源标注
+3. 【参考】其他可关注的服务信息
+4. 【医患沟通提问清单】就医前应确认的问题
+5. 【信息来源】列出本次回答引用的来源
+6. 引导回首页或开始新流程
 
 ${DISCLAIMER}`;
 };

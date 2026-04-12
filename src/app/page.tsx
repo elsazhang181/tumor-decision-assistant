@@ -286,7 +286,6 @@ export default function Home() {
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
 
-    // 添加用户消息
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -295,17 +294,13 @@ export default function Home() {
       stage: currentStage
     };
 
-    // 构建历史消息（使用最新的消息列表，包含用户消息）
-    const currentMessages = [...messages, userMessage];
-    setMessages(currentMessages);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput('');
     setIsLoading(true);
 
-    // 构建发送给API的历史消息（过滤掉欢迎消息，只保留真实对话）
-    const historyMessages = currentMessages
-      .filter(m => !m.content.includes('您好！我是您的') && !m.content.includes('第一步') && !m.content.includes('第二步') && !m.content.includes('第三步') && !m.content.includes('第四步'))
-      .filter(m => !m.content.includes('【前序环节摘要】'))
-      .map(m => ({ role: m.role, content: m.content }));
+    // 构建历史消息（包含所有之前环节的消息）
+    const historyMessages = messages.map(m => ({ role: m.role, content: m.content }));
 
     // 构建完整上下文（包含所有已完成环节的结论）
     const fullContext = {
@@ -541,7 +536,7 @@ export default function Home() {
         {/* Chat Area */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg" style={{ height: '600px', minHeight: '500px' }}>
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg h-[calc(100vh-280px)] min-h-[500px]">
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
                 <CardTitle className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2">
@@ -574,8 +569,8 @@ export default function Home() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0 flex flex-col !p-0" style={{ height: 'calc(100% - 60px)' }}>
-                <ScrollArea className="flex-1 p-4 min-h-0" ref={scrollRef} style={{ flex: 1, minHeight: 0 }}>
+              <CardContent className="p-0 flex flex-col h-[calc(100%-70px)]">
+                <ScrollArea className="flex-1 p-4" ref={scrollRef}>
                   <div className="space-y-4">
                     {messages.map((message) => (
                       <div
@@ -628,8 +623,8 @@ export default function Home() {
                 </ScrollArea>
 
                 {/* Input Area */}
-                <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-900 shrink-0">
-                  <form onSubmit={handleSubmit} className="flex gap-3">
+                <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-900">
+                  <div className="flex gap-3">
                     <Input
                       ref={inputRef}
                       value={input}
@@ -645,8 +640,8 @@ export default function Home() {
                     >
                       <Send className="h-4 w-4" />
                     </Button>
-                  </form>
-                </div>
+                  </div>
+                </form>
               </CardContent>
             </Card>
           </div>
