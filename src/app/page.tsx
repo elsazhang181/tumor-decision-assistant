@@ -199,14 +199,21 @@ function extractContextFromMessages(
 function extractConclusion(answer: string): string {
   if (!answer) return '';
   
+  // 如果内容是欢迎消息（包含模块标题），跳过
+  if (answer.includes('第一步') || answer.includes('第二步') || 
+      answer.includes('第三步') || answer.includes('第四步') ||
+      answer.includes('## ')) {
+    return '';
+  }
+  
   // 尝试提取【结论】或【结论】部分
   const conclusionMatch = answer.match(/【?结论】?\s*([^\n【]+)/);
   if (conclusionMatch) {
-    return conclusionMatch[1].trim().substring(0, 100);
+    return conclusionMatch[1].trim().substring(0, 80);
   }
   
-  // 如果没有明确结论，提取前200字符作为摘要
-  const firstPart = answer.substring(0, 200);
+  // 如果没有明确结论，提取前80字符作为摘要
+  const firstPart = answer.substring(0, 80);
   return firstPart.replace(/\n/g, ' ').trim();
 }
 
@@ -214,25 +221,25 @@ function extractConclusion(answer: string): string {
 function generateWelcomeWithContext(context: Partial<ConversationContext>, targetStage: Stage): string {
   const baseWelcome = WELCOME_MESSAGES[targetStage];
   
-  // 构建上下文提示（不显示标题，更自然）
+  // 构建简短的上下文提示
   const contextParts: string[] = [];
   
-  if (context?.previousStages?.symptom) {
-    contextParts.push(`您之前提到：${context.previousStages.symptom}`);
+  if (context?.previousStages?.symptom && context.previousStages.symptom.length > 5) {
+    contextParts.push(`您之前提到：${context.previousStages.symptom.substring(0, 50)}`);
   }
-  if (context?.previousStages?.department) {
-    contextParts.push(`根据科室匹配：${context.previousStages.department}`);
+  if (context?.previousStages?.department && context.previousStages.department.length > 5) {
+    contextParts.push(`科室匹配：${context.previousStages.department.substring(0, 50)}`);
   }
-  if (context?.previousStages?.treatment) {
-    contextParts.push(`关于治疗建议：${context.previousStages.treatment}`);
+  if (context?.previousStages?.treatment && context.previousStages.treatment.length > 5) {
+    contextParts.push(`治疗相关：${context.previousStages.treatment.substring(0, 50)}`);
   }
   
   if (contextParts.length === 0) {
     return baseWelcome;
   }
   
-  // 在欢迎消息开头添加上下文（简洁格式）
-  const contextHeader = contextParts.join('\n') + '\n\n';
+  // 简洁格式
+  const contextHeader = contextParts.join('\n') + '\n\n---\n\n';
   return contextHeader + baseWelcome;
 }
 
@@ -558,7 +565,7 @@ export default function Home() {
         {/* Chat Area */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg h-[calc(100vh-220px)] min-h-[500px] flex flex-col">
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg h-[calc(100vh-220px)] flex flex-col overflow-hidden">
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 py-3 flex-shrink-0">
                 <CardTitle className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2">
@@ -591,8 +598,8 @@ export default function Home() {
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0 flex flex-col flex-1 min-h-0">
-                <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+              <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
                   <div className="space-y-4">
                     {messages.map((message) => (
                       <div
@@ -642,7 +649,7 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                </ScrollArea>
+                </div>
 	
                 {/* Input Area */}
                 <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
