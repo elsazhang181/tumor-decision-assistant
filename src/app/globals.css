@@ -135,3 +135,22 @@
 body {
   @apply font-sans;
 }
+
+/* 锁定移动端缩放比例，防止点击模块后页面放大 */
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* 确保移动端输入框不被缩放影响 */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* 移动端安全区域适配 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
