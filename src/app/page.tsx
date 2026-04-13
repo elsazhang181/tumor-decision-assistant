@@ -586,7 +586,7 @@ export default function Home() {
         {/* Chat Area - Mobile Optimized */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 md:gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col" style={{ height: 'calc(100vh - 180px)' }}>
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col h-[calc(100vh-180px)] md:h-[calc(100vh-80px)]">
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 py-2 md:py-3 px-3 flex-shrink-0">
                 <CardTitle className="flex items-center justify-between text-sm md:text-base">
                   <div className="flex items-center gap-2">
