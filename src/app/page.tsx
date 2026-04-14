@@ -24,10 +24,215 @@ import {
   Shield,
   QrCode,
   X,
-  ExternalLink
+  ExternalLink,
+  History,
+  Trash2,
+  Search
 } from 'lucide-react';
 import Image from 'next/image';
 import hospitalsQRData from '@/lib/hospitals-qrcode.json';
+
+// ============== 历史记录存储键名 ==============
+const HISTORY_STORAGE_KEY = 'cancer-assistant-chat-history';
+const HISTORY_EXPIRE_DAYS = 3;
+
+// ============== 历史记录类型 ==============
+interface ChatHistoryItem {
+  id: string;
+  content: string;
+  timestamp: number;
+  stage: Stage;
+}
+
+// ============== 历史记录工具函数 ==============
+const getHistory = (): ChatHistoryItem[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem(HISTORY_STORAGE_KEY);
+    if (!data) return [];
+    const history: ChatHistoryItem[] = JSON.parse(data);
+    // 过滤过期记录
+    const now = Date.now();
+    const expireTime = HISTORY_EXPIRE_DAYS * 24 * 60 * 60 * 1000;
+    return history.filter(item => now - item.timestamp < expireTime);
+  } catch {
+    return [];
+  }
+};
+
+const saveHistory = (item: ChatHistoryItem): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const history = getHistory();
+    // 去重：如果已有相同内容，删除旧的
+    const filtered = history.filter(h => h.content !== item.content);
+    // 添加到开头
+    const newHistory = [item, ...filtered].slice(0, 50); // 最多保留50条
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(newHistory));
+  } catch {
+    // 忽略存储错误
+  }
+};
+
+const deleteHistoryItem = (id: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    const history = getHistory();
+    const newHistory = history.filter(item => item.id !== id);
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(newHistory));
+  } catch {
+    // 忽略存储错误
+  }
+};
+
+const clearAllHistory = (): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(HISTORY_STORAGE_KEY);
+  } catch {
+    // 忽略存储错误
+  }
+};
+
+// ============== 格式化时间 ==============
+const formatTime = (timestamp: number): string => {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const day = 24 * 60 * 60 * 1000;
+  
+  if (diff < 60 * 1000) return '刚刚';
+  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / (60 * 1000))}分钟前`;
+  if (diff < day) return `${Math.floor(diff / (60 * 60 * 1000))}小时前`;
+  if (diff < 2 * day) return '昨天';
+  return `${Math.floor(diff / day)}天前`;
+};
+
+// ============== 历史记录面板组件 ==============
+interface HistoryPanelProps {
+  onClose: () => void;
+  onSelectHistory: (content: string) => void;
+}
+
+function HistoryPanel({ onClose, onSelectHistory }: HistoryPanelProps) {
+  const [history, setHistory] = useState<ChatHistoryItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  useEffect(() => {
+    setHistory(getHistory());
+  }, []);
+  
+  const filteredHistory = searchTerm 
+    ? history.filter(item => item.content.toLowerCase().includes(searchTerm.toLowerCase()))
+    : history;
+  
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    deleteHistoryItem(id);
+    setHistory(getHistory());
+  };
+  
+  const handleClearAll = () => {
+    if (confirm('确定清空所有历史记录？')) {
+      clearAllHistory();
+      setHistory([]);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
+      <div 
+        className="h-full w-full max-w-sm bg-white dark:bg-slate-800 shadow-2xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <History className="h-5 w-5 text-blue-500" />
+            <h2 className="font-semibold text-gray-900 dark:text-white">历史记录</h2>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <X className="h-5 w-5 text-gray-500" />
+          </button>
+        </div>
+        
+        {/* Search */}
+        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="搜索历史记录..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 text-sm"
+            />
+          </div>
+        </div>
+        
+        {/* History List */}
+        <div className="flex-1 overflow-y-auto">
+          {filteredHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              <History className="h-12 w-12 mb-2 opacity-30" />
+              <p className="text-sm">{searchTerm ? '未找到相关记录' : '暂无历史记录'}</p>
+            </div>
+          ) : (
+            <div className="p-2 space-y-1">
+              {filteredHistory.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    onSelectHistory(item.content);
+                    onClose();
+                  }}
+                  className="w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                >
+                  <div className="flex items-start gap-2">
+                    <MessageCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
+                        {item.content}
+                      </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatTime(item.timestamp)}
+                        </span>
+                        <button
+                          onClick={(e) => handleDelete(e, item.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-opacity"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Footer */}
+        {history.length > 0 && (
+          <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={handleClearAll}
+              className="w-full text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 py-2 rounded-lg transition-colors"
+            >
+              清空所有记录
+            </button>
+            <p className="text-xs text-gray-400 text-center mt-2">
+              记录保留最近{HISTORY_EXPIRE_DAYS}天
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 
@@ -462,6 +667,9 @@ export default function Home() {
   // 二维码弹窗状态
   const [selectedHospital, setSelectedHospital] = useState<typeof HOSPITALS_QR.hospitals[0] | null>(null);
   
+  // 历史记录面板状态
+  const [showHistory, setShowHistory] = useState(false);
+  
   // 当前消息中的医院列表（用于显示推荐卡片）
   const [messageHospitals, setMessageHospitals] = useState<typeof HOSPITALS_QR.hospitals>([]);
 
@@ -612,6 +820,14 @@ export default function Home() {
           [currentStage]: messages
         }));
       }
+      // 保存用户提问到历史记录
+      const historyItem: ChatHistoryItem = {
+        id: userMessage.id,
+        content: userMessage.content,
+        timestamp: Date.now(),
+        stage: currentStage
+      };
+      saveHistory(historyItem);
     }
   };
 
@@ -693,10 +909,21 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
-              <Shield className="mr-1 h-3 w-3" />
-              仅辅助决策，不替代诊疗
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
+                <Shield className="mr-1 h-3 w-3" />
+                仅辅助决策，不替代诊疗
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                onClick={() => setShowHistory(true)}
+                title="历史记录"
+              >
+                <History className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -1065,6 +1292,17 @@ export default function Home() {
         hospital={selectedHospital} 
         onClose={() => setSelectedHospital(null)} 
       />
+
+      {/* 历史记录面板 */}
+      {showHistory && (
+        <HistoryPanel
+          onClose={() => setShowHistory(false)}
+          onSelectHistory={(content) => {
+            setInput(content);
+            setShowHistory(false);
+          }}
+        />
+      )}
     </div>
   );
 }
