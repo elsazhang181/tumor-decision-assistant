@@ -160,13 +160,82 @@ function HospitalRecommendCard({ hospitals, onSelectHospital }: HospitalRecommen
 // ============== 从消息中提取医院名称 ==============
 function extractHospitalsFromMessage(message: string): typeof HOSPITALS_QR.hospitals {
   const matchedHospitals: typeof HOSPITALS_QR.hospitals = [];
+  const normalizedMessage = message.replace(/\s/g, ''); // 移除空格
   
   for (const hospital of HOSPITALS_QR.hospitals) {
     // 匹配医院全称或简称
-    if (message.includes(hospital.name) || message.includes(hospital.shortName)) {
+    if (normalizedMessage.includes(hospital.name.replace(/\s/g, '')) || 
+        normalizedMessage.includes(hospital.shortName.replace(/\s/g, ''))) {
       // 避免重复添加
       if (!matchedHospitals.find(h => h.name === hospital.name)) {
         matchedHospitals.push(hospital);
+      }
+    }
+    // 额外匹配变体名称
+    const variants = [
+      // 北京肿瘤医院相关
+      { original: '北京大学肿瘤医院', variants: ['北大肿瘤', '北京肿瘤医院', '北肿', '肿瘤医院'] },
+      // 协和相关
+      { original: '北京协和医院', variants: ['协和医院', '协和'] },
+      // 上海肿瘤相关
+      { original: '上海复旦大学附属肿瘤医院', variants: ['上海肿瘤', '复旦肿瘤', '中肿'] },
+      // 广州肿瘤相关
+      { original: '广州中山大学附属肿瘤医院', variants: ['中山肿瘤', '中肿', '广州肿瘤'] },
+      // 浙江肿瘤相关
+      { original: '浙江省肿瘤医院', variants: ['浙江肿瘤', '省肿瘤'] },
+      // 天津肿瘤相关
+      { original: '天津医科大学肿瘤医院', variants: ['天津肿瘤', '天肿'] },
+      // 湖南肿瘤相关
+      { original: '湖南省肿瘤医院', variants: ['湖南肿瘤', '湘雅肿瘤'] },
+      // 四川肿瘤相关
+      { original: '四川省肿瘤医院', variants: ['四川肿瘤', '川肿'] },
+      // 湖北肿瘤相关
+      { original: '湖北省肿瘤医院', variants: ['湖北肿瘤', '鄂肿'] },
+      // 江苏肿瘤相关
+      { original: '江苏省肿瘤医院', variants: ['江苏肿瘤'] },
+      // 辽宁肿瘤相关
+      { original: '辽宁省肿瘤医院', variants: ['辽宁肿瘤', '辽肿'] },
+      // 福建肿瘤相关
+      { original: '福建省肿瘤医院', variants: ['福建肿瘤', '闽肿'] },
+      // 江西肿瘤相关
+      { original: '江西省肿瘤医院', variants: ['江西肿瘤', '赣肿'] },
+      // 河南肿瘤相关
+      { original: '河南省肿瘤医院', variants: ['河南肿瘤', '豫肿'] },
+      // 云南肿瘤相关
+      { original: '云南省肿瘤医院', variants: ['云南肿瘤', '滇肿'] },
+      // 贵州肿瘤相关
+      { original: '贵州省肿瘤医院', variants: ['贵州肿瘤', '黔肿'] },
+      // 陕西肿瘤相关
+      { original: '陕西省肿瘤医院', variants: ['陕西肿瘤', '陕肿'] },
+      // 甘肃肿瘤相关
+      { original: '甘肃省肿瘤医院', variants: ['甘肃肿瘤', '甘肿'] },
+      // 吉林肿瘤相关
+      { original: '吉林省肿瘤医院', variants: ['吉林肿瘤', '吉肿'] },
+      // 山西肿瘤相关
+      { original: '山西省肿瘤医院', variants: ['山西肿瘤', '晋肿'] },
+      // 河北肿瘤相关
+      { original: '河北省肿瘤医院', variants: ['河北肿瘤', '冀肿'] },
+      // 重庆肿瘤相关
+      { original: '重庆大学附属肿瘤医院', variants: ['重庆肿瘤', '渝肿'] },
+      // 哈医大肿瘤相关
+      { original: '哈尔滨医科大学附属肿瘤医院', variants: ['哈医大肿瘤', '哈肿'] },
+      // 山东肿瘤相关
+      { original: '山东省肿瘤医院', variants: ['山东肿瘤', '齐鲁肿瘤'] },
+      // 301医院相关
+      { original: '解放军总医院（301医院）', variants: ['301医院', '301', '解放军总医院'] },
+    ];
+    
+    for (const group of variants) {
+      if (hospital.name.includes(group.original) || hospital.shortName.includes(group.original)) {
+        for (const variant of group.variants) {
+          if (normalizedMessage.includes(variant.replace(/\s/g, ''))) {
+            if (!matchedHospitals.find(h => h.name === hospital.name)) {
+              matchedHospitals.push(hospital);
+            }
+            break;
+          }
+        }
+        break;
       }
     }
   }
