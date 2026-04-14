@@ -872,8 +872,18 @@ export async function POST(request: NextRequest) {
 **3. 核心判断必须与上述结论保持完全一致，不得矛盾**`
       : '';
     
+    // 如果有历史对话，添加对话上下文提示
+    const historyContext = history.length > 0
+      ? `\n\n## 📋 本环节对话历史\n${history.map((h: { role: string; content: string }, i: number) => 
+          `${h.role === 'user' ? '【用户】' : '【助手】'}: ${h.content}`
+        ).join('\n')}\n\n**【重要】请结合上述对话历史回答当前问题：**
+**1. 如果用户的问题是延续之前的话题，请直接引用之前的结论进行补充或修正**
+**2. 如果用户问的是新的相关问题，请结合之前的上下文给出连贯的回答**
+**3. 确保回答与之前的对话保持一致性，避免重复或矛盾**`
+      : '';
+    
     const messages = [
-      { role: 'system', content: stagePrompt + contextPrompt },
+      { role: 'system', content: stagePrompt + contextPrompt + historyContext },
       ...history.map((h: { role: string; content: string }) => ({ role: h.role, content: h.content })),
       { role: 'user', content: message }
     ];

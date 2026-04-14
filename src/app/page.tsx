@@ -109,17 +109,14 @@ const formatTime = (timestamp: number): string => {
 
 // ============== 历史记录面板组件 ==============
 interface HistoryPanelProps {
+  history: ChatHistoryItem[];
   onClose: () => void;
   onSelectHistory: (content: string) => void;
+  onRefresh: () => void;
 }
 
-function HistoryPanel({ onClose, onSelectHistory }: HistoryPanelProps) {
-  const [history, setHistory] = useState<ChatHistoryItem[]>([]);
+function HistoryPanel({ history, onClose, onSelectHistory, onRefresh }: HistoryPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  useEffect(() => {
-    setHistory(getHistory());
-  }, []);
   
   const filteredHistory = searchTerm 
     ? history.filter(item => item.content.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -128,13 +125,13 @@ function HistoryPanel({ onClose, onSelectHistory }: HistoryPanelProps) {
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     deleteHistoryItem(id);
-    setHistory(getHistory());
+    onRefresh(); // 刷新历史记录列表
   };
   
   const handleClearAll = () => {
     if (confirm('确定清空所有历史记录？')) {
       clearAllHistory();
-      setHistory([]);
+      onRefresh(); // 刷新历史记录列表
     }
   };
   
@@ -670,8 +667,16 @@ export default function Home() {
   // 历史记录面板状态
   const [showHistory, setShowHistory] = useState(false);
   
+  // 聊天历史记录列表（持久化显示）
+  const [chatHistoryList, setChatHistoryList] = useState<ChatHistoryItem[]>([]);
+  
   // 当前消息中的医院列表（用于显示推荐卡片）
   const [messageHospitals, setMessageHospitals] = useState<typeof HOSPITALS_QR.hospitals>([]);
+
+  // 页面加载时初始化历史记录
+  useEffect(() => {
+    setChatHistoryList(getHistory());
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -828,6 +833,8 @@ export default function Home() {
         stage: currentStage
       };
       saveHistory(historyItem);
+      // 刷新历史记录列表
+      setChatHistoryList(getHistory());
     }
   };
 
@@ -1298,11 +1305,13 @@ export default function Home() {
       {/* 历史记录面板 */}
       {showHistory && (
         <HistoryPanel
+          history={chatHistoryList}
           onClose={() => setShowHistory(false)}
           onSelectHistory={(content) => {
             setInput(content);
             setShowHistory(false);
           }}
+          onRefresh={() => setChatHistoryList(getHistory())}
         />
       )}
     </div>
