@@ -1,0 +1,417 @@
+{
+  "meta": {
+    "description": "省级三甲医院及肿瘤专科医院官方小程序/服务号信息",
+    "version": "2025-04",
+    "usage": "推荐就诊医院时，可引用对应医院的小程序/服务号二维码，方便患者获取官方信息"
+  },
+  "hospitals": [
+    {
+      "name": "北京大学肿瘤医院",
+      "shortName": "北大肿瘤",
+      "type": "肿瘤专科",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "/images/hospitals/北大肿瘤-小程序.jpg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询", "住院服务"]
+    },
+    {
+      "name": "北京协和医院",
+      "shortName": "协和医院",
+      "type": "综合三甲",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "/images/hospitals/北京协和小程序.jpg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "智能导诊", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "解放军总医院（301医院）",
+      "shortName": "301医院",
+      "type": "综合三甲",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "/images/hospitals/解放军总医院（301医院）服务号-服务-智慧门诊.png",
+      "platform": "微信服务号",
+      "features": ["预约挂号", "智慧门诊", "报告查询"]
+    },
+    {
+      "name": "北京大学人民医院",
+      "shortName": "北大人民医院",
+      "type": "综合三甲",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "/images/hospitals/北京大学人民医院服务号-就医服务.png",
+      "platform": "微信服务号",
+      "features": ["就医服务", "预约挂号", "报告查询"]
+    },
+    {
+      "name": "天津医科大学肿瘤医院",
+      "shortName": "天津肿瘤",
+      "type": "肿瘤专科",
+      "region": "华北",
+      "city": "天津",
+      "qrCode": "/images/hospitals/天津医科大学肿瘤医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "河北省肿瘤医院",
+      "shortName": "河北肿瘤",
+      "type": "肿瘤专科",
+      "region": "华北",
+      "city": "石家庄",
+      "qrCode": "/images/hospitals/河北省肿瘤医院服务号-服务-预约挂号.gif",
+      "platform": "微信服务号",
+      "features": ["预约挂号", "就医服务"]
+    },
+    {
+      "name": "山西省肿瘤医院",
+      "shortName": "山西肿瘤",
+      "type": "肿瘤专科",
+      "region": "华北",
+      "city": "太原",
+      "qrCode": "/images/hospitals/山西省肿瘤医院服务号（左）-服务-预约挂号.jpeg",
+      "platform": "微信服务号",
+      "features": ["预约挂号", "就医服务"]
+    },
+    {
+      "name": "上海复旦大学附属肿瘤医院",
+      "shortName": "上海肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "上海",
+      "qrCode": "/images/hospitals/上海复旦大学附属肿瘤医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询", "住院服务"]
+    },
+    {
+      "name": "上海市胸科医院",
+      "shortName": "上海胸科",
+      "type": "专科三甲",
+      "region": "华东",
+      "city": "上海",
+      "qrCode": "/images/hospitals/上海市胸科医院服务号-服务-互联网医院.jpeg",
+      "platform": "微信服务号",
+      "features": ["互联网医院", "线上问诊", "预约挂号"]
+    },
+    {
+      "name": "浙江省肿瘤医院",
+      "shortName": "浙江肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "杭州",
+      "qrCode": "/images/hospitals/浙江省肿瘤医院公众号服务号二维码-服务-网络医院.png",
+      "platform": "微信服务号",
+      "features": ["网络医院", "线上问诊", "预约挂号"]
+    },
+    {
+      "name": "浙江大学医学院附属第二医院",
+      "shortName": "浙大二院",
+      "type": "综合三甲",
+      "region": "华东",
+      "city": "杭州",
+      "qrCode": "/images/hospitals/浙江大学医学院附属第二医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "江苏省人民医院",
+      "shortName": "南医大一附院",
+      "type": "综合三甲",
+      "region": "华东",
+      "city": "南京",
+      "qrCode": "/images/hospitals/江苏省人民医院南医大一附院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "江苏省肿瘤医院",
+      "shortName": "江苏肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "南京",
+      "qrCode": "/images/hospitals/江苏省肿瘤医院小程序.png",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "安徽省肿瘤医院",
+      "shortName": "安徽肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "合肥",
+      "qrCode": "/images/hospitals/安徽省肿瘤医院服务号-服务-就医服务.jpeg",
+      "platform": "微信服务号",
+      "features": ["就医服务", "预约挂号"]
+    },
+    {
+      "name": "山东省肿瘤医院",
+      "shortName": "山东肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "济南",
+      "qrCode": "/images/hospitals/山东省肿瘤医院服务号二维码-服务-医疗服务.jpeg",
+      "platform": "微信服务号",
+      "features": ["医疗服务", "预约挂号"]
+    },
+    {
+      "name": "青岛大学附属医院",
+      "shortName": "青大附院",
+      "type": "综合三甲",
+      "region": "华东",
+      "city": "青岛",
+      "qrCode": "/images/hospitals/青岛大学附属医院服务号-服务-智慧就医.jpeg",
+      "platform": "微信服务号",
+      "features": ["智慧就医", "预约挂号", "互联网医院"]
+    },
+    {
+      "name": "福建省肿瘤医院",
+      "shortName": "福建肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "福州",
+      "qrCode": "/images/hospitals/福建省肿瘤医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "江西省肿瘤医院",
+      "shortName": "江西肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "南昌",
+      "qrCode": "/images/hospitals/江西省肿瘤医院小程序.png",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊"]
+    },
+    {
+      "name": "广州中山大学附属肿瘤医院",
+      "shortName": "中肿",
+      "type": "肿瘤专科",
+      "region": "华南",
+      "city": "广州",
+      "qrCode": "/images/hospitals/广州中山大学附属肿瘤医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询", "住院服务"]
+    },
+    {
+      "name": "广东省人民医院",
+      "shortName": "省医",
+      "type": "综合三甲",
+      "region": "华南",
+      "city": "广州",
+      "qrCode": "/images/hospitals/广东省人民医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "广西医科大学附属肿瘤医院",
+      "shortName": "广西肿瘤",
+      "type": "肿瘤专科",
+      "region": "华南",
+      "city": "南宁",
+      "qrCode": "/images/hospitals/广西医科大学附属肿瘤医院小程序.png",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "南方医科大学南方医院",
+      "shortName": "南方医院",
+      "type": "综合三甲",
+      "region": "华南",
+      "city": "广州",
+      "qrCode": "/images/hospitals/南方医科大学南方医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "华中科技大学同济医院",
+      "shortName": "同济医院",
+      "type": "综合三甲",
+      "region": "华中",
+      "city": "武汉",
+      "qrCode": "/images/hospitals/华中科技大学同济医院支付宝小程序.png",
+      "platform": "支付宝小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "武汉大学中南医院",
+      "shortName": "中南医院",
+      "type": "综合三甲",
+      "region": "华中",
+      "city": "武汉",
+      "qrCode": "/images/hospitals/武汉大学中南医院小程序.png",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "湖北省肿瘤医院",
+      "shortName": "湖北肿瘤",
+      "type": "肿瘤专科",
+      "region": "华中",
+      "city": "武汉",
+      "qrCode": "/images/hospitals/湖北省肿瘤医院公众号-服务-掌上医院.jpeg",
+      "platform": "微信公众号",
+      "features": ["掌上医院", "预约挂号"]
+    },
+    {
+      "name": "湖南省肿瘤医院",
+      "shortName": "湖南肿瘤",
+      "type": "肿瘤专科",
+      "region": "华中",
+      "city": "长沙",
+      "qrCode": "/images/hospitals/湖南省肿瘤医院服务号-服务-互联网医院.jpeg",
+      "platform": "微信服务号",
+      "features": ["互联网医院", "预约挂号"]
+    },
+    {
+      "name": "河南省肿瘤医院",
+      "shortName": "河南肿瘤",
+      "type": "肿瘤专科",
+      "region": "华中",
+      "city": "郑州",
+      "qrCode": "/images/hospitals/河南省肿瘤医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "陆军军医大学西南医院",
+      "shortName": "西南医院",
+      "type": "综合三甲",
+      "region": "西南",
+      "city": "重庆",
+      "qrCode": "/images/hospitals/陆军军医大学西南医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "重庆大学附属肿瘤医院",
+      "shortName": "重庆肿瘤",
+      "type": "肿瘤专科",
+      "region": "西南",
+      "city": "重庆",
+      "qrCode": "/images/hospitals/重庆大学附属肿瘤医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊"]
+    },
+    {
+      "name": "四川省肿瘤医院",
+      "shortName": "四川肿瘤",
+      "type": "肿瘤专科",
+      "region": "西南",
+      "city": "成都",
+      "qrCode": "/images/hospitals/四川省肿瘤医院服务号-服务-就医服务.png",
+      "platform": "微信服务号",
+      "features": ["就医服务", "预约挂号", "线上问诊"]
+    },
+    {
+      "name": "西安交通大学第一附属医院",
+      "shortName": "西安交大一附院",
+      "type": "综合三甲",
+      "region": "西北",
+      "city": "西安",
+      "qrCode": "/images/hospitals/西安交通大学第一附属医院小程序.png",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "陕西省肿瘤医院",
+      "shortName": "陕西肿瘤",
+      "type": "肿瘤专科",
+      "region": "西北",
+      "city": "西安",
+      "qrCode": "/images/hospitals/陕西省肿瘤医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊"]
+    },
+    {
+      "name": "甘肃省肿瘤医院",
+      "shortName": "甘肃肿瘤",
+      "type": "肿瘤专科",
+      "region": "西北",
+      "city": "兰州",
+      "qrCode": "/images/hospitals/甘肃省肿瘤医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊"]
+    },
+    {
+      "name": "云南省肿瘤医院",
+      "shortName": "云南肿瘤",
+      "type": "肿瘤专科",
+      "region": "西南",
+      "city": "昆明",
+      "qrCode": "/images/hospitals/云南省肿瘤医院小程序.png",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "贵州省肿瘤医院",
+      "shortName": "贵州肿瘤",
+      "type": "肿瘤专科",
+      "region": "西南",
+      "city": "贵阳",
+      "qrCode": "/images/hospitals/贵州省肿瘤医院小程序.jpeg",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊"]
+    },
+    {
+      "name": "哈尔滨医科大学附属肿瘤医院",
+      "shortName": "哈医大肿瘤",
+      "type": "肿瘤专科",
+      "region": "东北",
+      "city": "哈尔滨",
+      "qrCode": "/images/hospitals/哈尔滨医科大学附属肿瘤医院服务号-服务-互联网医院.gif",
+      "platform": "微信服务号",
+      "features": ["互联网医院", "预约挂号"]
+    },
+    {
+      "name": "吉林省肿瘤医院",
+      "shortName": "吉林肿瘤",
+      "type": "肿瘤专科",
+      "region": "东北",
+      "city": "长春",
+      "qrCode": "/images/hospitals/吉林省肿瘤医院服务号-服务-预约挂号.png",
+      "platform": "微信服务号",
+      "features": ["预约挂号"]
+    },
+    {
+      "name": "辽宁省肿瘤医院",
+      "shortName": "辽宁肿瘤",
+      "type": "肿瘤专科",
+      "region": "东北",
+      "city": "沈阳",
+      "qrCode": "/images/hospitals/辽宁省肿瘤医院小程序.png",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "新疆医科大学附属肿瘤医院",
+      "shortName": "新疆肿瘤",
+      "type": "肿瘤专科",
+      "region": "西北",
+      "city": "乌鲁木齐",
+      "qrCode": "/images/hospitals/新疆医科大学附属肿瘤医院服务号-服务-互联网医院.jpeg",
+      "platform": "微信服务号",
+      "features": ["互联网医院", "预约挂号"]
+    }
+  ],
+  "searchGuide": {
+    "title": "医院查询指引",
+    "description": "根据专家知识库中的医院信息，匹配对应的小程序/服务号二维码",
+    "matchingRules": [
+      "精确匹配：医院名称完全一致时，直接返回对应二维码",
+      "别名匹配：支持医院简称（如'中肿'匹配'中山大学附属肿瘤医院'）",
+      "地区匹配：同一城市的医院可相互推荐"
+    ]
+  },
+  "citationRules": {
+    "title": "引用规则",
+    "rules": [
+      "推荐就诊医院时，可附带提供对应的小程序/服务号二维码",
+      "二维码信息格式：【来源：XX医院官方小程序/服务号】扫码获取官方服务",
+      "优先推荐已有二维码的医院",
+      "如医院无二维码，可引导患者通过医院官网或应用市场搜索"
+    ]
+  }
+}

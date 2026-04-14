@@ -1,0 +1,509 @@
+{
+  "meta": {
+    "source": "NCCN Guidelines",
+    "version": "Version 2.2026",
+    "chineseName": "美国国立综合癌症网络指南",
+    "scope": "结肠癌、直肠癌、胃癌、成人癌痛的诊断、治疗及支持治疗",
+    "notes": "本知识库为NCCN指南关键内容的官方翻译版本，保留英文术语以便对照"
+  },
+  "colon": {
+    "meta": {
+      "title": "结肠癌指南 Colon Cancer Guidelines",
+      "lastUpdated": "2026",
+      "version": "Version 2.2026"
+    },
+    "screening": {
+      "title": "筛查 Screening",
+      "recommendations": [
+        "一般风险人群：45岁起进行平均风险筛查 Average-risk screening beginning at age 45",
+        "高危人群：40岁起或比家族最早发病年龄提前10年开始筛查 Earlier screening for high-risk individuals",
+        "筛查方法：粪便免疫化学检测(FIT)、粪便DNA检测、CT结肠成像、结肠镜检查 FIT, stool DNA test, CT colonography, colonoscopy",
+        "结肠镜检查是金标准 Colonoscopy is the gold standard",
+        "有息肉史者：结肠镜监测间隔根据息肉类型决定 Surveillance colonoscopy based on polyp characteristics"
+      ]
+    },
+    "diagnosis": {
+      "title": "诊断 Diagnosis",
+      "pathology": {
+        "title": "病理诊断 Pathology",
+        "keyPoints": [
+          "组织学确诊是金标准 Histologic confirmation is required",
+          "分子检测：KRAS/NRAS/BRAF突变检测必须进行 KRAS/NRAS/BRAF mutation testing required",
+          "微卫星不稳定性(MSI)或错配修复(MMR)检测必须进行 MSI/MMR testing required",
+          "免疫组化：MLH1, MSH2, MSH6, PMS2蛋白表达检测 MMR protein expression by IHC"
+        ]
+      },
+      "imaging": {
+        "title": "影像学检查 Imaging",
+        "recommendations": [
+          "胸腹盆CT：所有患者基线评估 Baseline CT chest/abdomen/pelvis for all patients",
+          "腹部/盆腔MRI：肝转移评估 Liver MRI for metastatic assessment",
+          "PET-CT：选择性用于疑似转移病例 Selective use for suspected metastases",
+          "肝脏特异性对比剂MRI：肝转移敏感性最高 Preferred for liver lesion characterization"
+        ]
+      }
+    },
+    "staging": {
+      "title": "分期 Staging (AJCC TNM)",
+      "systems": [
+        "T1: 肿瘤侵犯黏膜下层 Submucosa invasion",
+        "T2: 肿瘤侵犯固有肌层 Muscularis propria invasion",
+        "T3: 肿瘤穿透固有肌层 Subserosa or non-serosalized pericolic tissues",
+        "T4a: 肿瘤穿透脏层腹膜 Visceral peritoneal invasion",
+        "T4b: 肿瘤直接侵犯邻近器官或结构 Direct invasion of adjacent organs/structures",
+        "N0: 无区域淋巴结转移 No regional lymph node metastasis",
+        "N1: 1-3个区域淋巴结转移 1-3 regional lymph node metastases",
+        "N2: 4个或以上区域淋巴结转移 ≥4 regional lymph node metastases",
+        "M0: 无远处转移 No distant metastasis",
+        "M1: 远处转移 Distant metastasis present"
+      ]
+    },
+    "treatment": {
+      "surgery": {
+        "title": "外科治疗 Surgery",
+        "principles": [
+          "完整结肠系膜切除(Complete Mesocolic Excision, CME)是标准术式 CME is the standard technique",
+          "淋巴结清扫：至少12枚淋巴结以准确分期 Adequate lymphadenectomy (≥12 nodes) for staging",
+          "切缘要求：R0切除（镜下切缘阴性）R0 resection required",
+          "腹腔镜手术：满足肿瘤学原则时可采用 Laparoscopic approach when oncologically appropriate",
+          "急诊手术：梗阻或穿孔时需个体化处理 Emergency surgery individualized"
+        ]
+      },
+      "chemotherapy": {
+        "title": "化疗 Chemotherapy",
+        "adjuvant": {
+          "title": "辅助化疗 Adjuvant Chemotherapy",
+          "indications": [
+            "III期（任何T N1-N2）：必须辅助化疗 Stage III: Adjuvant chemo required",
+            "II期高危因素：考虑辅助化疗 Stage II high-risk: Consider adjuvant chemo",
+            "II期高危因素：T4、脉管/神经侵犯、淋巴结<12枚、梗阻/穿孔 Poor differentiation, T4, <12 nodes, LVI, obstruction/perforation"
+          ],
+          "regimens": [
+            {
+              "name": "FOLFOX",
+              "fullName": "5-FU/亚叶酸钙/奥沙利铂",
+              "duration": "6个月",
+              "notes": "首选方案之一 Preferred regimen"
+            },
+            {
+              "name": "CAPOX",
+              "fullName": "卡培他滨/奥沙利铂",
+              "duration": "3-6个月",
+              "notes": "等效于FOLFOX Equivalent to FOLFOX"
+            },
+            {
+              "name": "5-FU/亚叶酸钙",
+              "fullName": "5-FU/亚叶酸钙推注或泵注",
+              "duration": "6个月",
+              "notes": "老年或奥沙利铂不耐受患者 For elderly or oxaliplatin-intolerant"
+            }
+          ]
+        },
+        "metastatic": {
+          "title": "转移性疾病的化疗 Metastatic Disease Chemotherapy",
+          "regimens": [
+            {
+              "name": "FOLFOXIRI",
+              "fullName": "5-FU/亚叶酸钙/奥沙利铂/伊立替康",
+              "notes": "强效三药方案 Triple regimen for aggressive disease"
+            },
+            {
+              "name": "FOLFOX/FOLFIRI ± Bevacizumab",
+              "fullName": "双药化疗联合贝伐单抗",
+              "notes": "标准一线方案 Standard first-line options"
+            },
+            {
+              "name": "CAPEOX ± Bevacizumab",
+              "fullName": "卡培他滨/奥沙利铂联合贝伐单抗",
+              "notes": "口服方案替代 Oral alternative"
+            }
+          ]
+        }
+      },
+      "targeted": {
+        "title": "靶向治疗 Targeted Therapy",
+        "drugs": [
+          {
+            "target": "VEGF",
+            "drug": "贝伐单抗 Bevacizumab",
+            "indications": "转移性结直肠癌一线治疗 First-line for metastatic CRC"
+          },
+          {
+            "target": "EGFR",
+            "drug": "西妥昔单抗/帕尼单抗 Cetuximab/Panitumumab",
+            "indications": "RAS野生型转移性结直肠癌 RAS wild-type mCRC only"
+          },
+          {
+            "target": "BRAF V600E",
+            "drug": "Encorafenib + 西妥昔单抗",
+            "indications": "BRAF V600E突变转移性结直肠癌 BRAF V600E mutant mCRC"
+          },
+          {
+            "target": "HER2",
+            "drug": "T-DXd (DS-8201) 或 曲妥珠单抗+帕妥珠单抗",
+            "indications": "HER2扩增/过表达的转移性结直肠癌 HER2+ mCRC"
+          },
+          {
+            "target": "KRAS G12C",
+            "drug": "Sotorasib/Adagrasib",
+            "indications": "KRAS G12C突变结直肠癌 KRAS G12C mutant CRC"
+          }
+        ]
+      },
+      "immunotherapy": {
+        "title": "免疫治疗 Immunotherapy",
+        "indications": [
+          "dMMR/MSI-H转移性结直肠癌：PD-1抑制剂一线首选 dMMR/MSI-H mCRC: PD-1 inhibitor preferred first-line",
+          "帕博利珠单抗Pembrolizumab：用于MSI-H/dMMR肿瘤 Pembrolizumab for MSI-H/dMMR tumors",
+          "纳武利尤单抗+伊匹木单抗Nivolumab+Ipilimumab：dMMR/MSI-H可选方案 Alternative for dMMR/MSI-H",
+          "pMMR/MSS结直肠癌：免疫联合化疗仍在探索中 pMMR/MSS CRC: IO combinations under investigation"
+        ]
+      }
+    },
+    "followup": {
+      "title": "随访 Monitoring",
+      "surveillance": [
+        "I期：少随访 Limited surveillance for stage I",
+        "II-III期：前2年每3-6个月随访，此后逐渐延长 Stage II-III: q3-6mo for 2yr, then less frequent",
+        "转移性疾病治疗后：定期影像学评估 Treated mCRC: Regular imaging surveillance",
+        "CEA监测：前2年每3-6个月 CEA q3-6mo for 2 years",
+        "结肠镜检查：术后1年， then 每3-5年 Colonoscopy at 1yr, then q3-5yr"
+      ]
+    }
+  },
+  "rectal": {
+    "meta": {
+      "title": "直肠癌指南 Rectal Cancer Guidelines",
+      "lastUpdated": "2026",
+      "version": "Version 2.2026"
+    },
+    "diagnosis": {
+      "title": "诊断 Diagnosis",
+      "staging": {
+        "title": "直肠癌分期检查 Rectal Cancer Staging Workup",
+        "requirements": [
+          "直肠MRI：必须，明确T分期、淋巴结状态、环周切缘(CRM) Mandatory: MRI for T, N, CRM assessment",
+          "高分辨率直肠MRI是标准检查 High-resolution endorectal MRI is standard",
+          "评估肿瘤距肛缘距离 Distance from anal verge required",
+          "评估肛门括约肌受累与否 Sphincter involvement assessment",
+          "新辅助治疗后再次MRI评估肿瘤退缩 Response assessment after neoadjuvant therapy"
+        ]
+      },
+      "imaging": {
+        "title": "影像学检查 Imaging",
+        "recommendations": [
+          "胸腹盆CT：远处转移评估 For distant metastatic assessment",
+          "直肠内超声(EUS)：早期T分期可选 Endorectal US for early T staging",
+          "PET-CT：选择性用于转移评估 Selective for metastatic workup"
+        ]
+      }
+    },
+    "treatment": {
+      "localized": {
+        "title": "局部治疗 Localized Disease",
+        "early": {
+          "title": "早期(T1N0) Early Stage",
+          "options": [
+            "T1Sm1（浅表黏膜下层）：经肛门切除 Transanal excision for T1Sm1",
+            "T1Sm2-Sm3或高危T1：根治性切除 Radical resection preferred for T1Sm2-3 or high-risk",
+            "高级别腺瘤：内镜下切除 Endoscopic resection for high-grade adenoma"
+          ]
+        },
+        "locallyAdvanced": {
+          "title": "局部晚期 Locally Advanced (T3-4 or N+)",
+          "principles": [
+            "新辅助放化疗是标准治疗 Neoadjuvant chemoradiation is standard",
+            "长程放化疗(LRC)或短程放疗(SCRT)均可 Long-course or short-course radiation options",
+            "总缓解(Clinical Complete Response, cCR)：可考虑等待观察策略 cCR: Consider watch-and-wait",
+            "新辅助治疗后需手术切除 Non-cCR: Surgery required"
+          ],
+          "radiation": [
+            {
+              "type": "长程放化疗 Long-course Chemoradiation (LCCRT)",
+              "regimen": "卡培他滨/5-FU + 放疗 45-50.4Gy",
+              "notes": "同步口服卡培他滨或静脉5-FU Capecitabine or IV 5-FU with RT",
+              "rest": "间隔5-12周手术 Wait 5-12 weeks before surgery"
+            },
+            {
+              "type": "短程放疗 Short-course Radiation (SCRT)",
+              "regimen": "25Gy/5次/1周 + 立即或延迟手术",
+              "notes": "立即手术或新辅助化疗后再手术 Immediate surgery or neoadjuvant chemo then surgery",
+              "rest": "短程延迟手术间隔1-4周 Short course with delay: 1-4 weeks"
+            }
+          ],
+          "surgery": {
+            "title": "手术原则 Surgical Principles",
+            "principles": [
+              "全直肠系膜切除(TME)是金标准 Total Mesorectal Excision (TME) is gold standard",
+              "低位前切除(LAR)保肛 Low Anterior Resection for sphincter preservation",
+              "腹会阴联合切除(APR)用于无法保肛者 Abdominoperineal Resection when APR needed",
+              "侧方淋巴结清扫：选择性进行 Selective lateral lymph node dissection",
+              "腹腔镜/机器人手术可选 Laparoscopic/robotic approaches acceptable"
+            ]
+          }
+        }
+      },
+      "chemotherapy": {
+        "title": "化疗 Chemotherapy",
+        "neoadjuvant": {
+          "title": "新辅助化疗 Neoadjuvant Chemotherapy",
+          "notes": "全程新辅助治疗(TNT)模式 Total Neoadjuvant Therapy (TNT)",
+          "regimens": [
+            "FOLFOX/CAPOX诱导化疗后放化疗 Induction chemo then chemoradiation",
+            "放化疗后辅助化疗 Adjuvant chemo after chemoradiation",
+            "短程放疗+新辅助化疗 SCRT + neoadjuvant chemo"
+          ]
+        },
+        "adjuvant": {
+          "title": "辅助化疗 Adjuvant Chemotherapy",
+          "notes": "基于结肠癌化疗原则 Similar to colon cancer adjuvant principles"
+        }
+      },
+      "watchfulWaiting": {
+        "title": "等待观察策略 Watch-and-Wait / Non-operative Management",
+        "criteria": [
+          "必须是cCR或近cCR cCR or near-cCR required",
+          "充分知情同意 Informed consent essential",
+          "严格随访计划 Rigorous surveillance protocol",
+          "患者依从性要高 High patient compliance needed"
+        ],
+        "surveillance": [
+          "前2年每1-3个月直肠指诊+内镜/ MRI Q1-3mo DRE + endoscopy/MRI for 2yr",
+          "第3年每3-6个月 Q3-6mo in year 3",
+          "此后每6-12个月 Q6-12mo thereafter"
+        ]
+      },
+      "metastatic": {
+        "title": "转移性直肠癌 Metastatic Rectal Cancer",
+        "principles": [
+          "治疗原则同转移性结肠癌 Principles same as metastatic colon cancer",
+          "直肠原发灶处理需个体化 Primary tumor management individualized",
+          "同步放化疗可用于直肠原发灶控制 Concurrent RT for primary tumor control"
+        ]
+      }
+    },
+    "followup": {
+      "title": "随访 Surveillance",
+      "recommendations": [
+        "前3年每3-6个月随访 Q3-6mo for first 3 years",
+        "CEA监测：前3年每3-6个月 CEA q3-6mo for 3 years",
+        "胸腹盆CT：前3年每年评估 CT chest/abdomen/pelvis annually for 3yr",
+        "直肠MRI：前2年定期评估 Rectal MRI q3-6mo for 2yr if watch-and-wait",
+        "肠镜检查：术后1年 then 每3-5年 Colonoscopy at 1yr then q3-5yr"
+      ]
+    }
+  },
+  "gastric": {
+    "meta": {
+      "title": "胃癌指南 Gastric Cancer Guidelines",
+      "lastUpdated": "2026",
+      "version": "Version 2.2026"
+    },
+    "screening": {
+      "title": "筛查 Screening",
+      "recommendations": [
+        "高危地区/家族史：胃镜筛查 Endoscopy for high-risk areas/family history",
+        "日本、韩国胃癌高发区建议定期筛查 Regular screening recommended in high-incidence regions",
+        "血清胃蛋白酶原检测可辅助筛查 PG testing as adjunct"
+      ]
+    },
+    "diagnosis": {
+      "title": "诊断 Diagnosis",
+      "requirements": [
+        "胃镜活检确诊 Histologic confirmation required",
+        "HER2检测必须进行 HER2 testing required",
+        "MSI/MMR检测建议进行 MSI/MMR testing recommended",
+          "PD-L1检测建议进行 PD-L1 testing recommended",
+        "EB病毒检测可选 EBV testing optional"
+      ]
+    },
+    "treatment": {
+      "resectable": {
+        "title": "可切除胃癌 Resectable Disease",
+        "surgery": {
+          "title": "手术原则 Surgical Principles",
+          "principles": [
+            "D2淋巴结清扫是标准 D2 lymphadenectomy is standard",
+            "全胃切除或远端胃切除取决于肿瘤位置 Total or distal gastrectomy based on tumor location",
+            "R0切除是目标 R0 resection is the goal"
+          ]
+        },
+        "adjuvant": {
+          "title": "辅助治疗 Adjuvant Therapy",
+          "options": [
+            "S-1单药辅助化疗（东亚证据）S-1 adjuvant for East Asian patients",
+            "XELOX (CAPEOX) 辅助化疗 CAPEOX adjuvant",
+            "SOX (S-1/奥沙利铂) 辅助化疗 SOX adjuvant",
+            "新辅助化疗FLOT方案（西方标准）FLOT neoadjuvant (Western standard)"
+          ]
+        }
+      },
+      "metastatic": {
+        "title": "转移性胃癌 Metastatic Disease",
+        "firstLine": {
+          "title": "一线治疗 First-line",
+          "regimens": [
+            "HER2阳性：曲妥珠单抗+化疗 Trastuzumab + chemo for HER2+",
+            "HER2阴性：化疗±免疫 PD-1 + chemo for HER2-",
+            "帕博利珠单抗+化疗：PD-L1 CPS≥5或MSI-H Pembrolizumab + chemo for PD-L1 CPS≥5 or MSI-H",
+            "纳武利尤单抗+化疗：PD-L1 CPS≥5 Nivolumab + chemo for PD-L1 CPS≥5"
+          ]
+        },
+        "secondLine": {
+          "title": "二线治疗 Second-line",
+          "options": [
+            "紫杉醇单药或多西他赛单药 Paclitaxel or docetaxel monotherapy",
+            "伊立替康单药 Irinotecan monotherapy",
+            "雷莫西尤单抗+紫杉醇 Ramucirumab + paclitaxel",
+            "T-DXd (DS-8201)：HER2阳性（IHC3+或IHC2+/FISH+） For HER2+ (IHC3+ or IHC2+/FISH+)"
+          ]
+        },
+        "thirdLine": {
+          "title": "三线及以后 Third-line and beyond",
+          "options": [
+            "瑞戈非尼Regorafenib：VEGFR抑制剂 Multi-kinase inhibitor",
+            "TAS-102 (Lonsurf)：氟尿嘧啶类前药 Nucleoside analog",
+            "帕博利珠单抗：MSI-H/dMMR或高TMB Pembrolizumab for MSI-H/dMMR or high TMB"
+          ]
+        }
+      }
+    }
+  },
+  "pain": {
+    "meta": {
+      "title": "成人癌痛指南 Cancer Pain Management in Adults",
+      "lastUpdated": "2026",
+      "version": "Version 2.2026"
+    },
+    "principles": {
+      "title": "疼痛管理原则 Pain Management Principles",
+      "fundamentals": [
+        "疼痛是多维度的，需要综合评估 Pain is multidimensional; comprehensive assessment required",
+        "患者自评是金标准 Patient self-report is gold standard",
+        "疼痛应当被视为第五生命体征 Pain as 5th vital sign",
+        "改善生活质量是核心目标 Quality of life is the primary goal"
+      ]
+    },
+    "assessment": {
+      "title": "疼痛评估 Pain Assessment",
+      "tools": [
+        "数字评分量表(NRS) Numeric Rating Scale (NRS)",
+        "视觉模拟量表(VAS) Visual Analog Scale (VAS)",
+        "面部表情量表 FPS-R Faces Pain Scale-Revised",
+        "简明疼痛评估量表(BPI) Brief Pain Inventory"
+      ],
+      "components": [
+        "疼痛部位 Location of pain",
+        "疼痛强度 Intensity of pain",
+        "疼痛性质 Quality (sharp, dull, burning)",
+        "发作时间和规律 Temporal pattern",
+        "加重/缓解因素 Aggravating/alleviating factors",
+        "对日常生活的影响 Impact on ADLs"
+      ]
+    },
+    "treatment": {
+      "pharmacologic": {
+        "title": "药物治疗 Pharmacologic Management",
+        "who ladder": {
+          "title": "WHO癌痛三阶梯 WHO Analgesic Ladder",
+          "steps": [
+            "第一阶梯：非阿片类镇痛药（非甾体抗炎药、对乙酰氨基酚）Step 1: Non-opioid ± adjuvant",
+            "第二阶梯：弱阿片类药物（可待因、曲马多）± 非阿片类 ± 辅助药 Step 2: Weak opioid for moderate pain",
+            "第三阶梯：强阿片类药物（吗啡、羟考酮、芬太尼）± 非阿片类 ± 辅助药 Step 3: Strong opioid for severe pain"
+          ],
+          "principles": [
+            "按时给药(By the clock)而非按需给药 Scheduled dosing, not PRN only",
+            "个体化剂量 Titrate to effect",
+            "注意细节 Pay attention to detail",
+            "口服给药首选 Oral route preferred",
+            "辅助药物可选用于神经病理性疼痛 Adjuvants for neuropathic pain"
+          ]
+        },
+        "opioids": {
+          "title": "阿片类药物 Opioids",
+          "common": [
+            {
+              "drug": "吗啡 Morphine",
+              "notes": "标准阿片类药物 Standard opioid"
+            },
+            {
+              "drug": "羟考酮 Oxycodone",
+              "notes": "可用于中重度疼痛 For moderate-severe pain"
+            },
+            {
+              "drug": "芬太尼透皮贴剂 Fentanyl patch",
+              "notes": "适用于无法口服患者 For patients unable to take oral"
+            },
+            {
+              "drug": "美沙酮 Methadone",
+              "notes": "复杂疼痛，需专业经验 Complex pain; specialist experience needed"
+            }
+          ],
+          "breakthrough": {
+            "title": "爆发痛处理 Breakthrough Pain",
+            "options": [
+              "按需追加快速起效阿片类药物 Rescue dose of rapid-onset opioid",
+              "爆发痛频率>3次/日考虑背景剂量调整 Consider basal opioid adjustment",
+              "考虑长效阿片类药物转换或剂量调整 Consider opioid rotation or dose increase"
+            ]
+          }
+        },
+        "adjuvants": {
+          "title": "辅助药物 Adjuvant Analgesics",
+          "categories": [
+            {
+              "type": "神经病理性疼痛 Neuropathic Pain",
+              "drugs": [
+                "加巴喷丁Gabapentin",
+                "普瑞巴林Pregabalin",
+                "度洛西汀Duloxetine",
+                "三环类抗抑郁药TCAs (amitriptyline, nortriptyline)"
+              ]
+            },
+            {
+              "type": "骨转移疼痛 Bone Metastasis Pain",
+              "drugs": [
+                "双膦酸盐Bisphosphonates (zoledronic acid, pamidronate)",
+                "地诺单抗Denosumab"
+              ]
+            }
+          ]
+        }
+      },
+      "nonPharmacologic": {
+        "title": "非药物治疗 Non-pharmacologic Approaches",
+        "options": [
+          "认知行为治疗 Cognitive Behavioral Therapy (CBT)",
+          "放松训练 Relaxation techniques",
+          "针灸 Acupuncture",
+          "经皮神经电刺激(TENS) Transcutaneous Electrical Nerve Stimulation",
+          "姑息性放疗 Palliative radiation therapy for localized pain",
+          "介入治疗（神经阻滞、鞘内镇痛）Interventional techniques"
+        ]
+      }
+    },
+    "sideEffects": {
+      "title": "阿片类药物副作用管理 Opioid Side Effect Management",
+      "management": [
+        "便秘：预防性使用泻药 Constipation: Prophylactic laxatives required",
+        "恶心呕吐：预防性使用止吐药 Nausea: Antiemetics may be needed initially",
+        "镇静/嗜睡：通常一过性 Sedation: Usually transient",
+        "呼吸抑制：监测，纳洛酮备用 Respiratory depression: Monitor, naloxone available",
+        "成瘾/依赖：风险评估，规范管理 Addiction: Risk assessment, careful management"
+      ]
+    }
+  },
+  "citationGuide": {
+    "title": "NCCN指南引用规范 Citation Guide",
+    "rules": [
+      "中文回答中引用NCCN指南，使用中文翻译内容附英文原文 Citation with Chinese translation + English original",
+      "治疗方案引用格式：【NCCN指南2026】Treatment recommendation with NCCN Guidelines 2026 reference",
+      "检查/评估引用格式：【NCCN指南2026】Assessment/Test recommendation with NCCN Guidelines 2026 reference",
+      "当CSCO与NCCN推荐不一致时，以国内临床实践为准，NCCN作为国际参考 When CSCO and NCCN differ, prioritize Chinese clinical practice with NCCN as international reference"
+    ],
+    "format": {
+      "example": "【NCCN指南2026】根据NCCN Guidelines Version 2.2026，转移性结直肠癌一线推荐化疗±靶向治疗，具体方案根据RAS/BRAF状态和患者因素选择。",
+      "source": "来源：NCCN Clinical Practice Guidelines in Oncology. Colon Cancer. Version 2.2026."
+    }
+  }
+}

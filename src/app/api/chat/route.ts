@@ -3,6 +3,8 @@ import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
 import expertsData from '@/lib/experts-knowledge.json';
 import cscoData from '@/lib/csco-knowledge.json';
 import insuranceData from '@/lib/insurance-knowledge.json';
+import nccnData from '@/lib/nccn-knowledge.json';
+import hospitalsQRData from '@/lib/hospitals-qrcode.json';
 
 type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 
@@ -10,6 +12,8 @@ type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 const EXPERTS_KNOWLEDGE = expertsData;
 const CSCO_KNOWLEDGE = cscoData;
 const INSURANCE_KNOWLEDGE = insuranceData;
+const NCCN_KNOWLEDGE = nccnData;
+const HOSPITALS_QR = hospitalsQRData;
 
 // ============== 统一回复格式模板 ==============
 const UNIFIED_OUTPUT_TEMPLATE = `
@@ -84,14 +88,20 @@ const OFFICIAL_SOURCES = `
 
 **【医疗行业指南/共识】**
 - 中华医学会、中国抗癌协会等专业学会发布的指南
-- 中国临床肿瘤学会(CSCO)诊疗指南
-- 美国NCCN指南（国际参考）
+- 中国临床肿瘤学会(CSCO)诊疗指南【2025版】
+- 美国NCCN指南（国际参考）【Version 2.2026 官方中文翻译】
 - 权威医学期刊发表的临床研究数据
 
 **【知识库来源】**
 - 熊猫群专家信息汇总（2024年6月，人工复核）
 - 2025 CSCO结直肠癌诊疗指南
+- NCCN Guidelines Version 2.2026（美国国立综合癌症网络指南官方中文翻译）
+  - 结肠癌 Colon Cancer
+  - 直肠癌 Rectal Cancer
+  - 胃癌 Gastric Cancer
+  - 成人癌痛 Cancer Pain Management
 - 带病投保最新保险知识库
+- 省级三甲医院及肿瘤专科医院小程序/服务号二维码（${HOSPITALS_QR.hospitals.length}家医院）
 
 **【核心原则】**
 涉及医护人员及诊疗相关关键信息，必须以医院官网、医院公众号服务号、或各地政府官方信息为准进行说明。
@@ -107,15 +117,16 @@ const CITATION_SETTINGS = `
 | 来源类型 | 标签格式 | 示例 |
 |---------|---------|------|
 | 医院官网/公众号 | 【来源：XX医院官网/官方公众号】 | 【来源：北京大学肿瘤医院官网】 |
+| 医院小程序/服务号 | 【来源：XX医院官方小程序/服务号】 | 【来源：北京大学肿瘤医院小程序】扫码获取 |
 | 政府官方 | 【来源：XX政府官网】 | 【来源：国家卫健委官网】 |
 | CSCO指南 | 【CSCO指南2025】 | 【CSCO指南2025】肝转移灶R0切除是唯一潜在治愈手段 |
-| NCCN指南 | 【NCCN指南2026】 | 【NCCN指南2026】推荐贝伐单抗用于晚期肠癌 |
+| NCCN指南 | 【NCCN指南2026】 | 【NCCN指南2026】dMMR/MSI-H转移性结直肠癌推荐PD-1抑制剂一线治疗 |
 | 专家共识 | 【专家共识】 | 【专家共识】转化治疗窗口期2-6个月 |
 | 知识库 | 【知识库：熊猫群】 | 【知识库：熊猫群】推荐专家信息 |
 | 保险知识 | 【知识库：保险】 | 【知识库：保险】惠民保投保要点 |
 
 **【引用来源优先级】**
-1. 医院官方：医院官网 > 医院官方公众号/服务号 > 医院官方APP
+1. 医院官方：医院官网 > 医院官方公众号/服务号 > 医院官方小程序 > 医院官方APP
 2. 政府官方：国家层面 > 省市层面 > 地方层面
 3. 指南/共识类：CSCO指南 > NCCN指南 > 专家共识
 4. 知识库：专家库 > 指南库 > 保险库
@@ -123,10 +134,16 @@ const CITATION_SETTINGS = `
 **【引用标注规则】**
 - 涉及**医护人员及诊疗相关关键信息**：必须标注具体来源（如：该信息综合自XXX医院官网/官方公众号）
 - 涉及**数据/统计**：必须标注来源
-- 涉及**治疗方案**：必须标注指南依据或医院官网/官方公众号
+- 涉及**治疗方案、检查项目、分期判断**：优先引用【CSCO指南2025】，国际参考引用【NCCN指南2026】
 - 涉及**医院/专家**：必须标注知识库来源 + 建议核实医院官网/官方公众号
 - 涉及**保险内容**：必须标注保险知识库来源
 - 通用医学知识：可标注权威临床指南或专家共识
+
+**【NCCN指南引用说明】**
+- NCCN指南Version 2.2026已提供官方中文翻译
+- 引用格式：【NCCN指南2026】中文翻译内容
+- 来源标注：NCCN Clinical Practice Guidelines in Oncology. [Disease]. Version 2.2026.
+- 包含指南：结肠癌、直肠癌、胃癌、成人癌痛
 
 **【免责声明设置】**
 回答末尾必须包含以下免责声明：
@@ -137,8 +154,10 @@ const CITATION_SETTINGS = `
 本回答参考了以下来源（按优先级排序）：
 • 【医院官网/官方公众号】相关医院官方网站或官方微信公众号/服务号
 • 【政府官网】各级政府官方网站（如国家卫生健康委员会官网、国家医疗保障局官网等）
-• 【知识库：熊猫群】肿瘤专家信息汇总
 • 【CSCO指南2025】2025 CSCO结直肠癌诊疗指南
+• 【NCCN指南2026】NCCN Clinical Practice Guidelines Version 2.2026（美国国立综合癌症网络指南官方中文翻译：结肠癌、直肠癌、胃癌、成人癌痛）
+• 【知识库：熊猫群】肿瘤专家信息汇总
+• 【知识库：保险】带病投保最新保险知识库
 
 **⚠️ 重要提示**
 以上信息仅供参考，不能替代专业医生的诊断和治疗。
@@ -352,9 +371,123 @@ const generateCSCOGuideSummary = () => {
   return lines.join('\n');
 };
 
+// ============== NCCN指南摘要生成 ==============
+const generateNCCNGuideSummary = () => {
+  const lines: string[] = [];
+  
+  // 结肠癌NCCN指南要点
+  lines.push('### NCCN指南-结肠癌 Colon Cancer (Version 2.2026)');
+  lines.push('**筛查 Screening**：');
+  nccnData.colon.screening.recommendations.forEach(r => {
+    lines.push(`- ${r}`);
+  });
+  
+  lines.push('**分期 Staging (AJCC TNM)**：');
+  nccnData.colon.staging.systems.forEach(s => {
+    lines.push(`- ${s}`);
+  });
+  
+  lines.push('**手术原则 Surgery**：');
+  nccnData.colon.treatment.surgery.principles.forEach(p => {
+    lines.push(`- ${p}`);
+  });
+  
+  lines.push('**辅助化疗 Adjuvant**：');
+  nccnData.colon.treatment.chemotherapy.adjuvant.regimens.forEach(r => {
+    lines.push(`- ${r.name}(${r.fullName})：${r.notes}`);
+  });
+  
+  lines.push('**靶向治疗 Targeted Therapy**：');
+  nccnData.colon.treatment.targeted.drugs.forEach(t => {
+    lines.push(`- ${t.target}：${t.drug}（${t.indications}）`);
+  });
+  
+  lines.push('**免疫治疗 Immunotherapy**：');
+  nccnData.colon.treatment.immunotherapy.indications.forEach(i => {
+    lines.push(`- ${i}`);
+  });
+  
+  // 直肠癌NCCN指南要点
+  lines.push('');
+  lines.push('### NCCN指南-直肠癌 Rectal Cancer (Version 2.2026)');
+  lines.push('**分期检查 Staging Workup**：');
+  nccnData.rectal.diagnosis.staging.requirements.forEach(r => {
+    lines.push(`- ${r}`);
+  });
+  
+  lines.push('**局部晚期治疗 Locally Advanced**：');
+  nccnData.rectal.treatment.localized.locallyAdvanced.principles.forEach(p => {
+    lines.push(`- ${p}`);
+  });
+  
+  lines.push('**放疗方案 Radiation Options**：');
+  nccnData.rectal.treatment.localized.locallyAdvanced.radiation.forEach(r => {
+    lines.push(`- ${r.type}：${r.regimen}；${r.notes}`);
+  });
+  
+  lines.push('**TME手术原则**：');
+  nccnData.rectal.treatment.localized.locallyAdvanced.surgery.principles.forEach(p => {
+    lines.push(`- ${p}`);
+  });
+  
+  lines.push('**等待观察策略 Watch-and-Wait**：');
+  nccnData.rectal.treatment.watchfulWaiting.criteria.forEach(c => {
+    lines.push(`- ${c}`);
+  });
+  
+  // 胃癌NCCN指南要点
+  lines.push('');
+  lines.push('### NCCN指南-胃癌 Gastric Cancer (Version 2.2026)');
+  lines.push('**诊断要求 Diagnosis**：');
+  nccnData.gastric.diagnosis.requirements.forEach(r => {
+    lines.push(`- ${r}`);
+  });
+  
+  lines.push('**可切除胃癌治疗**：');
+  nccnData.gastric.treatment.resectable.adjuvant.options.forEach(o => {
+    lines.push(`- ${o}`);
+  });
+  
+  lines.push('**转移性胃癌一线 First-line**：');
+  nccnData.gastric.treatment.metastatic.firstLine.regimens.forEach(r => {
+    lines.push(`- ${r}`);
+  });
+  
+  // 成人癌痛NCCN指南要点
+  lines.push('');
+  lines.push('### NCCN指南-成人癌痛 Cancer Pain (Version 2.2026)');
+  lines.push('**疼痛评估 Pain Assessment**：');
+  nccnData.pain.assessment.tools.forEach(t => {
+    lines.push(`- ${t}`);
+  });
+  
+  lines.push('**WHO三阶梯 WHO Analgesic Ladder**：');
+  nccnData.pain.treatment.pharmacologic['who ladder'].steps.forEach(s => {
+    lines.push(`- ${s}`);
+  });
+  
+  lines.push('**常用阿片类药物 Opioids**：');
+  nccnData.pain.treatment.pharmacologic.opioids.common.forEach(o => {
+    lines.push(`- ${o.drug}：${o.notes}`);
+  });
+  
+  lines.push('**辅助药物 Adjuvants**：');
+  nccnData.pain.treatment.pharmacologic.adjuvants.categories.forEach(c => {
+    lines.push(`- ${c.type}：${c.drugs.join('、')}`);
+  });
+  
+  lines.push('');
+  lines.push('**【引用格式】**如引用NCCN指南，使用以下格式：');
+  lines.push('【NCCN指南2026】Treatment recommendation with NCCN Guidelines Version 2.2026 reference');
+  lines.push('来源：NCCN Clinical Practice Guidelines in Oncology. [Disease]. Version 2.2026.');
+  
+  return lines.join('\n');
+};
+
 // ============== 症状自查 prompt ==============
 const generateSymptomPrompt = () => {
   const cscoSummary = generateCSCOGuideSummary();
+  const nccnSummary = generateNCCNGuideSummary();
   
   return `## 📋 环节一：症状自查
 
@@ -362,7 +495,7 @@ const generateSymptomPrompt = () => {
 帮助患者系统性描述和评估症状，为后续就医决策提供关键信息。
 
 ### ⚠️ 核心约束
-1. **必须综合检索知识库**：先检索CSCO指南，再检索专家知识库，最后综合回答
+1. **必须综合检索知识库**：先检索CSCO指南和NCCN指南，再检索专家知识库，最后综合回答
 2. **必须显示引用来源**：所有专业信息需标注来源
 3. **不涉及医疗诊断**：只能说"建议进一步检查"，不能给出诊断结论
 4. **不提供诊疗方案**：只提供就医方向和沟通准备建议
@@ -375,6 +508,9 @@ ${OFFICIAL_SOURCES}
 
 ### CSCO指南诊断标准摘要
 ${cscoSummary}
+
+### NCCN指南诊断筛查摘要
+${nccnSummary}
 
 ${QUESTION_LIST_TEMPLATE}
 
@@ -403,7 +539,7 @@ ${QUESTION_LIST_TEMPLATE}
 4. 【医患沟通提问清单】是否需要与医生沟通的情况（精简列举3-5个问题）
 5. 【记录要点】建议患者提前记录的信息
 6. 【信息来源声明】根据内容选择引用：
-   - 涉及**症状分析、危险信号识别**：引用【2025 CSCO结直肠癌诊疗指南】
+   - 涉及**症状分析、危险信号识别**：引用【2025 CSCO结直肠癌诊疗指南】和/或【NCCN指南2026】
    - 涉及**紧急情况判断**：引用权威临床指南或专家共识
    - **核心原则**：涉及医护人员及诊疗相关关键信息，必须说明具体来源（如：该信息综合自XXX医院官网/官方公众号，或综合自权威临床指南）
    - **禁止**：科室推荐、医院信息、保险问题引用本知识库
@@ -428,6 +564,38 @@ const generateDepartmentPrompt = () => {
 ${expertsList}`;
   }).join('\n\n');
 
+// ============== 医院二维码知识库摘要生成 ==============
+const generateHospitalQRPrompt = () => {
+  const lines: string[] = [];
+  
+  lines.push('### 医院小程序/服务号二维码（扫码获取官方服务）');
+  lines.push(`**收录医院数量**：${HOSPITALS_QR.hospitals.length}家省级三甲及肿瘤专科医院\n`);
+  
+  // 按区域分组展示
+  const regions = ['华北', '华东', '华南', '华中', '西南', '西北', '东北'];
+  regions.forEach(region => {
+    const regionHospitals = HOSPITALS_QR.hospitals.filter(h => h.region === region);
+    if (regionHospitals.length > 0) {
+      lines.push(`**【${region}地区】**`);
+      regionHospitals.forEach(h => {
+        lines.push(`- ${h.name}（${h.shortName}）- ${h.platform}：${h.features.join('、')}`);
+        lines.push(`  二维码路径：${h.qrCode}`);
+      });
+      lines.push('');
+    }
+  });
+  
+  lines.push('**【使用说明】**');
+  lines.push('1. 推荐就诊医院时，可附带提供对应的小程序/服务号二维码');
+  lines.push('2. 格式：【来源：XX医院官方小程序/服务号】扫码获取预约挂号等官方服务');
+  lines.push('3. 优先匹配知识库中已有二维码的医院');
+  lines.push('4. 如推荐医院不在列表中，可引导患者通过医院官网或应用市场搜索');
+  
+  return lines.join('\n');
+};
+
+const hospitalQRPrompt = generateHospitalQRPrompt();
+
   return `## 🏥 环节二：科室匹配
 
 ### 你的职责
@@ -437,7 +605,7 @@ ${expertsList}`;
 1. **必须引用知识库**：科室匹配必须基于专家知识库中的真实医院和专家
 2. **必须显示引用来源**：推荐医院/专家需标注知识库来源
 3. **不推荐库外信息**：不得推荐知识库中不存在的医院或专家
-4. **提供官方参考**：引导患者参考医院官网、官方挂号平台
+4. **提供官方参考**：引导患者参考医院官网、官方挂号平台、官方小程序/服务号
 
 ### 引用来源设置
 ${CITATION_SETTINGS}
@@ -450,10 +618,15 @@ ${OFFICIAL_SOURCES}
   - 涵盖医院：${EXPERTS_KNOWLEDGE.meta.totalHospitals}家
   - 专家总数：${EXPERTS_KNOWLEDGE.meta.totalExperts}位
   - 覆盖城市：${EXPERTS_KNOWLEDGE.meta.cities}个
+- 省级三甲医院及肿瘤专科医院小程序/服务号二维码（${HOSPITALS_QR.hospitals.length}家医院）
 
 ### 知识库中的医院和专家
 
 ${hospitals}
+
+### 医院小程序/服务号二维码
+
+${hospitalQRPrompt}
 
 ${QUESTION_LIST_TEMPLATE}
 
@@ -465,22 +638,23 @@ ${QUESTION_LIST_TEMPLATE}
    - 放疗科：放射治疗
 
 ### 官方挂号参考
-- **本地医院**：关注医院官网、官方APP、微信公众号
+- **本地医院**：关注医院官网、官方APP、微信公众号/小程序
 - **外地医院**：可通过"国家医保服务平台"APP查询跨省就医备案
 - **专家号源**：部分专家号需提前1-2周预约
+- **扫码挂号**：推荐医院后，可附带提供对应的小程序/服务号二维码，方便患者扫码获取官方服务
 
 ### 输出格式要求（统一格式）
 **先出关键结论，再通俗解释论据。**
 
 1. 【结论】推荐科室（直接给出）
 2. 【通俗解释】用生活化语言解释为什么推荐这个科室
-3. 【依据】推荐的医院和专家（必须从知识库中选择）
+3. 【依据】推荐的医院和专家（必须从知识库中选择），如推荐医院有小程序/服务号二维码，一并提供
 4. 【医患沟通提问清单】是否需要与医生沟通的情况（精简列举3-5个问题）
 5. 【记录要点】首次就诊需要准备的资料清单
 6. 【信息来源声明】根据内容选择引用：
-   - 涉及**科室推荐、医院信息、专家信息**：引用【知识库：熊猫群肿瘤专家信息汇总】及对应医院官网/官方公众号
+   - 涉及**科室推荐、医院信息、专家信息**：引用【知识库：熊猫群肿瘤专家信息汇总】及对应医院官网/官方公众号/小程序
    - 涉及**挂号流程、报销政策**：引用【官方参考：各地政府官网（如国家医保服务平台）】
-   - **核心原则**：涉及医护人员及诊疗相关关键信息，必须说明具体来源（如：该专家信息综合自XXX医院官网/官方公众号）
+   - **核心原则**：涉及医护人员及诊疗相关关键信息，必须说明具体来源
    - **禁止**：治疗方案、检查项目等问题引用本知识库
 7. 【重要提示】补充说明或注意事项（如有）
 
@@ -492,6 +666,7 @@ ${DISCLAIMER}`;
 // ============== 治疗相关 prompt ==============
 const generateTreatmentPrompt = () => {
   const cscoSummary = generateCSCOGuideSummary();
+  const nccnSummary = generateNCCNGuideSummary();
   
   return `## 💊 环节三：治疗相关
 
@@ -499,7 +674,7 @@ const generateTreatmentPrompt = () => {
 提供治疗过程中的关键决策辅助信息，帮助患者理解治疗流程和注意事项。
 
 ### ⚠️ 核心约束
-1. **必须综合检索知识库**：CSCO指南 + 专家知识库 + 保险知识库（如涉及费用）
+1. **必须综合检索知识库**：CSCO指南 + NCCN指南 + 专家知识库 + 保险知识库（如涉及费用）
 2. **必须显示引用来源**：所有专业信息需标注来源
 3. **不涉及具体治疗方案**：不推荐具体用药、剂量、手术方式
 4. **不提供医疗决策**：只提供流程信息、注意事项、沟通准备
@@ -515,28 +690,31 @@ ${LIVER_METASTASIS_QA_TEMPLATE}
 ### CSCO指南治疗原则摘要
 ${cscoSummary}
 
+### NCCN指南治疗原则摘要
+${nccnSummary}
+
 ${QUESTION_LIST_TEMPLATE}
 
 ### 关键信息（精简版）
 
 #### 1. 术前检查要点
 - **常规检查**：血常规、生化、凝血功能、传染病筛查
-- **影像检查**：胸腹盆CT、盆腔MRI（直肠癌必需）
-- **病理检查**：穿刺活检、免疫组化、分子检测（KRAS/NRAS/BRAF）
+- **影像检查**：胸腹盆CT、盆腔MRI（直肠癌必需）【NCCN指南2026】
+- **病理检查**：穿刺活检、免疫组化、分子检测（KRAS/NRAS/BRAF）【NCCN指南2026】
 - **关键数据**：肿瘤标志物（CEA、CA19-9）、基因突变状态、MMR蛋白表达
 
-#### 2. 治疗顺序（基于分期）【来源：CSCO指南2025】
+#### 2. 治疗顺序（基于分期）【来源：CSCO指南2025、NCCN指南2026】
 - **早期（I期）**：手术为主，通常无需辅助化疗
-- **局部晚期**：手术+辅助化疗 或 新辅助治疗→手术
-- **晚期/转移（IV期）**：系统治疗为主（化疗±靶向±免疫）
+- **局部晚期**：手术+辅助化疗 或 新辅助治疗→手术【NCCN指南2026：直肠癌TNT模式】
+- **晚期/转移（IV期）**：系统治疗为主（化疗±靶向±免疫）【NCCN指南2026：MSI-H/dMMR首选免疫治疗】
 
-#### 3. 化疗副作用应对（仅供参考）
+#### 3. 化疗副作用应对（仅供参考）【来源：NCCN指南2026 成人癌痛部分】
 - **骨髓抑制**：定期监测血常规，必要时使用升白针
 - **消化道反应**：止吐、护胃、营养支持
 - **神经毒性**：奥沙利铂相关，避免受凉
 - **手足综合征**：卡培他滨相关，对症处理
 
-#### 4. 转移治疗重点【来源：CSCO指南2025】
+#### 4. 转移治疗重点【来源：CSCO指南2025、NCCN指南2026】
 - **肝转移**：评估可切除性；不可切除者以系统治疗为主
 - **肺转移**：评估手术可能性
 - **寡转移**：局部治疗可能获益
@@ -550,9 +728,10 @@ ${QUESTION_LIST_TEMPLATE}
 4. 【医患沟通提问清单】是否需要与医生沟通的情况（精简列举3-5个问题）
 5. 【记录要点】治疗前/治疗中需要准备或记录的信息
 6. 【信息来源声明】根据内容选择引用：
-   - 涉及**治疗方案、检查项目、分期判断**：引用【2025 CSCO结直肠癌诊疗指南】
-   - 涉及**副作用应对、康复护理**：引用权威临床指南或医院官网/官方公众号
-   - **核心原则**：涉及医护人员及诊疗相关关键信息，必须说明具体来源（如：该诊疗建议综合自XXX医院官网/官方公众号，或综合自权威临床指南）
+   - 涉及**治疗方案、检查项目、分期判断**：引用【2025 CSCO结直肠癌诊疗指南】和/或【NCCN指南2026】
+   - 涉及**国际治疗趋势、新药/靶向/免疫治疗**：优先引用【NCCN指南2026】
+   - 涉及**副作用应对、康复护理、疼痛管理**：引用【NCCN指南2026 成人癌痛】或医院官网/官方公众号
+   - **核心原则**：涉及医护人员及诊疗相关关键信息，必须说明具体来源
    - **禁止**：科室推荐、医院信息等问题引用本知识库
 7. 【重要提示】补充说明或注意事项（如有）
 
