@@ -21,10 +21,158 @@ import {
   ChevronLeft,
   CheckCircle2,
   Lock,
-  Shield
+  Shield,
+  QrCode,
+  X,
+  ExternalLink
 } from 'lucide-react';
+import Image from 'next/image';
+import hospitalsQRData from '@/lib/hospitals-qrcode.json';
 
 type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
+
+// 医院二维码数据
+const HOSPITALS_QR = hospitalsQRData;
+
+// ============== 医院二维码弹窗组件 ==============
+interface HospitalQRDialogProps {
+  hospital: typeof HOSPITALS_QR.hospitals[0] | null;
+  onClose: () => void;
+}
+
+function HospitalQRDialoDialog({ hospital, onClose }: HospitalQRDialogProps) {
+  if (!hospital) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div 
+        className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <QrCode className="h-5 w-5 text-blue-500" />
+            <h3 className="font-semibold text-gray-900 dark:text-white">{hospital.name}</h3>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <X className="h-5 w-5 text-gray-500" />
+          </button>
+        </div>
+        <div className="p-4 space-y-4">
+          <div className="relative w-full aspect-square bg-gray-50 dark:bg-slate-700 rounded-xl overflow-hidden">
+            <Image
+              src={hospital.qrCode}
+              alt={`${hospital.name}小程序/服务号二维码`}
+              fill
+              className="object-contain"
+              sizes="(max-width: 448px) 100vw, 448px"
+            />
+          </div>
+          <div className="text-center space-y-2">
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400">
+              {hospital.platform}
+            </Badge>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              扫码获取官方服务
+            </p>
+            <div className="flex flex-wrap justify-center gap-1">
+              {hospital.features.map((feature, idx) => (
+                <span key={idx} className="text-xs px-2 py-1 bg-gray-100 dark:bg-slate-600 rounded-full text-gray-600 dark:text-gray-300">
+                  {feature}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <ExternalLink className="h-3 w-3" />
+            <span>长按识别二维码，或截图保存后微信扫码</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============== 医院推荐卡片组件 ==============
+interface HospitalRecommendCardProps {
+  hospitals: typeof HOSPITALS_QR.hospitals;
+  onSelectHospital: (hospital: typeof HOSPITALS_QR.hospitals[0]) => void;
+}
+
+function HospitalRecommendCard({ hospitals, onSelectHospital }: HospitalRecommendCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  if (hospitals.length === 0) return null;
+  
+  return (
+    <div className="mt-3 border border-blue-200 dark:border-blue-800 rounded-xl bg-blue-50/50 dark:bg-blue-900/20 overflow-hidden">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between p-3 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <QrCode className="h-4 w-4 text-blue-500" />
+          <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
+            可扫码获取官方服务（{hospitals.length}家医院）
+          </span>
+        </div>
+        <ChevronRight className={`h-4 w-4 text-blue-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+      </button>
+      {isExpanded && (
+        <div className="border-t border-blue-200 dark:border-blue-800 p-3 space-y-2">
+          {hospitals.map((hospital, idx) => (
+            <button
+              key={idx}
+              onClick={() => onSelectHospital(hospital)}
+              className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors text-left"
+            >
+              <div className="relative w-12 h-12 bg-white rounded-lg overflow-hidden shadow-sm flex-shrink-0">
+                <Image
+                  src={hospital.qrCode}
+                  alt={hospital.name}
+                  fill
+                  className="object-contain"
+                  sizes="48px"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {hospital.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {hospital.platform} · {hospital.city}
+                </p>
+              </div>
+              <div className="text-xs text-blue-500 flex-shrink-0">
+                点击查看
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============== 从消息中提取医院名称 ==============
+function extractHospitalsFromMessage(message: string): typeof HOSPITALS_QR.hospitals {
+  const matchedHospitals: typeof HOSPITALS_QR.hospitals = [];
+  
+  for (const hospital of HOSPITALS_QR.hospitals) {
+    // 匹配医院全称或简称
+    if (message.includes(hospital.name) || message.includes(hospital.shortName)) {
+      // 避免重复添加
+      if (!matchedHospitals.find(h => h.name === hospital.name)) {
+        matchedHospitals.push(hospital);
+      }
+    }
+  }
+  
+  return matchedHospitals;
+}
 
 interface Message {
   id: string;
@@ -241,6 +389,12 @@ export default function Home() {
   });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // 二维码弹窗状态
+  const [selectedHospital, setSelectedHospital] = useState<typeof HOSPITALS_QR.hospitals[0] | null>(null);
+  
+  // 当前消息中的医院列表（用于显示推荐卡片）
+  const [messageHospitals, setMessageHospitals] = useState<typeof HOSPITALS_QR.hospitals>([]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -622,39 +776,50 @@ export default function Home() {
               <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-2 md:p-4" ref={scrollRef}>
                     <div className="space-y-3 md:space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex gap-2 md:gap-3 ${
-                          message.role === 'user' ? 'flex-row-reverse' : ''
-                        }`}
-                      >
-                        <div
-                          className={`flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full ${
-                            message.role === 'user'
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gradient-to-br from-teal-500 to-blue-500 text-white'
-                          }`}
-                        >
-                          {message.role === 'user' ? (
-                            <User className="h-4 w-4 md:h-5 md:w-5" />
-                          ) : (
-                            <Bot className="h-4 w-4 md:h-5 md:w-5" />
+                    {messages.map((message) => {
+                      const hospitals = message.role === 'assistant' ? extractHospitalsFromMessage(message.content) : [];
+                      return (
+                        <div key={message.id}>
+                          <div
+                            className={`flex gap-2 md:gap-3 ${
+                              message.role === 'user' ? 'flex-row-reverse' : ''
+                            }`}
+                          >
+                            <div
+                              className={`flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full ${
+                                message.role === 'user'
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gradient-to-br from-teal-500 to-blue-500 text-white'
+                              }`}
+                            >
+                              {message.role === 'user' ? (
+                                <User className="h-4 w-4 md:h-5 md:w-5" />
+                              ) : (
+                                <Bot className="h-4 w-4 md:h-5 md:w-5" />
+                              )}
+                            </div>
+                            <div
+                              className={`max-w-[88%] md:max-w-[85%] rounded-xl px-3 py-2 md:px-4 md:py-3 ${
+                                message.role === 'user'
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
+                              }`}
+                            >
+                              <div className="whitespace-pre-wrap text-xs md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none">
+                                {message.content}
+                              </div>
+                            </div>
+                          </div>
+                          {/* 医院推荐卡片 - 仅在Bot回复且包含医院时显示 */}
+                          {hospitals.length > 0 && (
+                            <HospitalRecommendCard 
+                              hospitals={hospitals} 
+                              onSelectHospital={setSelectedHospital} 
+                            />
                           )}
                         </div>
-                        <div
-                          className={`max-w-[88%] md:max-w-[85%] rounded-xl px-3 py-2 md:px-4 md:py-3 ${
-                            message.role === 'user'
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
-                          }`}
-                        >
-                          <div className="whitespace-pre-wrap text-xs md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none">
-                            {message.content}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {isLoading && messages[messages.length - 1]?.role === 'user' && (
                       <div className="flex gap-2 md:gap-3">
                         <div className="flex h-8 w-8 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-blue-500 text-white">
@@ -825,6 +990,12 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* 医院二维码弹窗 */}
+      <HospitalQRDialoDialog 
+        hospital={selectedHospital} 
+        onClose={() => setSelectedHospital(null)} 
+      />
     </div>
   );
 }
