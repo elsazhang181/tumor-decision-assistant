@@ -182,13 +182,13 @@ function HistoryPanel({ onClose, onSelectHistory }: HistoryPanelProps) {
           ) : (
             <div className="p-2 space-y-1">
               {filteredHistory.map((item) => (
-                <button
+                <div
                   key={item.id}
                   onClick={() => {
                     onSelectHistory(item.content);
                     onClose();
                   }}
-                  className="w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                  className="w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer group"
                 >
                   <div className="flex items-start gap-2">
                     <MessageCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
@@ -209,7 +209,7 @@ function HistoryPanel({ onClose, onSelectHistory }: HistoryPanelProps) {
                       </div>
                     </div>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -909,21 +909,10 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
-                <Shield className="mr-1 h-3 w-3" />
-                仅辅助决策，不替代诊疗
-              </Badge>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
-                onClick={() => setShowHistory(true)}
-                title="历史记录"
-              >
-                <History className="h-4 w-4" />
-              </Button>
-            </div>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
+              <Shield className="mr-1 h-3 w-3" />
+              仅辅助决策，不替代诊疗
+            </Badge>
           </div>
         </div>
       </header>
@@ -1031,6 +1020,19 @@ export default function Home() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* 历史记录入口 - 放在四个模块下方 */}
+        <div className="mb-2 md:mb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowHistory(true)}
+            className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 text-xs"
+          >
+            <History className="h-3.5 w-3.5 mr-1" />
+            历史记录
+          </Button>
         </div>
 
         {/* Chat Area - Mobile Optimized */}
