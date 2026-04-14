@@ -5,6 +5,7 @@ import cscoData from '@/lib/csco-knowledge.json';
 import insuranceData from '@/lib/insurance-knowledge.json';
 import nccnData from '@/lib/nccn-knowledge.json';
 import hospitalsQRData from '@/lib/hospitals-qrcode.json';
+import clinicalTrialData from '@/lib/clinical-trial-knowledge.json';
 
 type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 
@@ -14,6 +15,7 @@ const CSCO_KNOWLEDGE = cscoData;
 const INSURANCE_KNOWLEDGE = insuranceData;
 const NCCN_KNOWLEDGE = nccnData;
 const HOSPITALS_QR = hospitalsQRData;
+const CLINICAL_TRIAL_KNOWLEDGE = clinicalTrialData;
 
 // ============== 统一回复格式模板 ==============
 const UNIFIED_OUTPUT_TEMPLATE = `
@@ -101,6 +103,7 @@ const OFFICIAL_SOURCES = `
   - 胃癌 Gastric Cancer
   - 成人癌痛 Cancer Pain Management
 - 带病投保最新保险知识库
+- 了解、参加药物临床试验的保姆级教程（来源：Zgr整理于2025年9月）
 - 省级三甲医院及肿瘤专科医院小程序/服务号二维码（${HOSPITALS_QR.hospitals.length}家医院）
 
 **【核心原则】**
@@ -124,12 +127,13 @@ const CITATION_SETTINGS = `
 | 专家共识 | 【专家共识】 | 【专家共识】转化治疗窗口期2-6个月 |
 | 知识库 | 【知识库：熊猫群】 | 【知识库：熊猫群】推荐专家信息 |
 | 保险知识 | 【知识库：保险】 | 【知识库：保险】惠民保投保要点 |
+| 临床试验 | 【知识库：临床试验教程】 | 【知识库：临床试验教程】如何查询和参加临床试验 |
 
 **【引用来源优先级】**
 1. 医院官方：医院官网 > 医院官方公众号/服务号 > 医院官方小程序 > 医院官方APP
 2. 政府官方：国家层面 > 省市层面 > 地方层面
 3. 指南/共识类：CSCO指南 > NCCN指南 > 专家共识
-4. 知识库：专家库 > 指南库 > 保险库
+4. 知识库：专家库 > 指南库 > 保险库 > 临床试验库
 
 **【引用标注规则】**
 - 涉及**医护人员及诊疗相关关键信息**：必须标注具体来源（如：该信息综合自XXX医院官网/官方公众号）
@@ -137,6 +141,7 @@ const CITATION_SETTINGS = `
 - 涉及**治疗方案、检查项目、分期判断**：优先引用【CSCO指南2025】，国际参考引用【NCCN指南2026】
 - 涉及**医院/专家**：必须标注知识库来源 + 建议核实医院官网/官方公众号
 - 涉及**保险内容**：必须标注保险知识库来源
+- 涉及**临床试验查询、参加条件、流程**：必须标注【知识库：临床试验教程】
 - 通用医学知识：可标注权威临床指南或专家共识
 
 **【NCCN指南引用说明】**
@@ -712,6 +717,35 @@ ${QUESTION_LIST_TEMPLATE}
 - **肝转移**：评估可切除性；不可切除者以系统治疗为主
 - **肺转移**：评估手术可能性
 - **寡转移**：局部治疗可能获益
+
+#### 5. 临床试验（适合缺乏标准治疗方案的患者）【来源：知识库：临床试验教程】
+**【如何查找临床试验】**
+- **官方平台**：药物临床试验登记与信息公示平台 http://www.chinadrugtrials.org.cn/index.html
+  - 点击"高级查询"→填写"适应症"（癌症类型）、"机构"（医院）→查看试验详情
+- **医院公众号/患者群**：各大医院公众号、微信搜索"癌肿+临床招募"
+- **熊猫和朋友们公众号**：入群了解信息
+
+**【如何参加临床试验】**
+1. 按上述途径找到具体试验详情
+2. 查看"入选标准"中的基因突变类型要求
+3. 如符合条件，挂号负责该试验的研究者
+4. 可先电话咨询或线上问诊
+
+**【自查要求】**
+- 治疗状态：必须出现耐药/进展/不耐受才能参加
+- 身体状况：无大出血/血栓/手术恢复期，器官功能基本运转，ECOG评分0-1
+- 病理要求：靶向药试验需基因检测报告或病理切片（白片≥6片）
+- 传染病：可在知识库查询，不可在活动期
+
+**【加入时机建议】**
+- 出现耐药/不耐受时：胰腺癌等治疗手段欠缺的癌种强烈建议参加
+- 一线治疗稳定时：建议继续坚持，不建议盲目参加
+- I/II期试验：入组条件宽松但风险较高，无其他选择时可搏
+- III期试验：确证性阶段，条件合适可考虑
+
+**【了解副作用】**
+- 加患者群问实际经验
+- 搜索同类药物+\"副作用\"
 
 ### 输出格式要求（统一格式）
 **先出关键结论，再通俗解释论据。**
