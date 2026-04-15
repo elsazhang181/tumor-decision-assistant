@@ -27,7 +27,11 @@ import {
   ExternalLink,
   History,
   Trash2,
-  Search
+  Search,
+  Paperclip,
+  File,
+  FileSpreadsheet,
+  Image as ImageIcon
 } from 'lucide-react';
 import Image from 'next/image';
 import hospitalsQRData from '@/lib/hospitals-qrcode.json';
@@ -660,6 +664,11 @@ export default function Home() {
   // 聊天历史记录列表（持久化显示）
   const [chatHistoryList, setChatHistoryList] = useState<ChatHistoryItem[]>([]);
   
+  // 文件上传状态
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   // 当前消息中的医院列表（用于显示推荐卡片）
   const [messageHospitals, setMessageHospitals] = useState<typeof HOSPITALS_QR.hospitals>([]);
 
@@ -825,6 +834,46 @@ export default function Home() {
       saveHistory(historyItem);
       // 刷新历史记录列表
       setChatHistoryList(getHistory());
+    }
+  };
+
+  // 文件上传处理
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // 验证文件类型
+    const allowedTypes = [
+      'text/plain',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/jpeg'
+    ];
+    const allowedExtensions = ['.txt', '.doc', '.docx', '.xls', '.xlsx', '.pdf', '.jpg', '.jpeg'];
+    const fileExt = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExt)) {
+      alert('不支持的文件格式，请上传 txt、word、excel、pdf 或 jpeg 格式的文件');
+      return;
+    }
+    
+    // 验证文件大小 (默认 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      alert('文件大小超过限制，最大支持 10MB');
+      return;
+    }
+    
+    setAttachedFile(file);
+  };
+
+  const handleRemoveFile = () => {
+    setAttachedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -1134,7 +1183,51 @@ export default function Home() {
 	
                 {/* Input Area - Mobile optimized */}
                 <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-2 md:p-3 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
+                  {/* 附件显示区域 */}
+                  {attachedFile && (
+                    <div className="mb-2 flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      {attachedFile.type.includes('image') ? (
+                        <ImageIcon className="h-4 w-4 text-blue-500" />
+                      ) : attachedFile.type.includes('sheet') || attachedFile.name.endsWith('.xls') || attachedFile.name.endsWith('.xlsx') ? (
+                        <FileSpreadsheet className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <File className="h-4 w-4 text-blue-500" />
+                      )}
+                      <span className="flex-1 text-xs text-blue-700 dark:text-blue-400 truncate">
+                        {attachedFile.name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        ({(attachedFile.size / 1024).toFixed(1)}KB)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleRemoveFile}
+                        className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800/50 rounded"
+                      >
+                        <X className="h-3 w-3 text-gray-500" />
+                      </button>
+                    </div>
+                  )}
                   <div className="flex gap-2">
+                    {/* 文件上传按钮 */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".txt,.doc,.docx,.xls,.xlsx,.pdf,.jpg,.jpeg"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isLoading}
+                      className="shrink-0 h-10 w-10 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      title="上传附件"
+                    >
+                      <Paperclip className="h-4 w-4 text-gray-500" />
+                    </Button>
                     <Input
                       ref={inputRef}
                       type="text"
@@ -1146,13 +1239,16 @@ export default function Home() {
                     />
                     <Button 
                       type="submit" 
-                      disabled={!input.trim() || isLoading}
+                      disabled={(!input.trim() && !attachedFile) || isLoading}
                       className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                       size="icon"
                     >
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
+                  <p className="mt-1 text-xs text-gray-400">
+                    支持 txt、word、excel、pdf、jpeg 格式，最大 10MB
+                  </p>
                 </form>
               </CardContent>
             </Card>
