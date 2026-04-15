@@ -6,6 +6,7 @@ import insuranceData from '@/lib/insurance-knowledge.json';
 import nccnData from '@/lib/nccn-knowledge.json';
 import hospitalsQRData from '@/lib/hospitals-qrcode.json';
 import clinicalTrialData from '@/lib/clinical-trial-knowledge.json';
+import chemotherapyData from '@/lib/chemotherapy-side-effects.json';
 
 type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 
@@ -16,6 +17,7 @@ const INSURANCE_KNOWLEDGE = insuranceData;
 const NCCN_KNOWLEDGE = nccnData;
 const HOSPITALS_QR = hospitalsQRData;
 const CLINICAL_TRIAL_KNOWLEDGE = clinicalTrialData;
+const CHEMOTHERAPY_SIDE_EFFECTS = chemotherapyData;
 
 // ============== 统一回复格式模板 ==============
 const UNIFIED_OUTPUT_TEMPLATE = `
@@ -103,6 +105,7 @@ const OFFICIAL_SOURCES = `
   - 胃癌 Gastric Cancer
   - 成人癌痛 Cancer Pain Management
 - 带病投保最新保险知识库
+- 肠癌化疗不良反应QA对（${CHEMOTHERAPY_SIDE_EFFECTS.meta.totalItems}个问题，${CHEMOTHERAPY_SIDE_EFFECTS.meta.lastUpdated}更新）
 - 了解、参加药物临床试验的保姆级教程（来源：Zgr整理于2025年9月）
 - 省级三甲医院及肿瘤专科医院小程序/服务号二维码（${HOSPITALS_QR.hospitals.length}家医院）
 
@@ -677,22 +680,37 @@ const generateTreatmentPrompt = () => {
   const cscoSummary = generateCSCOGuideSummary();
   const nccnSummary = generateNCCNGuideSummary();
   
+  // 生成化疗不良反应知识库摘要
+  const chemoSideEffectsSummary = CHEMOTHERAPY_SIDE_EFFECTS.qa_pairs.map(qa => 
+`### 【${qa.category}】
+**问题**：${qa.question}
+**通俗版**：${qa.answer.split('【专业细节】')[0]}
+**相似问题**：${qa.similar_questions?.join('、') || '无'}`
+  ).join('\n\n');
+  
   return `## 💊 环节三：治疗相关
 
 ### 你的职责
 提供治疗过程中的关键决策辅助信息，帮助患者理解治疗流程和注意事项。
 
 ### ⚠️ 核心约束
-1. **必须综合检索知识库**：CSCO指南 + NCCN指南 + 专家知识库 + 保险知识库（如涉及费用）
+1. **必须综合检索知识库**：CSCO指南 + NCCN指南 + 专家知识库 + 保险知识库（如涉及费用）+ 化疗不良反应知识库
 2. **必须显示引用来源**：所有专业信息需标注来源
 3. **不涉及具体治疗方案**：不推荐具体用药、剂量、手术方式
 4. **不提供医疗决策**：只提供流程信息、注意事项、沟通准备
+5. **优先引用不良反应知识库**：涉及化疗/靶向副作用的问题，必须引用【知识库：肠癌化疗不良反应QA对】
 
 ### 引用来源设置
 ${CITATION_SETTINGS}
 
 ### 知识库综合检索
 ${OFFICIAL_SOURCES}
+
+### 【知识库】肠癌化疗不良反应QA对（必须优先引用）
+**涵盖 ${CHEMOTHERAPY_SIDE_EFFECTS.meta.totalItems} 个常见问题**
+**分类**：${CHEMOTHERAPY_SIDE_EFFECTS.meta.categories.join('、')}
+
+${chemoSideEffectsSummary}
 
 ${LIVER_METASTASIS_QA_TEMPLATE}
 
