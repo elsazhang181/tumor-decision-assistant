@@ -737,6 +737,48 @@ export default function Home() {
   const sendMessage = async (content: string) => {
     if ((!content.trim() && attachedFiles.length === 0) || isLoading) return;
 
+    // 在科室推荐环节，智能判断问题类型并自动切换
+    if (currentStage === 'department') {
+      const lowerContent = content.toLowerCase();
+      
+      // 判断是否涉及症状问题
+      const symptomKeywords = ['症状', '难受', '不舒服', '疼痛', '发烧', '呕吐', '腹泻', '便秘', '出血', 
+        '体重下降', '食欲', '疲劳', '乏力', '指标', '检查结果', '报告解读', '异常'];
+      
+      // 判断是否涉及治疗问题
+      const treatmentKeywords = ['治疗', '化疗', '放疗', '手术', '用药', '药物', '靶向', '免疫',
+        '方案', '疗程', '副作用', '不良反应', '耐药', '效果'];
+      
+      // 判断是否涉及医保/费用问题
+      const guidanceKeywords = ['医保', '报销', '费用', '价格', '多少钱', '花费', '保险', 
+        '特药', '双通道', '门特', '门规', '慢特', '大病', '异地就医', '临床试验'];
+      
+      const hasSymptom = symptomKeywords.some(k => lowerContent.includes(k));
+      const hasTreatment = treatmentKeywords.some(k => lowerContent.includes(k));
+      const hasGuidance = guidanceKeywords.some(k => lowerContent.includes(k));
+      
+      // 优先顺序：症状 > 治疗 > 医保
+      if (hasSymptom) {
+        setCurrentStage('symptom');
+        toast.info('已切换至「症状自查」环节', {
+          description: '根据您的问题内容，将为您提供针对性的症状解读',
+          duration: 3000,
+        });
+      } else if (hasTreatment) {
+        setCurrentStage('treatment');
+        toast.info('已切换至「治疗相关」环节', {
+          description: '根据您的问题内容，将为您提供针对性的治疗指导',
+          duration: 3000,
+        });
+      } else if (hasGuidance) {
+        setCurrentStage('guidance');
+        toast.info('已切换至「就医指导」环节', {
+          description: '根据您的问题内容，将为您提供医保和费用相关信息',
+          duration: 3000,
+        });
+      }
+    }
+
     setIsLoading(true);
 
     // 清空文件内容变量
