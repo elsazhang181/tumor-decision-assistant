@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { toast, Toaster } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -125,7 +126,11 @@ function HistoryPanel({ history, onClose, onSelectHistory, onRefresh }: HistoryP
   const [searchTerm, setSearchTerm] = useState('');
   
   const filteredHistory = searchTerm 
-    ? history.filter(item => item.content.toLowerCase().includes(searchTerm.toLowerCase()))
+    ? history.filter(item => 
+        item.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.fileNames.some(name => name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        item.userQuestion.toLowerCase().includes(searchTerm.toLowerCase())
+      )
     : history;
   
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -928,7 +933,7 @@ export default function Home() {
       // 保存用户提问到历史记录
       const historyItem: ChatHistoryItem = {
         id: userMessage.id,
-        content: fullMessage,  // 完整消息（包含文件信息）
+        content: fullMessageWithAttachments,  // 完整消息（包含文件信息）
         userQuestion: content.trim() || '请根据上传的文件内容回答相关问题',  // 用户输入框中的问题
         fileNames: currentFiles.map(f => f.name),  // 关联的文件名列表
         timestamp: Date.now(),
@@ -1066,6 +1071,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-gray-800 dark:to-slate-900">
+      <Toaster position="top-center" richColors />
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md dark:bg-slate-900/80">
         <div className="container mx-auto px-4 py-3">
@@ -1559,7 +1565,10 @@ export default function Home() {
             setInput(userQuestion);
             if (fileNames && fileNames.length > 0) {
               // 提示用户需要重新上传文件
-              alert(`请重新上传之前关联的文件：${fileNames.join(', ')}`);
+              toast(`请重新上传之前关联的文件：${fileNames.join(', ')}`, {
+                description: '点击上传按钮选择文件',
+                duration: 5000,
+              });
             }
             setShowHistory(false);
           }}
