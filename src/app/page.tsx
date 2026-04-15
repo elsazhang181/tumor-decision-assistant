@@ -732,25 +732,58 @@ export default function Home() {
           const isImage = file.type.startsWith('image/');
           
           if (isImage) {
-            // 图片文件转为 base64 - 使用同步读取方式
+            // 图片文件压缩后转为 base64
             const base64 = await new Promise<string>((resolve) => {
               const reader = new FileReader();
-              reader.onload = () => resolve(reader.result as string);
+              reader.onload = (e) => {
+                const img = new (window as unknown as { Image: new () => HTMLImageElement }).Image();
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  const ctx = canvas.getContext('2d');
+                  
+                  // 计算压缩后的尺寸（最大 800px）
+                  let width = img.width;
+                  let height = img.height;
+                  const maxSize = 800;
+                  
+                  if (width > maxSize || height > maxSize) {
+                    if (width > height) {
+                      height = Math.round((height * maxSize) / width);
+                      width = maxSize;
+                    } else {
+                      width = Math.round((width * maxSize) / height);
+                      height = maxSize;
+                    }
+                  }
+                  
+                  canvas.width = width;
+                  canvas.height = height;
+                  ctx?.drawImage(img, 0, 0, width, height);
+                  
+                  // 转为 base64（压缩质量 0.5）
+                  const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+                  resolve(compressedBase64);
+                };
+                img.onerror = () => resolve('');
+                img.src = e.target?.result as string;
+              };
               reader.onerror = () => resolve('');
               reader.readAsDataURL(file);
             });
             
             if (base64) {
-              fileContent += `[文件${index + 1}: ${file.name} (图片文件)]\n`;
-              fileContent += `图片数据: ${base64}\n\n`;
+              fileContent += `[文件${index + 1}: ${file.name} (已压缩图片)]\n`;
+              fileContent += `[图片数据]\n${base64}\n\n`;
             } else {
-              fileContent += `[文件${index + 1}: ${file.name}] (图片读取失败)\n\n`;
+              fileContent += `[文件${index + 1}: ${file.name}] (图片处理失败)\n\n`;
             }
           } else {
             // 文本文件直接读取
             try {
               const text = await file.text();
-              fileContent += `[文件${index + 1}: ${file.name}]\n${text}\n\n`;
+              // 限制文本长度
+              const truncatedText = text.length > 5000 ? text.substring(0, 5000) + '\n...(内容过长已截断)' : text;
+              fileContent += `[文件${index + 1}: ${file.name}]\n${truncatedText}\n\n`;
             } catch {
               fileContent += `[文件${index + 1}: ${file.name}] (读取失败)\n\n`;
             }
