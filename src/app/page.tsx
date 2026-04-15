@@ -737,40 +737,63 @@ export default function Home() {
   const sendMessage = async (content: string) => {
     if ((!content.trim() && attachedFiles.length === 0) || isLoading) return;
 
-    // 在科室推荐环节，智能判断问题类型并自动切换
-    if (currentStage === 'department') {
-      const lowerContent = content.toLowerCase();
-      
-      // 判断是否涉及症状问题
-      const symptomKeywords = ['症状', '难受', '不舒服', '疼痛', '发烧', '呕吐', '腹泻', '便秘', '出血', 
-        '体重下降', '食欲', '疲劳', '乏力', '指标', '检查结果', '报告解读', '异常'];
-      
-      // 判断是否涉及治疗问题
-      const treatmentKeywords = ['治疗', '化疗', '放疗', '手术', '用药', '药物', '靶向', '免疫',
-        '方案', '疗程', '副作用', '不良反应', '耐药', '效果'];
-      
-      // 判断是否涉及医保/费用问题
-      const guidanceKeywords = ['医保', '报销', '费用', '价格', '多少钱', '花费', '保险', 
-        '特药', '双通道', '门特', '门规', '慢特', '大病', '异地就医', '临床试验'];
-      
-      const hasSymptom = symptomKeywords.some(k => lowerContent.includes(k));
-      const hasTreatment = treatmentKeywords.some(k => lowerContent.includes(k));
-      const hasGuidance = guidanceKeywords.some(k => lowerContent.includes(k));
-      
-      // 优先顺序：症状 > 治疗 > 医保
-      if (hasSymptom) {
+    // 智能判断问题类型并自动切换环节（所有环节适用）
+    const lowerContent = content.toLowerCase();
+    
+    // 定义各环节的专属关键词
+    const symptomExclusiveKeywords = ['症状', '难受', '不舒服', '指标异常', '报告解读', 
+      'ca125', 'ca153', 'afp', '血红蛋白', '白细胞', '血小板', '肝功能', '肾功能'];
+    
+    const treatmentExclusiveKeywords = ['化疗', '放疗', '手术', '靶向', '免疫治疗', '免疫', 
+      '用药', '药物', '耐药', '疗程', '方案', 'cea', 'ca199', 'ca724', 'ca242', '治疗效果', 
+      '副作用', '不良反应', '效果', '起效', '没效果', '降低', '上升', '指标'];
+    
+    const guidanceExclusiveKeywords = ['医保', '报销', '费用', '特药', '双通道', '门特', '门规', 
+      '异地就医', '临床试验', '大病保险', '价格', '多少钱', '花费'];
+    
+    // 判断问题是否与各环节相关
+    const isSymptomRelated = symptomExclusiveKeywords.some(k => lowerContent.includes(k));
+    const isTreatmentRelated = treatmentExclusiveKeywords.some(k => lowerContent.includes(k));
+    const isGuidanceRelated = guidanceExclusiveKeywords.some(k => lowerContent.includes(k));
+    
+    // 切换逻辑：治疗相关问题优先切换（因为治疗是核心问题）
+    // 只有问题明显属于其他环节时才切换
+    if (isTreatmentRelated && currentStage !== 'treatment' && currentStage !== 'department') {
+      // 治疗相关问题：切换到治疗相关环节
+      setCurrentStage('treatment');
+      toast.info('已切换至「治疗相关」环节', {
+        description: '根据您的问题内容，将为您提供针对性的治疗指导',
+        duration: 3000,
+      });
+    } else if (isGuidanceRelated && currentStage !== 'guidance' && currentStage !== 'department') {
+      // 医保相关问题：切换到就医指导环节
+      setCurrentStage('guidance');
+      toast.info('已切换至「就医指导」环节', {
+        description: '根据您的问题内容，将为您提供医保和费用相关信息',
+        duration: 3000,
+      });
+    } else if (isSymptomRelated && currentStage === 'guidance') {
+      // 只有在就医指导环节时，症状问题才切换到症状自查
+      setCurrentStage('symptom');
+      toast.info('已切换至「症状自查」环节', {
+        description: '根据您的问题内容，将为您提供针对性的症状解读',
+        duration: 3000,
+      });
+    } else if (currentStage === 'department') {
+      // 科室推荐环节的切换逻辑
+      if (isSymptomRelated) {
         setCurrentStage('symptom');
         toast.info('已切换至「症状自查」环节', {
           description: '根据您的问题内容，将为您提供针对性的症状解读',
           duration: 3000,
         });
-      } else if (hasTreatment) {
+      } else if (isTreatmentRelated) {
         setCurrentStage('treatment');
         toast.info('已切换至「治疗相关」环节', {
           description: '根据您的问题内容，将为您提供针对性的治疗指导',
           duration: 3000,
         });
-      } else if (hasGuidance) {
+      } else if (isGuidanceRelated) {
         setCurrentStage('guidance');
         toast.info('已切换至「就医指导」环节', {
           description: '根据您的问题内容，将为您提供医保和费用相关信息',
