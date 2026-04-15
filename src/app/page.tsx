@@ -734,88 +734,90 @@ export default function Home() {
 
     setIsLoading(true);
 
-    // 如果有附件，读取所有文件内容
+    // 清空文件内容变量
     let fileContent = '';
-    if (attachedFiles.length > 0) {
-      try {
-        for (let index = 0; index < attachedFiles.length; index++) {
-          const file = attachedFiles[index];
-          const isImage = file.type.startsWith('image/');
-          
-          if (isImage) {
-            // 图片文件压缩后转为 base64
-            const base64 = await new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                const img = new (window as unknown as { Image: new () => HTMLImageElement }).Image();
-                img.onload = () => {
-                  const canvas = document.createElement('canvas');
-                  const ctx = canvas.getContext('2d');
-                  
-                  // 计算压缩后的尺寸（最大 800px）
-                  let width = img.width;
-                  let height = img.height;
-                  const maxSize = 800;
-                  
-                  if (width > maxSize || height > maxSize) {
-                    if (width > height) {
-                      height = Math.round((height * maxSize) / width);
-                      width = maxSize;
-                    } else {
-                      width = Math.round((width * maxSize) / height);
-                      height = maxSize;
-                    }
-                  }
-                  
-                  canvas.width = width;
-                  canvas.height = height;
-                  ctx?.drawImage(img, 0, 0, width, height);
-                  
-                  // 转为 base64（压缩质量 0.5）
-                  const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
-                  resolve(compressedBase64);
-                };
-                img.onerror = () => resolve('');
-                img.src = e.target?.result as string;
-              };
-              reader.onerror = () => resolve('');
-              reader.readAsDataURL(file);
-            });
-            
-            if (base64) {
-              fileContent += `[文件${index + 1}: ${file.name} (已压缩图片)]\n`;
-              fileContent += `[图片数据]\n${base64}\n\n`;
-            } else {
-              fileContent += `[文件${index + 1}: ${file.name}] (图片处理失败)\n\n`;
-            }
-          } else {
-            // 文本文件直接读取
-            try {
-              const text = await file.text();
-              // 限制文本长度
-              const truncatedText = text.length > 5000 ? text.substring(0, 5000) + '\n...(内容过长已截断)' : text;
-              fileContent += `[文件${index + 1}: ${file.name}]\n${truncatedText}\n\n`;
-            } catch {
-              fileContent += `[文件${index + 1}: ${file.name}] (读取失败)\n\n`;
-            }
-          }
+
+    // 构建附件信息（用于多模态支持）
+    const attachments: Array<{ filename: string; base64: string; mimeType: string }> = [];
+    for (let index = 0; index < attachedFiles.length; index++) {
+      const file = attachedFiles[index];
+      const isImage = file.type.startsWith('image/');
+      
+      if (isImage) {
+        // 图片文件压缩后转为 base64
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new (window as unknown as { Image: new () => HTMLImageElement }).Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              
+              // 计算压缩后的尺寸（最大 600px）
+              let width = img.width;
+              let height = img.height;
+              const maxSize = 600;
+              
+              if (width > maxSize || height > maxSize) {
+                if (width > height) {
+                  height = Math.round((height * maxSize) / width);
+                  width = maxSize;
+                } else {
+                  width = Math.round((width * maxSize) / height);
+                  height = maxSize;
+                }
+              }
+              
+              canvas.width = width;
+              canvas.height = height;
+              ctx?.drawImage(img, 0, 0, width, height);
+              
+              // 转为 base64（压缩质量 0.4）
+              const compressedBase64 = canvas.toDataURL('image/jpeg', 0.4);
+              resolve(compressedBase64);
+            };
+            img.onerror = () => resolve('');
+            img.src = e.target?.result as string;
+          };
+          reader.onerror = () => resolve('');
+          reader.readAsDataURL(file);
+        });
+        
+        if (base64) {
+          // 移除 data:image/jpeg;base64, 前缀，只发送纯 base64 数据
+          const pureBase64 = base64.includes(',') ? base64.split(',')[1] : base64;
+          attachments.push({
+            filename: file.name,
+            base64: pureBase64,
+            mimeType: 'image/jpeg'
+          });
+          fileContent += `[文件${index + 1}: ${file.name}] (已作为图片附件上传)\n`;
+        } else {
+          fileContent += `[文件${index + 1}: ${file.name}] (图片处理失败)\n`;
         }
-      } catch (error) {
-        console.error('读取文件失败:', error);
-        setIsLoading(false);
-        return;
+      } else {
+        // 文本文件直接读取
+        try {
+          const text = await file.text();
+          // 限制文本长度
+          const truncatedText = text.length > 5000 ? text.substring(0, 5000) + '\n...(内容过长已截断)' : text;
+          fileContent += `[文件${index + 1}: ${file.name}]\n${truncatedText}\n\n`;
+        } catch {
+          fileContent += `[文件${index + 1}: ${file.name}] (读取失败)\n`;
+        }
       }
     }
 
-    // 构建消息内容（包含文件内容）
-    const fullMessage = attachedFiles.length > 0
-      ? `【用户上传文件 (${attachedFiles.length}个)】\n\n【文件内容】\n${fileContent}\n\n【用户问题】\n${content.trim() || '请根据上传的文件内容回答相关问题'}`
-      : content.trim();
+    // 如果有非图片附件，添加到消息内容中
+    const fullMessage = content.trim() || '请根据上传的文件内容回答相关问题';
+    const fullMessageWithAttachments = attachedFiles.length > 0 && fileContent
+      ? `【用户上传文件 (${attachedFiles.length}个)】\n\n【文件内容】\n${fileContent}\n\n【用户问题】\n${fullMessage}`
+      : fullMessage;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: fullMessage,
+      content: fullMessageWithAttachments,
       timestamp: new Date(),
       stage: currentStage
     };
@@ -848,10 +850,11 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          message: content.trim(),
+          message: fullMessage,
           history: historyMessages,
           stage: currentStage,
-          context: fullContext
+          context: fullContext,
+          attachments: attachments  // 发送图片附件
         })
       });
 

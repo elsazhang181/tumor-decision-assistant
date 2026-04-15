@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config, HeaderUtils } from 'coze-coding-dev-sdk';
+import { LLMClient, Config, HeaderUtils, Message } from 'coze-coding-dev-sdk';
 import expertsData from '@/lib/experts-knowledge.json';
 import cscoData from '@/lib/csco-knowledge.json';
 import insuranceData from '@/lib/insurance-knowledge.json';
@@ -102,6 +102,29 @@ const UNIFIED_OUTPUT_TEMPLATE = `
 - ❌ 不得删除或跳过任何必填条目
 - ❌ 不得在同一问题上有不同的核心判断
 - ❌ 不得引用与问题无关的知识库来源
+`;
+
+// ============== 图片识别规则 ==============
+const IMAGE_RECOGNITION_RULES = `
+### 📷 图片识别规则
+
+**【识别图片内容】**
+当用户上传图片时，你必须：
+1. 识别图片中的所有文字内容（包括标题、正文、数字、日期等）
+2. 识别图片中的表格、图表、报告格式
+3. 如果是检查报告，提取关键指标和数值
+4. 如果是文件或文档，识别并总结其内容
+
+**【图片数据格式识别】**
+如果用户消息中包含 [图片数据（base64编码）]：标记，这是压缩后的JPEG图片数据，你必须：
+1. 从 base64 数据中识别图片内容
+2. 提取图片中的文字、数字、表格信息
+3. 结合图片内容回答用户问题
+
+**【处理原则】**
+- 图片文字识别优先于其他知识库检索
+- 如图片内容与知识库有差异，以图片实际内容为准
+- 如果无法识别图片，应明确告知用户
 `;
 
 // ============== 官方信息来源 ==============
@@ -540,6 +563,9 @@ const generateSymptomPrompt = () => {
 3. **不涉及医疗诊断**：只能说"建议进一步检查"，不能给出诊断结论
 4. **不提供诊疗方案**：只提供就医方向和沟通准备建议
 
+### 图片识别
+${IMAGE_RECOGNITION_RULES}
+
 ### 引用来源设置
 ${CITATION_SETTINGS}
 
@@ -656,6 +682,9 @@ const hospitalQRPrompt = generateHospitalQRPrompt();
 4. **提供官方参考**：引导患者参考医院官网、官方挂号平台、官方小程序/服务号
 5. **必须提及具体专家姓名**：回复中必须提及知识库中列出的专家姓名和医院名称
 
+### 图片识别
+${IMAGE_RECOGNITION_RULES}
+
 ### 引用来源设置
 ${CITATION_SETTINGS}
 
@@ -731,6 +760,9 @@ const generateTreatmentPrompt = () => {
 3. **不涉及具体治疗方案**：不推荐具体用药、剂量、手术方式
 4. **不提供医疗决策**：只提供流程信息、注意事项、沟通准备
 5. **优先引用不良反应知识库**：涉及化疗/靶向副作用的问题，必须引用【知识库：肠癌化疗不良反应QA对】
+
+### 图片识别
+${IMAGE_RECOGNITION_RULES}
 
 ### 引用来源设置
 ${CITATION_SETTINGS}
@@ -845,6 +877,9 @@ const generateGuidancePrompt = () => {
 3. **官方信息来源**：引用政府官网、官方平台信息
 4. **不涉及法律/财务建议**：如有需要请咨询专业人士
 
+### 图片识别
+${IMAGE_RECOGNITION_RULES}
+
 ### 引用来源设置
 ${CITATION_SETTINGS}
 
@@ -918,7 +953,7 @@ const STAGE_PROMPTS: Record<Stage, string> = {
 // ============== API 路由 ==============
 export async function POST(request: NextRequest) {
   try {
-    const { message, stage = 'symptom', history = [], context } = await request.json();
+    const { message, stage = 'symptom', history = [], context, attachments = [] } = await request.json();
     
     const stagePrompt = STAGE_PROMPTS[stage as Stage] || STAGE_PROMPTS.symptom;
     
@@ -940,11 +975,46 @@ export async function POST(request: NextRequest) {
 **3. 确保回答与之前的对话保持一致性，避免重复或矛盾**`
       : '';
     
-    const messages = [
-      { role: 'system', content: stagePrompt + contextPrompt + historyContext },
-      ...history.map((h: { role: string; content: string }) => ({ role: h.role, content: h.content })),
-      { role: 'user', content: message }
-    ];
+    // 构建系统消息
+    const systemMessage = { role: 'system' as const, content: stagePrompt + contextPrompt + historyContext };
+    
+    // 构建历史消息
+    const historyMessages = history.map((h: { role: string; content: string }) => ({ 
+      role: h.role as 'user' | 'assistant' | 'system', 
+      content: h.content 
+    }));
+    
+    // 构建用户消息（支持多模态内容）
+    let userMessage: { role: 'user'; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> };
+    
+    if (attachments && attachments.length > 0) {
+      // 多模态消息格式
+      const contentParts: Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }> = [
+        { type: 'text', text: message }
+      ];
+      
+      // 添加图片附件
+      attachments.forEach((attachment: { filename: string; base64: string; mimeType?: string }) => {
+        // 提取纯 base64 数据（移除 data:image/xxx;base64, 前缀）
+        const pureBase64 = attachment.base64.includes(',') 
+          ? attachment.base64.split(',')[1] 
+          : attachment.base64;
+        
+        contentParts.push({
+          type: 'image_url',
+          image_url: {
+            url: `data:${attachment.mimeType || 'image/jpeg'};base64,${pureBase64}`
+          }
+        });
+      });
+      
+      userMessage = { role: 'user' as const, content: contentParts };
+    } else {
+      // 纯文本消息
+      userMessage = { role: 'user' as const, content: message };
+    }
+    
+    const messages = [systemMessage, ...historyMessages, userMessage];
     
     const config = new Config();
     const client = new LLMClient(config);
@@ -968,13 +1038,8 @@ export async function POST(request: NextRequest) {
         };
         
         try {
-          const formattedMessages = messages.map(m => ({
-            role: m.role as 'user' | 'assistant' | 'system',
-            content: m.content
-          }));
-          
           const responseStream = client.stream(
-            formattedMessages,
+            messages as Message[],
             { streaming: true },
             undefined,
             customHeaders
