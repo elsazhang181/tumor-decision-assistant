@@ -718,12 +718,31 @@ export default function Home() {
   }, [currentStage]); // 只依赖 currentStage
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || isLoading) return;
+    if ((!content.trim() && !attachedFile) || isLoading) return;
+
+    setIsLoading(true);
+
+    // 如果有附件，先读取文件内容
+    let fileContent = '';
+    if (attachedFile) {
+      try {
+        fileContent = await attachedFile.text();
+      } catch (error) {
+        console.error('读取文件失败:', error);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // 构建消息内容（包含文件内容）
+    const fullMessage = attachedFile
+      ? `【用户上传文件：${attachedFile.name}】\n\n【文件内容开始】\n${fileContent}\n【文件内容结束】\n\n【用户问题】\n${content.trim() || '请根据上传的文件内容回答相关问题'}`
+      : content.trim();
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: content.trim(),
+      content: fullMessage,
       timestamp: new Date(),
       stage: currentStage
     };
@@ -731,7 +750,13 @@ export default function Home() {
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput('');
-    setIsLoading(true);
+    
+    // 清空附件
+    const currentFile = attachedFile;
+    setAttachedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
 
     // 构建历史消息（包含所有之前环节的消息）
     const historyMessages = messages.map(m => ({ role: m.role, content: m.content }));
@@ -1149,8 +1174,25 @@ export default function Home() {
                                   : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
                               }`}
                             >
+                              {/* 如果消息包含文件，显示文件标识 */}
+                              {message.content.includes('【用户上传文件') && (
+                                <div className={`mb-2 p-2 rounded-lg border ${
+                                  message.role === 'user' 
+                                    ? 'bg-blue-600/30 border-blue-400/50' 
+                                    : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                }`}>
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <File className="h-4 w-4" />
+                                    <span className={message.role === 'user' ? 'text-blue-100' : 'text-green-700 dark:text-green-400'}>
+                                      {message.content.match(/【用户上传文件：([^】]+)】/)?.[1] || '已上传文件'}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                               <div className="whitespace-pre-wrap text-xs md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none">
-                                {message.content}
+                                {message.content.includes('【用户上传文件') 
+                                  ? message.content.replace(/【用户上传文件：[^\n]+\n+\n【文件内容开始】\n[\s\S]*?\n【文件内容结束】\n+/g, '')
+                                  : message.content}
                               </div>
                             </div>
                           </div>
