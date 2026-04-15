@@ -726,33 +726,36 @@ export default function Home() {
     // 如果有附件，读取所有文件内容
     let fileContent = '';
     if (attachedFiles.length > 0) {
-      const filePromises = attachedFiles.map(async (file, index) => {
-        const isImage = file.type.startsWith('image/');
-        
-        if (isImage) {
-          // 图片文件转为 base64
-          return new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              resolve(`[文件${index + 1}: ${file.name} (图片)]\n${reader.result as string}`);
-            };
-            reader.onerror = () => resolve(`[文件${index + 1}: ${file.name}] (图片读取失败)`);
-            reader.readAsDataURL(file);
-          });
-        } else {
-          // 文本文件直接读取
-          try {
-            const text = await file.text();
-            return `[文件${index + 1}: ${file.name}]\n${text}`;
-          } catch {
-            return `[文件${index + 1}: ${file.name}] (读取失败)`;
+      try {
+        for (let index = 0; index < attachedFiles.length; index++) {
+          const file = attachedFiles[index];
+          const isImage = file.type.startsWith('image/');
+          
+          if (isImage) {
+            // 图片文件转为 base64 - 使用同步读取方式
+            const base64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = () => resolve('');
+              reader.readAsDataURL(file);
+            });
+            
+            if (base64) {
+              fileContent += `[文件${index + 1}: ${file.name} (图片文件)]\n`;
+              fileContent += `图片数据: ${base64}\n\n`;
+            } else {
+              fileContent += `[文件${index + 1}: ${file.name}] (图片读取失败)\n\n`;
+            }
+          } else {
+            // 文本文件直接读取
+            try {
+              const text = await file.text();
+              fileContent += `[文件${index + 1}: ${file.name}]\n${text}\n\n`;
+            } catch {
+              fileContent += `[文件${index + 1}: ${file.name}] (读取失败)\n\n`;
+            }
           }
         }
-      });
-      
-      try {
-        const fileContents = await Promise.all(filePromises);
-        fileContent = fileContents.join('\n\n---\n\n');
       } catch (error) {
         console.error('读取文件失败:', error);
         setIsLoading(false);

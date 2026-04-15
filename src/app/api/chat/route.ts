@@ -19,13 +19,13 @@ const CLINICAL_TRIAL_KNOWLEDGE = clinicalTrialData;
 
 // ============== 统一回复格式模板 ==============
 const UNIFIED_OUTPUT_TEMPLATE = `
-### 【强制要求】统一回复格式（所有环节必须严格遵循）
+### 【强制格式要求】必须严格遵循
 
-【段落分隔要求】（必须执行，否则格式不合格）
+【段落空行要求】这是硬性规定，违反将导致格式不合格：
 
-每个主要条目之间必须用【空行】分隔，这是强制要求：
+每个条目标题和内容之间必须换行，每个条目之间必须有空行：
 
-【正确格式示例】
+【正确格式】
 [结论]
 根据检查结果，您的情况属于...
 
@@ -36,14 +36,13 @@ const UNIFIED_OUTPUT_TEMPLATE = `
 1. 影像学检查显示...
 2. 肿瘤标志物...
 
-[医患沟通提问清单]
-1. 我的情况是否需要立即治疗？
-2. ...
+【错误格式】
+[结论]根据检查结果...[通俗解释]打个比方...[依据]1.影像学...
 
 【格式原则】
 1. 先出关键结论，再通俗解释论据
-2. 每个条目必须完整输出，不得省略
-3. 条目之间必须空行（约350ms以上的换行间隔）
+2. 每个条目必须完整输出，不得省略或合并
+3. 条目之间必须有两个换行符（即一个空行）
 4. 严禁把所有内容堆在一起，违反此要求视为格式不合格
 
 【条目输出顺序】（必须严格按顺序，不得调整或删除）
@@ -558,15 +557,23 @@ ${DISCLAIMER}`;
 
 // ============== 科室匹配 prompt ==============
 const generateDepartmentPrompt = () => {
-  const hospitals = EXPERTS_KNOWLEDGE.hospitals.map(h => {
-    const expertsList = h.experts.slice(0, 5).map(e => 
-      `    - ${e.name}（${e.title}）-${e.expertise.substring(0, 50)}...`
-    ).join('\n');
+  // 限制医院数量以避免 token 溢出，优先选择重点医院
+  const topHospitals = EXPERTS_KNOWLEDGE.hospitals.slice(0, 30).map(h => {
+    // 按专长分类展示专家
+    const bySpecialty = h.experts.reduce((acc, e) => {
+      if (!acc[e.specialty]) acc[e.specialty] = [];
+      if (acc[e.specialty].length < 3) acc[e.specialty].push(e);
+      return acc;
+    }, {} as Record<string, typeof h.experts>);
+    
+    const expertsList = Object.entries(bySpecialty).map(([specialty, experts]) => {
+      const expertLines = experts.map(e => `      - ${e.name}（${e.title}）`);
+      return `    【${specialty}】\n${expertLines.join('\n')}`;
+    }).join('\n');
     
     return `### ${h.name}（${h.city}）
 - 地区：${h.region}
 - 专家数量：${h.expertCount}位
-- 重点专家：
 ${expertsList}`;
   }).join('\n\n');
 
@@ -607,11 +614,12 @@ const hospitalQRPrompt = generateHospitalQRPrompt();
 ### 你的职责
 根据患者的症状和可能的疾病类型，**严格引用知识库中的专家信息**，匹配合适的就诊科室和医院。
 
-### ⚠️ 核心约束
-1. **必须引用知识库**：科室匹配必须基于专家知识库中的真实医院和专家
+### ⚠️ 核心约束（必须遵守）
+1. **必须引用知识库**：科室匹配必须基于下方知识库中的真实医院和专家
 2. **必须显示引用来源**：推荐医院/专家需标注知识库来源
 3. **不推荐库外信息**：不得推荐知识库中不存在的医院或专家
 4. **提供官方参考**：引导患者参考医院官网、官方挂号平台、官方小程序/服务号
+5. **必须提及具体专家姓名**：回复中必须提及知识库中列出的专家姓名和医院名称
 
 ### 引用来源设置
 ${CITATION_SETTINGS}
@@ -619,16 +627,16 @@ ${CITATION_SETTINGS}
 ### 知识库综合检索
 ${OFFICIAL_SOURCES}
 
-**【知识库来源】**
+**【知识库来源 - 必须引用】**
 - 熊猫群专家信息汇总（人工复核20260406）
   - 涵盖医院：${EXPERTS_KNOWLEDGE.meta.totalHospitals}家
   - 专家总数：${EXPERTS_KNOWLEDGE.meta.totalExperts}位
   - 覆盖城市：${EXPERTS_KNOWLEDGE.meta.cities}个
 - 省级三甲医院及肿瘤专科医院小程序/服务号二维码（${HOSPITALS_QR.hospitals.length}家医院）
 
-### 知识库中的医院和专家
+### 知识库中的医院和专家（必须引用此部分信息）
 
-${hospitals}
+${topHospitals}
 
 ### 医院小程序/服务号二维码
 
@@ -649,7 +657,8 @@ ${QUESTION_LIST_TEMPLATE}
 1. 【推荐科室】直接给出
 2. 【推荐理由】简要说明
 3. 【推荐医院】必须明确写出完整的医院名称，如"北京大学肿瘤医院"、"北京协和医院"等（页面已自动关联二维码卡片，点击查看）
-4. 【就诊准备】列出关键资料清单
+4. 【推荐专家】必须提及知识库中对应的专家姓名，如"张小田（主任医师）- 北京大学肿瘤医院内科"
+5. 【就诊准备】列出关键资料清单
 
 **注意**：
 - 【推荐医院】必须写完整的医院官方名称，不要写简称或代称
