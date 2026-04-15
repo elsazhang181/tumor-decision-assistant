@@ -43,7 +43,9 @@ const HISTORY_EXPIRE_DAYS = 3;
 // ============== 历史记录类型 ==============
 interface ChatHistoryItem {
   id: string;
-  content: string;
+  content: string;  // 完整的消息内容（包含文件信息）
+  userQuestion: string;  // 用户输入框中的问题
+  fileNames: string[];  // 关联的文件名列表
   timestamp: number;
   stage: Stage;
 }
@@ -68,8 +70,8 @@ const saveHistory = (item: ChatHistoryItem): void => {
   if (typeof window === 'undefined') return;
   try {
     const history = getHistory();
-    // 去重：如果已有相同内容，删除旧的
-    const filtered = history.filter(h => h.content !== item.content);
+    // 去重：如果已有相同问题，删除旧的
+    const filtered = history.filter(h => h.userQuestion !== item.userQuestion);
     // 添加到开头
     const newHistory = [item, ...filtered].slice(0, 50); // 最多保留50条
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(newHistory));
@@ -115,7 +117,7 @@ const formatTime = (timestamp: number): string => {
 interface HistoryPanelProps {
   history: ChatHistoryItem[];
   onClose: () => void;
-  onSelectHistory: (content: string) => void;
+  onSelectHistory: (userQuestion: string, fileNames: string[]) => void;
   onRefresh: () => void;
 }
 
@@ -186,7 +188,7 @@ function HistoryPanel({ history, onClose, onSelectHistory, onRefresh }: HistoryP
                 <div
                   key={item.id}
                   onClick={() => {
-                    onSelectHistory(item.content);
+                    onSelectHistory(item.userQuestion, item.fileNames);
                     onClose();
                   }}
                   className="w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer group"
@@ -194,8 +196,17 @@ function HistoryPanel({ history, onClose, onSelectHistory, onRefresh }: HistoryP
                   <div className="flex items-start gap-2">
                     <MessageCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
+                      {/* 显示文件信息 */}
+                      {item.fileNames && item.fileNames.length > 0 && (
+                        <div className="flex items-center gap-1 mb-1">
+                          <Paperclip className="h-3 w-3 text-gray-400" />
+                          <span className="text-xs text-blue-600 dark:text-blue-400 truncate">
+                            {item.fileNames.join(', ')}
+                          </span>
+                        </div>
+                      )}
                       <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
-                        {item.content}
+                        {item.userQuestion || '请根据上传的文件内容回答相关问题'}
                       </p>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -914,7 +925,9 @@ export default function Home() {
       // 保存用户提问到历史记录
       const historyItem: ChatHistoryItem = {
         id: userMessage.id,
-        content: userMessage.content,
+        content: fullMessage,  // 完整消息（包含文件信息）
+        userQuestion: content.trim() || '请根据上传的文件内容回答相关问题',  // 用户输入框中的问题
+        fileNames: currentFiles.map(f => f.name),  // 关联的文件名列表
         timestamp: Date.now(),
         stage: currentStage
       };
@@ -1539,8 +1552,12 @@ export default function Home() {
         <HistoryPanel
           history={chatHistoryList}
           onClose={() => setShowHistory(false)}
-          onSelectHistory={(content) => {
-            setInput(content);
+          onSelectHistory={(userQuestion, fileNames) => {
+            setInput(userQuestion);
+            if (fileNames && fileNames.length > 0) {
+              // 提示用户需要重新上传文件
+              alert(`请重新上传之前关联的文件：${fileNames.join(', ')}`);
+            }
             setShowHistory(false);
           }}
           onRefresh={() => setChatHistoryList(getHistory())}
