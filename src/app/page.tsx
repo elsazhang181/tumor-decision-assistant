@@ -664,10 +664,11 @@ export default function Home() {
   // 聊天历史记录列表（持久化显示）
   const [chatHistoryList, setChatHistoryList] = useState<ChatHistoryItem[]>([]);
   
-  // 文件上传状态
-  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  // 文件上传状态 - 支持多文件
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB 总大小上限
   
   // 当前消息中的医院列表（用于显示推荐卡片）
   const [messageHospitals, setMessageHospitals] = useState<typeof HOSPITALS_QR.hospitals>([]);
@@ -718,15 +719,40 @@ export default function Home() {
   }, [currentStage]); // 只依赖 currentStage
 
   const sendMessage = async (content: string) => {
-    if ((!content.trim() && !attachedFile) || isLoading) return;
+    if ((!content.trim() && attachedFiles.length === 0) || isLoading) return;
 
     setIsLoading(true);
 
-    // 如果有附件，先读取文件内容
+    // 如果有附件，读取所有文件内容
     let fileContent = '';
-    if (attachedFile) {
+    if (attachedFiles.length > 0) {
+      const filePromises = attachedFiles.map(async (file, index) => {
+        const isImage = file.type.startsWith('image/');
+        
+        if (isImage) {
+          // 图片文件转为 base64
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              resolve(`[文件${index + 1}: ${file.name} (图片)]\n${reader.result as string}`);
+            };
+            reader.onerror = () => resolve(`[文件${index + 1}: ${file.name}] (图片读取失败)`);
+            reader.readAsDataURL(file);
+          });
+        } else {
+          // 文本文件直接读取
+          try {
+            const text = await file.text();
+            return `[文件${index + 1}: ${file.name}]\n${text}`;
+          } catch {
+            return `[文件${index + 1}: ${file.name}] (读取失败)`;
+          }
+        }
+      });
+      
       try {
-        fileContent = await attachedFile.text();
+        const fileContents = await Promise.all(filePromises);
+        fileContent = fileContents.join('\n\n---\n\n');
       } catch (error) {
         console.error('读取文件失败:', error);
         setIsLoading(false);
@@ -735,8 +761,8 @@ export default function Home() {
     }
 
     // 构建消息内容（包含文件内容）
-    const fullMessage = attachedFile
-      ? `【用户上传文件：${attachedFile.name}】\n\n【文件内容开始】\n${fileContent}\n【文件内容结束】\n\n【用户问题】\n${content.trim() || '请根据上传的文件内容回答相关问题'}`
+    const fullMessage = attachedFiles.length > 0
+      ? `【用户上传文件 (${attachedFiles.length}个)】\n\n【文件内容】\n${fileContent}\n\n【用户问题】\n${content.trim() || '请根据上传的文件内容回答相关问题'}`
       : content.trim();
 
     const userMessage: Message = {
@@ -752,8 +778,8 @@ export default function Home() {
     setInput('');
     
     // 清空附件
-    const currentFile = attachedFile;
-    setAttachedFile(null);
+    const currentFiles = [...attachedFiles];
+    setAttachedFiles([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -862,10 +888,10 @@ export default function Home() {
     }
   };
 
-  // 文件上传处理
+  // 文件上传处理 - 支持多文件
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     
     // 验证文件类型
     const allowedTypes = [
@@ -875,28 +901,53 @@ export default function Home() {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'image/jpeg'
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp'
     ];
-    const allowedExtensions = ['.txt', '.doc', '.docx', '.xls', '.xlsx', '.pdf', '.jpg', '.jpeg'];
-    const fileExt = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    const allowedExtensions = ['.txt', '.doc', '.docx', '.xls', '.xlsx', '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.webp'];
     
-    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExt)) {
-      alert('不支持的文件格式，请上传 txt、word、excel、pdf 或 jpeg 格式的文件');
+    for (const file of files) {
+      const fileExt = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+      
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExt)) {
+        alert(`不支持的文件格式：${file.name}，请上传 txt、word、excel、pdf 或图片格式`);
+        return;
+      }
+      
+      // 单个文件大小限制 (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`文件 "${file.name}" 超过5MB限制`);
+        return;
+      }
+    }
+    
+    // 计算当前总大小 + 新文件总大小
+    const currentTotalSize = attachedFiles.reduce((sum, f) => sum + f.size, 0);
+    const newTotalSize = currentTotalSize + files.reduce((sum, f) => sum + f.size, 0);
+    
+    if (newTotalSize > MAX_TOTAL_SIZE) {
+      const remainingSize = MAX_TOTAL_SIZE - currentTotalSize;
+      alert(`总文件大小超过10MB限制，还能上传 ${(remainingSize / 1024 / 1024).toFixed(1)}MB`);
       return;
     }
     
-    // 验证文件大小 (默认 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      alert('文件大小超过限制，最大支持 10MB');
-      return;
-    }
+    // 添加到现有文件列表
+    setAttachedFiles(prev => [...prev, ...files]);
     
-    setAttachedFile(file);
+    // 清空 input 以允许重复选择同一文件
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
-  const handleRemoveFile = () => {
-    setAttachedFile(null);
+  const handleRemoveFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearAllFiles = () => {
+    setAttachedFiles([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -1174,7 +1225,7 @@ export default function Home() {
                                   : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
                               }`}
                             >
-                              {/* 如果消息包含文件，显示文件标识 */}
+                              {/* 如果消息包含文件，显示文件信息 */}
                               {message.content.includes('【用户上传文件') && (
                                 <div className={`mb-2 p-2 rounded-lg border ${
                                   message.role === 'user' 
@@ -1184,14 +1235,14 @@ export default function Home() {
                                   <div className="flex items-center gap-2 text-xs">
                                     <File className="h-4 w-4" />
                                     <span className={message.role === 'user' ? 'text-blue-100' : 'text-green-700 dark:text-green-400'}>
-                                      {message.content.match(/【用户上传文件：([^】]+)】/)?.[1] || '已上传文件'}
+                                      {message.content.match(/【用户上传文件[^】]*】/)?.[0]?.replace(/【|】/g, '') || '已上传文件'}
                                     </span>
                                   </div>
                                 </div>
                               )}
                               <div className="whitespace-pre-wrap text-xs md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none">
                                 {message.content.includes('【用户上传文件') 
-                                  ? message.content.replace(/【用户上传文件：[^\n]+\n+\n【文件内容开始】\n[\s\S]*?\n【文件内容结束】\n+/g, '')
+                                  ? message.content.split('【用户问题】')[1] || message.content
                                   : message.content}
                               </div>
                             </div>
@@ -1225,29 +1276,45 @@ export default function Home() {
 	
                 {/* Input Area - Mobile optimized */}
                 <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-2 md:p-3 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
-                  {/* 附件显示区域 */}
-                  {attachedFile && (
-                    <div className="mb-2 flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                      {attachedFile.type.includes('image') ? (
-                        <ImageIcon className="h-4 w-4 text-blue-500" />
-                      ) : attachedFile.type.includes('sheet') || attachedFile.name.endsWith('.xls') || attachedFile.name.endsWith('.xlsx') ? (
-                        <FileSpreadsheet className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <File className="h-4 w-4 text-blue-500" />
+                  {/* 附件显示区域 - 支持多文件 */}
+                  {attachedFiles.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      {attachedFiles.map((file, index) => {
+                        const isImage = file.type.startsWith('image/');
+                        return (
+                          <div 
+                            key={`${file.name}-${index}`}
+                            className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 max-w-[200px]"
+                          >
+                            {isImage ? (
+                              <ImageIcon className="h-4 w-4 text-blue-500 shrink-0" />
+                            ) : file.name.endsWith('.xls') || file.name.endsWith('.xlsx') ? (
+                              <FileSpreadsheet className="h-4 w-4 text-green-500 shrink-0" />
+                            ) : (
+                              <File className="h-4 w-4 text-blue-500 shrink-0" />
+                            )}
+                            <span className="flex-1 text-xs text-blue-700 dark:text-blue-400 truncate">
+                              {file.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(index)}
+                              className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800/50 rounded shrink-0"
+                            >
+                              <X className="h-3 w-3 text-gray-500" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                      {attachedFiles.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={handleClearAllFiles}
+                          className="text-xs text-gray-500 hover:text-red-500 px-2"
+                        >
+                          清除全部
+                        </button>
                       )}
-                      <span className="flex-1 text-xs text-blue-700 dark:text-blue-400 truncate">
-                        {attachedFile.name}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        ({(attachedFile.size / 1024).toFixed(1)}KB)
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleRemoveFile}
-                        className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800/50 rounded"
-                      >
-                        <X className="h-3 w-3 text-gray-500" />
-                      </button>
                     </div>
                   )}
                   <div className="flex gap-2">
@@ -1255,8 +1322,9 @@ export default function Home() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".txt,.doc,.docx,.xls,.xlsx,.pdf,.jpg,.jpeg"
+                      accept=".txt,.doc,.docx,.xls,.xlsx,.pdf,.jpg,.jpeg,.png,.gif,.webp"
                       onChange={handleFileSelect}
+                      multiple
                       className="hidden"
                     />
                     <Button
@@ -1281,7 +1349,7 @@ export default function Home() {
                     />
                     <Button 
                       type="submit" 
-                      disabled={(!input.trim() && !attachedFile) || isLoading}
+                      disabled={(!input.trim() && attachedFiles.length === 0) || isLoading}
                       className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                       size="icon"
                     >
@@ -1289,7 +1357,7 @@ export default function Home() {
                     </Button>
                   </div>
                   <p className="mt-1 text-xs text-gray-400">
-                    支持 txt、word、excel、pdf、jpeg 格式，最大 10MB
+                    支持多文件上传，txt、word、excel、pdf、图片格式，总大小最大 10MB
                   </p>
                 </form>
               </CardContent>
