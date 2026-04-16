@@ -488,7 +488,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   // 逐条过滤，避免误删重要内容
   let filteredContent = content;
 
-  // 1. 过滤 【信息来源声明】 段落标题（整行删除，包括标题下的列表）
+  // 1. 过滤 【信息来源声明】 段落标题及后续列表（保留标题后的单个链接行，删除多行列表）
   filteredContent = filteredContent
     // 删除独立的 [信息来源声明] 整行及后续连续的非标题行
     .replace(/(?:^|\n)\[信息来源声明\][^\n]*(?:\n(?!\s*(?:---|\[医患沟通提问清单\]|\[记录要点\]|\[重要提示\]))[^\n]*)*/gi, '');
@@ -497,7 +497,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   filteredContent = filteredContent
     .replace(/(?:^|\n)(?:●【信息来源】|【信息来源】|●【来源】|【来源】)[^\n]*(?:\n(?!\s*(?:---|\[医患沟通提问清单\]|\[记录要点\]|\[重要提示\]))[^\n]*)*/gi, '');
 
-  // 3. 过滤 【来源：xxx】 格式
+  // 3. 过滤 【来源：xxx】 格式（单行）
   filteredContent = filteredContent
     .replace(/(?:^|\n)\s*【来源[：:][^\n】]*】?\s*/gi, '');
 
@@ -552,6 +552,17 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   
   // 匹配各种编号格式
   let processedContent = filteredContent;
+
+  // 0. 先处理 emoji 数字格式 1️⃣ 2️⃣ 3️⃣ 等
+  processedContent = processedContent.replace(
+    /[\u0031-\u0039]\uFE0F\u20E3/g,
+    (match) => {
+      // 提取数字
+      const num = match.replace(/\uFE0F|\u20E3/g, '');
+      const index = parseInt(num, 10);
+      return makeLink(num, index);
+    }
+  );
   
   // 1. 处理全角方括号【1】【2】【3】或【①】【②】【③】
   processedContent = processedContent.replace(
@@ -595,6 +606,15 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     (match, num) => {
       const index = getIndexFromNum(num);
       return makeLink(num, index) + ' ';
+    }
+  );
+  
+  // 6. 处理括号中的纯数字 (1) (2) (3)
+  processedContent = processedContent.replace(
+    /\((\d+)\)/g,
+    (match, num) => {
+      const index = getIndexFromNum(num);
+      return `<a href="${sourceMap.has(index) ? sourceMap.get(index)!.url : '#'}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">(${num})</a>`;
     }
   );
   
