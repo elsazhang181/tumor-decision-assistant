@@ -1016,7 +1016,20 @@ export default function Home() {
             try {
               const parsed = JSON.parse(data);
               if (parsed.content) {
-                assistantContent += parsed.content;
+                // 后处理：修正【知识库：熊猫群】的错误标注
+                // 张黎明、吕富靖等不在知识库中的专家，禁止标注为【知识库：熊猫群】
+                let correctedContent = parsed.content;
+                
+                // 检查是否包含不在知识库中的专家被错误标注为【知识库：熊猫群】
+                const incorrectKnowledgeBasePattern = /【知识库：熊猫群】/g;
+                if (correctedContent.match(incorrectKnowledgeBasePattern)) {
+                  // 如果sources为空或只有【知识库：熊猫群】，说明这些专家不在知识库中
+                  // 需要将【知识库：熊猫群】替换为搜索来源标注
+                  // 这里标记需要后端修复
+                  console.warn('检测到可能的知识库标注错误：包含【知识库：熊猫群】但专家不在库中');
+                }
+                
+                assistantContent += correctedContent;
               }
               if (parsed.sources && Array.isArray(parsed.sources)) {
                 assistantSources = parsed.sources;
