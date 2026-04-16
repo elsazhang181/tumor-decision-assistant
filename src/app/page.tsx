@@ -1502,22 +1502,29 @@ export default function Home() {
                               />
                               {/* 来源列表 - 仅在assistant回复且有sources时显示 */}
                               {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                                  <div className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-3">
+                                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1">
                                     <ExternalLink className="h-3 w-3" />
-                                    <span>来源：</span>
-                                    {message.sources.map((source, idx) => (
-                                      <a
-                                        key={source.index}
-                                        href={source.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-0.5 mx-1 px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                                      >
-                                        <span className="font-medium">{idx + 1}</span>
-                                      </a>
-                                    ))}
+                                    <span>【信息来源声明】本回答参考了以下来源：</span>
                                   </div>
+                                  <ul className="space-y-1.5">
+                                    {message.sources.map((source, idx) => (
+                                      <li key={source.index} className="flex items-start gap-2 text-xs">
+                                        <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-medium text-[10px]">
+                                          {idx + 1}
+                                        </span>
+                                        <a
+                                          href={source.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline decoration-blue-300 dark:decoration-blue-700 hover:decoration-blue-500 transition-colors line-clamp-2 flex-1"
+                                          title={source.url}
+                                        >
+                                          {source.title || source.url}
+                                        </a>
+                                      </li>
+                                    ))}
+                                  </ul>
                                 </div>
                               )}
                             </div>
