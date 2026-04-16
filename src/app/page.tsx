@@ -477,12 +477,17 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   const sourceMap = new Map<number, SourceItem>();
   if (sources && sources.length > 0) {
     sources.forEach(s => sourceMap.set(s.index, s));
-    console.log('[DEBUG] sources received:', sources.length, 'items');
-    sources.forEach(s => console.log(`[DEBUG] source ${s.index}: ${s.title}`));
-  } else {
-    console.log('[DEBUG] no sources received');
+  }
+  
+  // 无sources或无内容时直接返回
+  if (!sourceMap.size || !content) {
     return content;
   }
+  
+  // 调试：检查内容中的数字标注格式
+  const contentPreview = content.substring(0, 500);
+  console.log('[renderContentWithSources] content preview:', contentPreview);
+  console.log('[renderContentWithSources] sources:', sources);
   
   // 定义解析数字索引的函数
   const getIndexFromNum = (num: string): number => {
@@ -528,6 +533,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     /【([1-9]|10|[一二三四五六七八九十①-⑨]|[\u2460-\u2469]|[\u2470-\u2473])】/g, 
     (match, num) => {
       const index = getIndexFromNum(num);
+      console.log(`[DEBUG] 全角方括号匹配: "${match}" -> num=${num}, index=${index}`);
       return makeLink(num, index);
     }
   );
@@ -537,6 +543,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     /\[([1-9]|10|[一二三四五六七八九十]|[\u2460-\u2469]|[\u2470-\u2473])\]/g, 
     (match, num) => {
       const index = getIndexFromNum(num);
+      console.log(`[DEBUG] 半角方括号匹配: "${match}" -> num=${num}, index=${index}`);
       return makeLink(num, index);
     }
   );
@@ -1086,7 +1093,10 @@ export default function Home() {
               }
               if (parsed.sources && Array.isArray(parsed.sources)) {
                 assistantSources = parsed.sources;
+                console.log('[API Response] sources received:', parsed.sources.length);
+                parsed.sources.forEach((s: SourceItem) => console.log(`[API Response] source ${s.index}: ${s.title}`));
               }
+              console.log('[Message Update] content length:', assistantContent.length, 'sources length:', assistantSources.length);
               setMessages(prev => 
                 prev.map(m => 
                   m.id === assistantMessage.id 
