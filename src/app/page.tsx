@@ -455,13 +455,48 @@ function extractHospitalsFromMessage(message: string): typeof HOSPITALS_QR.hospi
   return matchedHospitals;
 }
 
+interface SourceItem {
+  index: number;
+  title: string;
+  url: string;
+  snippet?: string;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
   stage?: Stage;
+  sources?: SourceItem[];
 }
+
+// ============== 渲染带链接的内容 ==============
+const renderContentWithSources = (content: string, sources: SourceItem[] = []) => {
+  if (!sources || sources.length === 0) {
+    return content;
+  }
+  
+  // 创建编号到URL的映射
+  const sourceMap = new Map<number, SourceItem>();
+  sources.forEach(s => sourceMap.set(s.index, s));
+  
+  // 使用正则替换 [①][②][③] 等为可点击链接
+  const processedContent = content.replace(/\[([一二三四五六七八九十]+)\]/g, (match, pinyin) => {
+    const indexMap: { [key: string]: number } = {
+      '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+      '六': 6, '七': 7, '八': 8, '九': 9, '十': 10
+    };
+    const index = indexMap[pinyin];
+    if (index && sourceMap.has(index)) {
+      const source = sourceMap.get(index)!;
+      return `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">[${pinyin}]</a>`;
+    }
+    return match;
+  });
+  
+  return processedContent;
+};
 
 const STAGES: Array<{
   id: Stage;
@@ -933,13 +968,15 @@ export default function Home() {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let assistantContent = '';
+      let assistantSources: SourceItem[] = [];
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: '',
         timestamp: new Date(),
-        stage: currentStage
+        stage: currentStage,
+        sources: []
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -960,14 +997,17 @@ export default function Home() {
               const parsed = JSON.parse(data);
               if (parsed.content) {
                 assistantContent += parsed.content;
-                setMessages(prev => 
-                  prev.map(m => 
-                    m.id === assistantMessage.id 
-                      ? { ...m, content: assistantContent }
-                      : m
-                  )
-                );
               }
+              if (parsed.sources && Array.isArray(parsed.sources)) {
+                assistantSources = parsed.sources;
+              }
+              setMessages(prev => 
+                prev.map(m => 
+                  m.id === assistantMessage.id 
+                    ? { ...m, content: assistantContent, sources: assistantSources }
+                    : m
+                )
+              );
             } catch {
               // 忽略解析错误
             }
@@ -1363,11 +1403,37 @@ export default function Home() {
                                   </div>
                                 </div>
                               )}
-                              <div className="whitespace-pre-wrap text-xs md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none">
-                                {message.content.includes('【用户上传文件') 
-                                  ? message.content.split('【用户问题】')[1] || message.content
-                                  : message.content}
-                              </div>
+                              <div 
+                                className="whitespace-pre-wrap text-xs md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none"
+                                dangerouslySetInnerHTML={{ 
+                                  __html: renderContentWithSources(
+                                    message.content.includes('【用户上传文件') 
+                                      ? message.content.split('【用户问题】')[1] || message.content
+                                      : message.content,
+                                    message.sources
+                                  )
+                                }}
+                              />
+                              {/* 来源列表 - 仅在assistant回复且有sources时显示 */}
+                              {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                  <div className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                                    <ExternalLink className="h-3 w-3" />
+                                    <span>来源：</span>
+                                    {message.sources.map((source, idx) => (
+                                      <a
+                                        key={source.index}
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-0.5 mx-1 px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                      >
+                                        <span className="font-medium">{idx + 1}</span>
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                           {/* 医院推荐卡片 - 仅在Bot回复且包含医院时显示 */}

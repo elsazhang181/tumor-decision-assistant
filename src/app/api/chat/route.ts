@@ -26,17 +26,35 @@ const FIRST_VISIT_KNOWLEDGE = firstVisitData;
 const searchClient = new SearchClient(new Config());
 
 // ============== 网络搜索函数 ==============
-async function searchWeb(query: string): Promise<string> {
+interface SearchResultItem {
+  index: number;
+  title: string;
+  url: string;
+  snippet: string;
+  gpt_summary?: string;
+  sourceType: string;
+}
+
+interface SearchResult {
+  items: SearchResultItem[];
+  total: number;
+}
+
+async function searchWeb(query: string): Promise<{ text: string; data: SearchResult }> {
   try {
     const response = await searchClient.webSearch(query, 5, true);
     
     if (!response.web_items || response.web_items.length === 0) {
-      return '未找到相关网络搜索结果。';
+      return { text: '未找到相关网络搜索结果。', data: { items: [], total: 0 } };
     }
     
-    let searchResult = '\n### 🌐 网络搜索结果\n\n';
+    const searchResultItems: SearchResultItem[] = [];
+    let searchResultText = '\n### 🌐 网络搜索结果\n\n';
     
-    for (const item of response.web_items) {
+    for (let i = 0; i < response.web_items.length; i++) {
+      const item = response.web_items[i];
+      const index = i + 1;
+      
       // 判断信息来源类型
       let sourceType = '网站';
       const url = item.url || '';
@@ -50,21 +68,36 @@ async function searchWeb(query: string): Promise<string> {
         sourceType = '医院官网';
       }
       
-      searchResult += `**【${sourceType}】${item.title}**\n`;
-      searchResult += `来源：${url}\n`;
+      // 保存结构化数据
+      searchResultItems.push({
+        index,
+        title: item.title || '',
+        url: url,
+        snippet: item.snippet || '',
+        gpt_summary: item.gpt_summary,
+        sourceType
+      });
+      
+      searchResultText += `[${index}] **【${sourceType}】${item.title}**\n`;
+      searchResultText += `来源：${url}\n`;
       if (item.snippet) {
-        searchResult += `摘要：${item.snippet}\n`;
+        searchResultText += `摘要：${item.snippet}\n`;
       }
       if (item.gpt_summary) {
-        searchResult += `概要：${item.gpt_summary}\n`;
+        searchResultText += `概要：${item.gpt_summary}\n`;
       }
-      searchResult += '\n---\n\n';
+      searchResultText += '\n---\n\n';
     }
     
-    return searchResult;
+    const searchResult: SearchResult = {
+      items: searchResultItems,
+      total: searchResultItems.length
+    };
+    
+    return { text: searchResultText, data: searchResult };
   } catch (error) {
     console.error('Web search error:', error);
-    return '';
+    return { text: '', data: { items: [], total: 0 } };
   }
 }
 
@@ -1289,6 +1322,8 @@ export async function POST(request: NextRequest) {
     
     // 判断是否需要网络搜索
     let webSearchContext = '';
+    let searchSourcesData: SearchResult | null = null;
+    
     if (shouldSearchWeb(message, stage as Stage)) {
       // 根据环节和问题类型构建搜索关键词
       let searchQuery = message;
@@ -1307,36 +1342,42 @@ export async function POST(request: NextRequest) {
       const finalSearchQuery = searchPrefix + searchQuery;
       
       const searchResult = await searchWeb(finalSearchQuery);
-      if (searchResult && searchResult.length > 0) {
+      
+      if (searchResult.text && searchResult.text.length > 0) {
+        searchSourcesData = searchResult.data;
+        
+        // 生成带编号的搜索结果
+        let numberedSearchResult = '\n### 🌐 网络搜索结果\n\n';
+        numberedSearchResult += `共找到 ${searchResult.data.total} 个相关来源，请使用上标编号①②③...标注信息来源。\n\n`;
+        
+        for (const item of searchResult.data.items) {
+          numberedSearchResult += `【${item.index}】${item.title}\n`;
+          numberedSearchResult += `来源：${item.url}\n`;
+          if (item.snippet) {
+            numberedSearchResult += `摘要：${item.snippet}\n`;
+          }
+          numberedSearchResult += '\n---\n\n';
+        }
+        
         webSearchContext = `
-\n\n## 🌐 补充信息（来自网络搜索）\n
+\n\n## 🌐 补充信息（来自网络搜索）
 以下搜索结果仅供参考，**不能**作为知识库内容引用：
 
-${searchResult}
+${numberedSearchResult}
 
 **【搜索结果使用规则 - 必须严格遵守】**
 
-1. **严格区分知识库和搜索结果**：
+1. **信息来源必须使用上标编号标注**：
+   - 在回复中使用①②③等上标数字标注信息来源
+   - 格式：内容[①]、内容[②]表示引用自对应编号的搜索结果
+
+2. **必须区分知识库和搜索结果**：
    - 【知识库：熊猫群专家信息汇总】只能用于知识库中**实际存在**的专家信息
-   - 【知识库：北肿首诊注意事项】只能用于知识库中**实际存在**的流程信息
    - **绝对禁止**将网络搜索结果标注为【知识库：熊猫群】
 
-2. **搜索结果的正确标注方式**：
-   - 【来源：医院官网 - 具体医院名称】
-   - 【来源：政府官网 - 具体网站】
-   - 【来源：行业媒体 - 具体媒体】
-   - 【来源：医疗平台 - 好大夫在线/丁香园等】
-
-3. **知识库外专家的正确处理方式**：
-   - 必须使用搜索结果来回答，不能只说"不在知识库中"
-   - 搜索结果包含多篇网络文章的综合信息，可用于分析对比
-   - 参考DeepSeek风格，先总述结论，再分情况给出建议
-
-4. **禁止行为**：
+3. **禁止行为**：
    - ❌ 禁止将搜索结果伪装成知识库内容
-   - ❌ 禁止在标注【知识库：熊猫群】的内容中混入搜索结果
    - ❌ 禁止编造专家的专业数据
-   - ❌ 禁止只说"不在知识库中"就结束回答
 
 `;
       }
@@ -1430,13 +1471,28 @@ ${searchResult}
             customHeaders
           );
           
+          let isFirstChunk = true;
+          
           for await (const part of responseStream) {
             const content = part.content;
             if (content && typeof content === 'string') {
-              const data = JSON.stringify({
+              // 构建响应数据
+              const responseData: {
+                content: string;
+                stage: string;
+                sources?: SearchResultItem[];
+              } = {
                 content,
                 stage
-              });
+              };
+              
+              // 只在第一条消息时发送来源数据
+              if (isFirstChunk && searchSourcesData && searchSourcesData.items.length > 0) {
+                responseData.sources = searchSourcesData.items;
+                isFirstChunk = false;
+              }
+              
+              const data = JSON.stringify(responseData);
               
               try {
                 controller.enqueue(encoder.encode(`data: ${data}\n\n`));
