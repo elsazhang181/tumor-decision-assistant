@@ -1502,22 +1502,22 @@ export default function Home() {
                               />
                               {/* 来源列表 - 仅在assistant回复且有sources时显示 */}
                               {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-3">
-                                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1">
+                                <div className="mt-3 bg-gray-100 dark:bg-slate-800/50 rounded-lg p-3">
+                                  <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1">
                                     <ExternalLink className="h-3 w-3" />
                                     <span>【信息来源声明】本回答参考了以下来源：</span>
                                   </div>
-                                  <ul className="space-y-1.5">
+                                  <ul className="space-y-2">
                                     {message.sources.map((source, idx) => (
-                                      <li key={source.index} className="flex items-start gap-2 text-xs">
-                                        <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-medium text-[10px]">
+                                      <li key={source.index} className="flex items-center gap-2 text-xs">
+                                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold">
                                           {idx + 1}
                                         </span>
                                         <a
                                           href={source.url}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline decoration-blue-300 dark:decoration-blue-700 hover:decoration-blue-500 transition-colors line-clamp-2 flex-1"
+                                          className="text-blue-500 hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300 transition-colors line-clamp-1 flex-1"
                                           title={source.url}
                                         >
                                           {source.title || source.url}
