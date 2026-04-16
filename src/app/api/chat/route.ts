@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config, HeaderUtils, Message } from 'coze-coding-dev-sdk';
+import { SearchClient } from 'coze-coding-dev-sdk';
 import expertsData from '@/lib/experts-knowledge.json';
 import cscoData from '@/lib/csco-knowledge.json';
 import insuranceData from '@/lib/insurance-knowledge.json';
@@ -20,6 +21,81 @@ const HOSPITALS_QR = hospitalsQRData;
 const CLINICAL_TRIAL_KNOWLEDGE = clinicalTrialData;
 const CHEMOTHERAPY_SIDE_EFFECTS = chemotherapyData;
 const FIRST_VISIT_KNOWLEDGE = firstVisitData;
+
+// ============== 搜索客户端初始化 ==============
+const searchClient = new SearchClient(new Config());
+
+// ============== 网络搜索函数 ==============
+async function searchWeb(query: string): Promise<string> {
+  try {
+    const response = await searchClient.webSearch(query, 5, true);
+    
+    if (!response.web_items || response.web_items.length === 0) {
+      return '未找到相关网络搜索结果。';
+    }
+    
+    let searchResult = '\n### 🌐 网络搜索结果\n\n';
+    
+    for (const item of response.web_items) {
+      // 判断信息来源类型
+      let sourceType = '网站';
+      const url = item.url || '';
+      if (url.includes('gov.cn')) {
+        sourceType = '政府官网';
+      } else if (url.includes('haodf.com') || url.includes('dxy.cn') || url.includes('99.com')) {
+        sourceType = '医疗平台';
+      } else if (url.includes('sina.com') || url.includes('qq.com') || url.includes('163.com') || url.includes('ifeng.com')) {
+        sourceType = '行业媒体';
+      } else if (url.includes('hospital') || url.includes('cancer') || url.includes('cc') || url.includes('org.cn')) {
+        sourceType = '医院官网';
+      }
+      
+      searchResult += `**【${sourceType}】${item.title}**\n`;
+      searchResult += `来源：${url}\n`;
+      if (item.snippet) {
+        searchResult += `摘要：${item.snippet}\n`;
+      }
+      if (item.gpt_summary) {
+        searchResult += `概要：${item.gpt_summary}\n`;
+      }
+      searchResult += '\n---\n\n';
+    }
+    
+    return searchResult;
+  } catch (error) {
+    console.error('Web search error:', error);
+    return '';
+  }
+}
+
+// ============== 判断是否需要网络搜索 ==============
+function shouldSearchWeb(message: string, stage: Stage): boolean {
+  const lowerMessage = message.toLowerCase();
+  
+  // 明确需要搜索的场景
+  const searchTriggers = [
+    // 专家相关信息
+    '专家', '主任', '医生', '大夫', '哪个医生', '找谁', '推荐医生',
+    // 医院具体信息
+    '挂号', '怎么挂号', '预约', '出诊', '停诊',
+    // 最新治疗/药物
+    '新药', '新疗法', '最新', '指南',
+    // 费用相关
+    '费用', '价格', '多少钱', '报销',
+    // 异地就医
+    '异地就医', '转诊',
+    // 北肿首诊
+    '首诊', '北肿', '北京大学肿瘤'
+  ];
+  
+  // 科室推荐环节更容易需要搜索
+  if (stage === 'department') {
+    return true;
+  }
+  
+  // 其他环节按关键词判断
+  return searchTriggers.some(trigger => lowerMessage.includes(trigger));
+}
 
 // ============== 统一回复格式模板 ==============
 const UNIFIED_OUTPUT_TEMPLATE = `
@@ -779,6 +855,31 @@ const hospitalQRPrompt = generateHospitalQRPrompt();
 - 用户询问检查指标
 - 其他非医院/专家询问的问题
 
+### 📌 【信息来源标注规则 - 最重要】
+**信息来源必须明确区分：**
+
+**一、知识库内信息**
+- 知识库中有的专家/医院：注明【知识库：熊猫群专家信息汇总】
+- 知识库中的就诊流程：注明【知识库：北肿首诊注意事项】
+
+**二、知识库外信息（网络搜索）**
+- 知识库中没有的专家/医院信息，引用搜索结果时：
+  - 注明【来源：医院官网 - 具体医院名称】
+  - 注明【来源：政府官网 - 具体网站】
+  - 注明【来源：行业媒体 - 具体媒体名称】
+  - 注明【来源：医疗平台 - 具体平台名称】
+
+**三、信息来源声明格式要求**
+- 【信息来源声明】必须逐条列出本次回复引用的所有来源
+- 格式：【来源类型】来源名称
+- 例如：
+  - 【知识库：熊猫群专家信息汇总】
+  - 【来源：医院官网 - 北京大学肿瘤医院官网】
+  - 【来源：政府官网 - 国家医疗保障局】
+  - 【来源：行业媒体 - 医学界肿瘤频道】
+- **禁止**：在信息来源声明中列出未实际引用的来源
+- **禁止**：混合标注（如"【知识库+网络搜索：xxx】"），必须分开标注
+
 ### 图片识别
 ${IMAGE_RECOGNITION_RULES}
 
@@ -1154,6 +1255,46 @@ export async function POST(request: NextRequest) {
     
     const stagePrompt = STAGE_PROMPTS[stage as Stage] || STAGE_PROMPTS.symptom;
     
+    // 判断是否需要网络搜索
+    let webSearchContext = '';
+    if (shouldSearchWeb(message, stage as Stage)) {
+      // 根据环节和问题类型构建搜索关键词
+      let searchQuery = message;
+      
+      // 科室推荐环节优先搜索专家信息
+      if (stage === 'department') {
+        // 提取专家姓名作为搜索关键词
+        const expertMatch = message.match(/[\u4e00-\u9fa5]{2,4}(?:主任|教授|医生|大夫)/g);
+        if (expertMatch) {
+          searchQuery = expertMatch.join(' ') + ' ' + message;
+        }
+      }
+      
+      // 添加搜索关键词前缀，提高搜索精准度
+      const searchPrefix = '北京大学肿瘤医院 胃肠 肝胆 结直肠 胃肠肿瘤 ';
+      const finalSearchQuery = searchPrefix + searchQuery;
+      
+      const searchResult = await searchWeb(finalSearchQuery);
+      if (searchResult && searchResult.length > 0) {
+        webSearchContext = `
+\n\n## 🌐 补充信息（来自网络搜索）\n
+如果下方知识库中没有用户询问的专家或信息，请参考网络搜索结果：
+
+${searchResult}
+
+**【搜索结果使用规则】**
+1. **优先使用知识库**：如果知识库中有相关信息，以知识库为准
+2. **补充使用搜索结果**：知识库中没有的信息，引用搜索结果
+3. **注明信息来源**：回复中必须明确标注信息来源：
+   - 来自知识库：【知识库：xxx】
+   - 来自网络搜索：【来源：医院官网/政府官网/行业媒体 - 具体网站名称】
+4. **区分信息来源**：不同来源的信息要分开标注
+5. **谨慎使用**：对于医疗专业信息，如不确定可建议用户咨询专业人士
+
+`;
+      }
+    }
+    
     // 如果有上下文，添加到 system prompt 中
     const contextPrompt = context?.summary 
       ? `\n\n## 📋 前序环节结论摘要\n${context.summary}\n\n**【重要】上述内容为用户在其他环节已获得的结论，回答时请：**
@@ -1173,7 +1314,7 @@ export async function POST(request: NextRequest) {
       : '';
     
     // 构建系统消息
-    const systemMessage = { role: 'system' as const, content: stagePrompt + contextPrompt + historyContext };
+    const systemMessage = { role: 'system' as const, content: stagePrompt + contextPrompt + historyContext + webSearchContext };
     
     // 构建历史消息
     const historyMessages = history.map((h: { role: string; content: string }) => ({ 
