@@ -473,13 +473,16 @@ interface Message {
 
 // ============== 渲染带链接的内容 ==============
 const renderContentWithSources = (content: string, sources: SourceItem[] = []) => {
-  if (!sources || sources.length === 0) {
-    return content;
-  }
-  
   // 创建编号到URL的映射
   const sourceMap = new Map<number, SourceItem>();
-  sources.forEach(s => sourceMap.set(s.index, s));
+  if (sources && sources.length > 0) {
+    sources.forEach(s => sourceMap.set(s.index, s));
+    console.log('[DEBUG] sources received:', sources.length, 'items');
+    sources.forEach(s => console.log(`[DEBUG] source ${s.index}: ${s.title}`));
+  } else {
+    console.log('[DEBUG] no sources received');
+    return content;
+  }
   
   // 定义解析数字索引的函数
   const getIndexFromNum = (num: string): number => {
@@ -520,7 +523,16 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   // 匹配各种编号格式
   let processedContent = content;
   
-  // 1. 处理带方括号的数字 [1][2][3] 或 [①][②][③] 或 [一][二][三]
+  // 1. 处理全角方括号【1】【2】【3】或【①】【②】【③】
+  processedContent = processedContent.replace(
+    /【([1-9]|10|[一二三四五六七八九十①-⑨]|[\u2460-\u2469]|[\u2470-\u2473])】/g, 
+    (match, num) => {
+      const index = getIndexFromNum(num);
+      return makeLink(num, index);
+    }
+  );
+  
+  // 2. 处理半角方括号[1][2][3]或[①][②][③]或[一][二][三]
   processedContent = processedContent.replace(
     /\[([1-9]|10|[一二三四五六七八九十]|[\u2460-\u2469]|[\u2470-\u2473])\]/g, 
     (match, num) => {
@@ -529,7 +541,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
   
-  // 2. 处理不带括号的点号数字：1. 2. 3. 或 ①. ②. ③.
+  // 3. 处理不带括号的点号数字：1. 2. 3. 或 ①. ②. ③.
   processedContent = processedContent.replace(
     /(\d+)\.\s*/g,
     (match, num) => {
@@ -538,7 +550,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
   
-  // 3. 处理不带括号也不带点的纯数字：1、2、3（中文顿号分隔）
+  // 4. 处理不带括号也不带点的纯数字：1、2、3（中文顿号分隔）
   processedContent = processedContent.replace(
     /(\d+)、\s*/g,
     (match, num) => {
@@ -547,7 +559,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
   
-  // 4. 处理不带括号的纯数字（前后有空格或换行）：① ② ③
+  // 5. 处理不带括号的纯数字（前后有空格或换行）：① ② ③
   processedContent = processedContent.replace(
     /([\u2460-\u2469]|[\u2470-\u2473])\s+/g,
     (match, num) => {
