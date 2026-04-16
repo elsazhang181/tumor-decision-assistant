@@ -1543,6 +1543,16 @@ export default function Home() {
                                   </ul>
                                 </div>
                               )}
+                              {/* 重要提示 - 仅在assistant回复时显示 */}
+                              {message.role === 'assistant' && (
+                                <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                  <span className="text-orange-500 mr-1">⚠️</span>
+                                  {message.content.includes('【用户上传文件') 
+                                    ? '以上信息仅供参考，具体选择需结合患者实际病情、就诊便利性等因素，建议提前通过医院官方渠道预约专家门诊，完善术前评估后再确定治疗方案。'
+                                    : '以上信息仅供参考，不能替代专业医生的诊断和治疗。具体治疗方案请遵医嘱，如有不适请尽快就医。'
+                                  }
+                                </div>
+                              )}
                             </div>
                           </div>
                           {/* 医院推荐卡片 - 仅在Bot回复且包含医院时显示 */}
