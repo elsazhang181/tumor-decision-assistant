@@ -74,7 +74,7 @@ async function searchWeb(query: string): Promise<{ text: string; data: SearchRes
         title: item.title || '',
         url: url,
         snippet: item.snippet || '',
-        gpt_summary: item.gpt_summary,
+        gpt_summary: (item as unknown as Record<string, unknown>).gpt_summary as string | undefined,
         sourceType
       });
       
@@ -83,8 +83,9 @@ async function searchWeb(query: string): Promise<{ text: string; data: SearchRes
       if (item.snippet) {
         searchResultText += `摘要：${item.snippet}\n`;
       }
-      if (item.gpt_summary) {
-        searchResultText += `概要：${item.gpt_summary}\n`;
+      const itemGptSummary = (item as unknown as Record<string, unknown>).gpt_summary as string | undefined;
+      if (itemGptSummary) {
+        searchResultText += `概要：${itemGptSummary}\n`;
       }
       searchResultText += '\n---\n\n';
     }
@@ -1389,21 +1390,59 @@ export async function POST(request: NextRequest) {
 
 ${numberedSearchResult}
 
-**【搜索结果使用规则 - 必须严格遵守】**
+**【搜索结果使用规则 - 最高优先级，必须严格遵守】**
 
-1. **信息来源必须使用上标编号标注**：
-   - 在回复中使用①②③等上标数字标注信息来源
-   - 格式：内容[①]、内容[②]表示引用自对应编号的搜索结果
+**核心原则**：
+- 本知识库仅包含：北京大学肿瘤医院、天津市肿瘤医院的**特定专家**
+- 以下专家**不在知识库中**：张黎明、吕富靖、以及任何未被知识库明确列出的专家
+- **绝对禁止**将这些不在库中的专家信息标注为【知识库：熊猫群】
 
-2. **必须区分知识库和搜索结果**：
-   - 【知识库：熊猫群专家信息汇总】只能用于知识库中**实际存在**的专家信息
-   - **绝对禁止**将网络搜索结果标注为【知识库：熊猫群】
+**【强制使用数字标注来源 - 违反将导致严重后果】**：
+在回复的【依据】部分，**每个事实**后面**必须**使用[①][②][③]等标注对应的搜索来源：
 
-3. **禁止行为**：
-   - ❌ 禁止将搜索结果伪装成知识库内容
-   - ❌ 禁止编造专家的专业数据
+✅ **正确格式**：
+\`\`\`
+【依据】
+- 张黎明是北京大学人民医院消化内科副主任医师[①][②]
+- 张黎明擅长消化道早期癌的内镜下诊断及治疗[①][②]
+- 吕富靖是北京友谊医院消化内科主任医师[③][④]
+- 吕富靖擅长ESD手术[③][④]
+\`\`\`
+
+❌ **错误格式（禁止使用）**：
+\`\`\`
+【依据】
+- 张黎明是北京大学人民医院消化内科副主任医师
+- 吕富靖是北京友谊医院消化内科主任医师[网络搜索公开信息]  ← 禁止！
+\`\`\`
+
+**【禁止行为 - 违反将导致严重后果】**：
+- ❌ 禁止将搜索结果标注为【知识库：熊猫群】
+- ❌ 禁止使用"[网络搜索公开信息]"作为来源，必须使用[①][②][③]
+- ❌ 禁止在回复中省略①②③等来源标注
+- ❌ 禁止编造专家的专业数据
+- ❌ 只说"不在知识库中"就结束回答，必须使用搜索结果[①②③]
+
+**【示例：正确的回复结构】**：
+\`\`\`
+【结论】
+两位专家各有专长...
+
+【依据】
+- 张黎明主任是北京大学人民医院消化内科副主任医师[①]
+- 张黎明主任擅长消化道早期癌的内镜下诊断及治疗[①][②]
+- 吕富靖主任是北京友谊医院消化内科主任医师[③]
+- 吕富靖主任擅长ESD微创治疗[③][④]
+
+【信息来源声明】
+[①] http://wapyyk.39.net/doctor/368680.html
+[②] https://www.youlai.cn/yyk/hospindex/30/...
+[③] https://友谊医院官网/...
+[④] https://...
+
 
 `;
+
       }
     }
     
