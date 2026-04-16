@@ -1331,20 +1331,44 @@ export async function POST(request: NextRequest) {
       // 科室推荐环节优先搜索专家信息
       if (stage === 'department') {
         // 提取专家姓名作为搜索关键词
-        const expertMatch = message.match(/[\u4e00-\u9fa5]{2,4}(?:主任|教授|医生|大夫)/g);
+        const expertMatch = message.match(/[\u4e00-\u9fa5]{2,4}(?:主任|教授|医生|大夫|医师)/g);
         if (expertMatch) {
-          searchQuery = expertMatch.join(' ') + ' ' + message;
+          // 针对专家问题，使用更精准的搜索策略
+          const expertNames = expertMatch.join(' ');
+          const hospitalMatch = message.match(/(?:北大人民|北京人民|友谊|肿瘤|协和|阜外|宣武|天坛)[^，,。\s]*/);
+          const hospital = hospitalMatch ? hospitalMatch[0] : '';
+          
+          // 优先搜索医疗平台上的专家信息
+          searchQuery = `${expertNames} ${hospital} 好大夫在线 39健康网 医生介绍 擅长 出诊`;
         }
       }
       
-      // 添加搜索关键词前缀，提高搜索精准度
-      const searchPrefix = '北京大学肿瘤医院 胃肠 肝胆 结直肠 胃肠肿瘤 ';
+      // 添加肿瘤相关限定词，提高搜索精准度
+      const searchPrefix = '消化内镜 胃肠肿瘤 胃肠道 消化道 ';
       const finalSearchQuery = searchPrefix + searchQuery;
       
       const searchResult = await searchWeb(finalSearchQuery);
       
       if (searchResult.text && searchResult.text.length > 0) {
-        searchSourcesData = searchResult.data;
+        // 过滤掉明显不相关的来源（如新闻网站）
+        const filteredItems = searchResult.data.items.filter(item => {
+          const url = item.url.toLowerCase();
+          const snippet = (item.snippet || '').toLowerCase();
+          // 排除新闻网站、资讯网站
+          const excludedKeywords = ['sina', 'qq.com', '163.com', 'sohu.com', 'ifeng', 
+                                   'thepaper', 'news', '日报', '晚报', '大众日报', '今日头条'];
+          return !excludedKeywords.some(kw => url.includes(kw) || snippet.includes(kw));
+        });
+        
+        // 重新编号
+        filteredItems.forEach((item, idx) => {
+          item.index = idx + 1;
+        });
+        
+        searchSourcesData = {
+          items: filteredItems,
+          total: filteredItems.length
+        };
         
         // 生成带编号的搜索结果
         let numberedSearchResult = '\n### 🌐 网络搜索结果\n\n';
