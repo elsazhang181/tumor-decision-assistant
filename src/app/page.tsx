@@ -505,8 +505,12 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   filteredContent = filteredContent
     .replace(/(?:^|\n)(?:\*\*)?[⚠️]*\s*重要提示[^\n]*(?:\n(?!\s*(?:---|\[医患沟通提问清单\]|\[记录要点\]|\[信息来源声明\]))[^\n]*)*/gi, '');
 
-  // 5. 清理多余的空行
+  // 5. 清理多余的空行和分隔符
   filteredContent = filteredContent
+    // 删除连续的多余分隔符
+    .replace(/\n-{3,}\n*/g, '\n')
+    // 删除孤立的单行分隔符（前后没有内容的）
+    .replace(/(?:^|\n)-{3,}(?:\n|$)/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   
