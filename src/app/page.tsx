@@ -481,59 +481,80 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   const sourceMap = new Map<number, SourceItem>();
   sources.forEach(s => sourceMap.set(s.index, s));
   
-  // 匹配各种编号格式：
-  // [1][2][3]、1、2、3、1. 2. 3.、[一][二][三]、[①][②][③]、①、②、③、①. ②. ③.
-  const processedContent = content
-    // 1. 处理带方括号的数字 [1][2][3] 或 [①][②][③]
-    .replace(
-      /\[([1-9]|10|[一二三四五六七八九十]|[\u2460-\u2469]|[\u2470-\u2473])\]/g, 
-      (match, num) => {
-        const indexMap: { [key: string]: number } = {
-          '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-          '六': 6, '七': 7, '八': 8, '九': 9, '十': 10
-        };
-        let index: number;
-        if (num.length === 1 && num.charCodeAt(0) >= 0x2460 && num.charCodeAt(0) <= 0x2469) {
-          index = num.charCodeAt(0) - 0x2460 + 1;
-        } else if (num.length === 1 && num.charCodeAt(0) >= 0x2470 && num.charCodeAt(0) <= 0x2473) {
-          index = num.charCodeAt(0) - 0x2470 + 11;
-        } else if (/^\d+$/.test(num)) {
-          index = parseInt(num);
-        } else {
-          index = indexMap[num] || 0;
-        }
-        
-        if (index && sourceMap.has(index)) {
-          const source = sourceMap.get(index)!;
-          return `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">[${num}]</a>`;
-        }
-        return match;
+  // 定义解析数字索引的函数
+  const getIndexFromNum = (num: string): number => {
+    const indexMap: { [key: string]: number } = {
+      '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+      '六': 6, '七': 7, '八': 8, '九': 9, '十': 10
+    };
+    
+    // Unicode带圈数字 ①-⑳ (U+2460 起)
+    if (num.length === 1) {
+      const charCode = num.charCodeAt(0);
+      // ①-⑩ (U+2460-U+2469)
+      if (charCode >= 0x2460 && charCode <= 0x2469) {
+        return charCode - 0x2460 + 1;
       }
-    )
-    // 2. 处理不带括号的点号数字：1. 2. 3. 或 ①. ②. ③.
-    .replace(
-      /(\d+)\.\s*/g,
-      (match, num) => {
-        const index = parseInt(num);
-        if (index && sourceMap.has(index)) {
-          const source = sourceMap.get(index)!;
-          return `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">[${num}]</a> `;
-        }
-        return match;
+      // ⑪-⑳ (U+2470-U+2473)
+      if (charCode >= 0x2470 && charCode <= 0x2473) {
+        return charCode - 0x2470 + 11;
       }
-    )
-    // 3. 处理不带括号也不带点的纯数字：1、2、3（中文顿号分隔）
-    .replace(
-      /(\d+)、\s*/g,
-      (match, num) => {
-        const index = parseInt(num);
-        if (index && sourceMap.has(index)) {
-          const source = sourceMap.get(index)!;
-          return `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">[${num}]</a> `;
-        }
-        return match;
-      }
-    );
+    }
+    // 阿拉伯数字
+    if (/^\d+$/.test(num)) {
+      return parseInt(num);
+    }
+    // 中文数字
+    return indexMap[num] || 0;
+  };
+  
+  // 转换为链接的函数
+  const makeLink = (num: string, index: number): string => {
+    if (index && sourceMap.has(index)) {
+      const source = sourceMap.get(index)!;
+      return `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">[${num}]</a>`;
+    }
+    return `[${num}]`;
+  };
+  
+  // 匹配各种编号格式
+  let processedContent = content;
+  
+  // 1. 处理带方括号的数字 [1][2][3] 或 [①][②][③] 或 [一][二][三]
+  processedContent = processedContent.replace(
+    /\[([1-9]|10|[一二三四五六七八九十]|[\u2460-\u2469]|[\u2470-\u2473])\]/g, 
+    (match, num) => {
+      const index = getIndexFromNum(num);
+      return makeLink(num, index);
+    }
+  );
+  
+  // 2. 处理不带括号的点号数字：1. 2. 3. 或 ①. ②. ③.
+  processedContent = processedContent.replace(
+    /(\d+)\.\s*/g,
+    (match, num) => {
+      const index = getIndexFromNum(num);
+      return makeLink(num, index) + ' ';
+    }
+  );
+  
+  // 3. 处理不带括号也不带点的纯数字：1、2、3（中文顿号分隔）
+  processedContent = processedContent.replace(
+    /(\d+)、\s*/g,
+    (match, num) => {
+      const index = getIndexFromNum(num);
+      return makeLink(num, index) + ' ';
+    }
+  );
+  
+  // 4. 处理不带括号的纯数字（前后有空格或换行）：① ② ③
+  processedContent = processedContent.replace(
+    /([\u2460-\u2469]|[\u2470-\u2473])\s+/g,
+    (match, num) => {
+      const index = getIndexFromNum(num);
+      return makeLink(num, index) + ' ';
+    }
+  );
   
   return processedContent;
 };
