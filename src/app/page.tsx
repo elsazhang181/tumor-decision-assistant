@@ -481,19 +481,39 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   const sourceMap = new Map<number, SourceItem>();
   sources.forEach(s => sourceMap.set(s.index, s));
   
-  // 使用正则替换 [①][②][③] 等为可点击链接
-  const processedContent = content.replace(/\[([一二三四五六七八九十]+)\]/g, (match, pinyin) => {
-    const indexMap: { [key: string]: number } = {
-      '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
-      '六': 6, '七': 7, '八': 8, '九': 9, '十': 10
-    };
-    const index = indexMap[pinyin];
-    if (index && sourceMap.has(index)) {
-      const source = sourceMap.get(index)!;
-      return `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">[${pinyin}]</a>`;
+  // 匹配各种编号格式：[1][2][3] 或 [一][二][三] 或 [①][②][③]
+  const processedContent = content.replace(
+    /\[([1-9]|10|[一二三四五六七八九十]|[\u2460-\u2469]|[\u2470-\u2473])\]/g, 
+    (match, num) => {
+      const indexMap: { [key: string]: number } = {
+        '一': 1, '二': 2, '三': 3, '四': 4, '五': 5,
+        '六': 6, '七': 7, '八': 8, '九': 9, '十': 10
+      };
+      let index: number;
+      // 匹配带圈数字 (Unicode U+2460 起：①②③...)
+      if (num.length === 1 && num.charCodeAt(0) >= 0x2460 && num.charCodeAt(0) <= 0x2469) {
+        index = num.charCodeAt(0) - 0x2460 + 1;
+      }
+      // 匹配带圈数字11-20 (Unicode U+2470 起)
+      else if (num.length === 1 && num.charCodeAt(0) >= 0x2470 && num.charCodeAt(0) <= 0x2473) {
+        index = num.charCodeAt(0) - 0x2470 + 11;
+      }
+      // 匹配阿拉伯数字
+      else if (/^\d+$/.test(num)) {
+        index = parseInt(num);
+      }
+      // 匹配中文数字
+      else {
+        index = indexMap[num] || 0;
+      }
+      
+      if (index && sourceMap.has(index)) {
+        const source = sourceMap.get(index)!;
+        return `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">[${num}]</a>`;
+      }
+      return match;
     }
-    return match;
-  });
+  );
   
   return processedContent;
 };
