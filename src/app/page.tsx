@@ -484,12 +484,21 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     return content;
   }
   
-  // 过滤掉【信息来源】部分的重复内容（只过滤从【信息来源】到下一个段落开头的内容）
-  // 保留"医患沟通提问清单"、"记录要点"、"重要提示"等内容
-  let filteredContent = content.replace(
-    /(?:^|\n)(?:●【信息来源】|【信息来源】|●【来源】|【来源】)[^\n]*(?:\n(?![^①-⑨\【\《\"]))?[\s\S]*?(?=\n\n【|\n[^-*\d\s]|$)/gi,
-    ''
-  ).trim();
+  // 过滤掉回复内容中的【信息来源】段落（保留底部声明列表）
+  // 匹配 ●【信息来源】 或 【信息来源】 段落，直到下一个标题段落
+  let filteredContent = content
+    // 过滤独立的【信息来源】段落（多行）
+    .replace(
+      /(?:^|\n)(?:●【信息来源】|【信息来源】|●【来源】|【来源】)[^\n]*(?:\n(?!\s*(?:[^\w\s]|$))[^\n]*)*/gi,
+      ''
+    )
+    // 过滤单行的【信息来源：xxx】格式
+    .replace(/(?:^|\n)\s*【信息来源[：:][^\n】]*】?\s*/gi, '')
+    // 过滤 【来源：xxx】 格式
+    .replace(/(?:^|\n)\s*【来源[：:][^\n】]*】?\s*/gi, '')
+    // 清理多余的空行
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   
   // 定义解析数字索引的函数
   const getIndexFromNum = (num: string): number => {
