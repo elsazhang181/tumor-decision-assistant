@@ -484,10 +484,10 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     return content;
   }
   
-  // 过滤掉回复内容中的【信息来源】段落（保留底部声明列表）
-  // 匹配 ●【信息来源】 或 【信息来源】 段落，直到下一个标题段落
+  // 过滤掉回复内容中的【信息来源】和【重要提示】段落（保留底部声明列表）
+  // 只过滤独立的段落标题，保留内容
   let filteredContent = content
-    // 过滤独立的【信息来源】段落（多行）
+    // 过滤独立的【信息来源】段落
     .replace(
       /(?:^|\n)(?:●【信息来源】|【信息来源】|●【来源】|【来源】)[^\n]*(?:\n(?!\s*(?:[^\w\s]|$))[^\n]*)*/gi,
       ''
@@ -496,6 +496,8 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     .replace(/(?:^|\n)\s*【信息来源[：:][^\n】]*】?\s*/gi, '')
     // 过滤 【来源：xxx】 格式
     .replace(/(?:^|\n)\s*【来源[：:][^\n】]*】?\s*/gi, '')
+    // 过滤 【重要提示】 段落（整段删除）
+    .replace(/(?:^|\n)【重要提示】[\s\S]*?(?=\n\n【|\n\n---|\n---|$)/gi, '')
     // 清理多余的空行
     .replace(/\n{3,}/g, '\n\n')
     .trim();
