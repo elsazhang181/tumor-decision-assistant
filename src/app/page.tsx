@@ -1555,14 +1555,13 @@ export default function Home() {
                               {/* 来源列表 - 仅在assistant回复且有sources时显示 */}
                               {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
                                 <div className="mt-3 bg-gray-100 dark:bg-slate-800/50 rounded-lg p-3">
-                                  <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2 flex items-center gap-1">
-                                    <ExternalLink className="h-3 w-3" />
+                                  <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">
                                     <span>【信息来源声明】本回答参考了以下来源：</span>
                                   </div>
-                                  <ul className="space-y-2">
+                                  <ul className="space-y-1.5">
                                     {message.sources.map((source, idx) => (
-                                      <li key={source.index} className="flex items-center gap-2 text-xs">
-                                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold">
+                                      <li key={source.index} className="flex items-start gap-2 text-xs">
+                                        <span className="flex-shrink-0 inline-block w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] font-bold mt-0.5">
                                           {idx + 1}
                                         </span>
                                         <a
