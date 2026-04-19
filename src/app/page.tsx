@@ -32,7 +32,9 @@ import {
   Paperclip,
   File,
   FileSpreadsheet,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Copy,
+  Download
 } from 'lucide-react';
 import Image from 'next/image';
 import hospitalsQRData from '@/lib/hospitals-qrcode.json';
@@ -1585,6 +1587,54 @@ export default function Home() {
                                     ? '以上信息仅供参考，具体选择需结合患者实际病情、就诊便利性等因素，建议提前通过医院官方渠道预约专家门诊，完善术前评估后再确定治疗方案。'
                                     : '以上信息仅供参考，不能替代专业医生的诊断和治疗。具体治疗方案请遵医嘱，如有不适请尽快就医。'
                                   }
+                                </div>
+                              )}
+                              {/* 复制和下载按钮 - 仅在assistant回复时显示 */}
+                              {message.role === 'assistant' && (
+                                <div className="mt-3 flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                                  <button
+                                    onClick={() => {
+                                      // 获取纯文本内容（去除HTML标签）
+                                      const tempDiv = document.createElement('div');
+                                      tempDiv.innerHTML = renderContentWithSources(message.content, message.sources);
+                                      const plainText = tempDiv.textContent || tempDiv.innerText || '';
+                                      navigator.clipboard.writeText(plainText).then(() => {
+                                        toast.success('已复制到剪贴板');
+                                      }).catch(() => {
+                                        toast.error('复制失败，请重试');
+                                      });
+                                    }}
+                                    className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                    title="复制回复内容"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                    <span>复制</span>
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      // 获取纯文本内容
+                                      const tempDiv = document.createElement('div');
+                                      tempDiv.innerHTML = renderContentWithSources(message.content, message.sources);
+                                      const plainText = tempDiv.textContent || tempDiv.innerText || '';
+                                      
+                                      // 创建下载文件
+                                      const blob = new Blob([plainText], { type: 'text/plain;charset=utf-8' });
+                                      const url = URL.createObjectURL(blob);
+                                      const link = document.createElement('a');
+                                      link.href = url;
+                                      link.download = `AI回复_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.txt`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                      URL.revokeObjectURL(url);
+                                      toast.success('已下载为文本文件');
+                                    }}
+                                    className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                                    title="下载回复内容"
+                                  >
+                                    <Download className="h-3 w-3" />
+                                    <span>下载</span>
+                                  </button>
                                 </div>
                               )}
                             </div>
