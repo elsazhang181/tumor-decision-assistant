@@ -42,50 +42,86 @@ interface SearchResult {
 
 async function searchWeb(query: string): Promise<{ text: string; data: SearchResult }> {
   try {
-    const response = await searchClient.webSearch(query, 5, true);
+    const response = await searchClient.webSearch(query, 8, true); // 增加搜索数量以便筛选
     
     if (!response.web_items || response.web_items.length === 0) {
       return { text: '未找到相关网络搜索结果。', data: { items: [], total: 0 } };
     }
     
-    const searchResultItems: SearchResultItem[] = [];
-    let searchResultText = '\n### 🌐 网络搜索结果\n\n';
+    // 定义来源优先级：政府官网 > 医院官网 > 医疗平台 > 行业媒体 > 其他
+    const sourcePriority: Record<string, number> = {
+      '政府官网': 1,
+      '医院官网': 2,
+      '医疗平台': 3,
+      '行业媒体': 4,
+      '自媒体': 5,
+      '网站': 6
+    };
     
-    for (let i = 0; i < response.web_items.length; i++) {
-      const item = response.web_items[i];
-      const index = i + 1;
-      
-      // 判断信息来源类型
+    // 判断信息来源类型并过滤低质量来源
+    const processItem = (item: typeof response.web_items[0], index: number) => {
+      const url = (item.url as string) || '';
       let sourceType = '网站';
-      const url = item.url || '';
+      
+      // 严格判断来源类型
       if (url.includes('gov.cn')) {
+        sourceType = '政府官网';
+      } else if (url.includes('nhsa.gov.cn') || url.includes('nhc.gov.cn') || url.includes('chinacdc.cn')) {
         sourceType = '政府官网';
       } else if (url.includes('haodf.com') || url.includes('dxy.cn') || url.includes('99.com')) {
         sourceType = '医疗平台';
-      } else if (url.includes('sina.com') || url.includes('qq.com') || url.includes('163.com') || url.includes('ifeng.com')) {
-        sourceType = '行业媒体';
+      } else if (url.includes('sina.com') || url.includes('qq.com') || url.includes('163.com') || url.includes('ifeng.com') || url.includes('sohu.com')) {
+        sourceType = '自媒体';
       } else if (url.includes('hospital') || url.includes('cancer') || url.includes('cc') || url.includes('org.cn')) {
         sourceType = '医院官网';
       }
       
-      // 保存结构化数据
-      searchResultItems.push({
-        index,
-        title: item.title || '',
-        url: url,
-        snippet: item.snippet || '',
-        gpt_summary: (item as unknown as Record<string, unknown>).gpt_summary as string | undefined,
-        sourceType
-      });
+      // 过滤低质量来源：优先保留政府官网和医院官网
+      const priority = sourcePriority[sourceType] || 6;
       
-      searchResultText += `[${index}] **【${sourceType}】${item.title}**\n`;
-      searchResultText += `来源：${url}\n`;
+      // gpt_summary可能存在于响应中但类型定义不完整
+      const gptSummary = (item as unknown as Record<string, unknown>).gpt_summary as string | undefined;
+      
+      return {
+        index,
+        title: (item.title as string) || '',
+        url: url,
+        snippet: (item.snippet as string) || '',
+        gpt_summary: gptSummary,
+        sourceType,
+        priority
+      };
+    };
+    
+    // 处理并排序搜索结果
+    const processedItems = response.web_items.map(processItem);
+    
+    // 按优先级排序：政府官网 > 医院官网 > 医疗平台 > 行业媒体 > 自媒体 > 其他
+    processedItems.sort((a, b) => a.priority - b.priority);
+    
+    // 限制返回结果：优先保留高质量来源，最多返回5个
+    const topItems = processedItems.slice(0, 5);
+    
+    // 重新编号
+    const searchResultItems: SearchResultItem[] = topItems.map((item, i) => ({
+      index: i + 1,
+      title: item.title,
+      url: item.url,
+      snippet: item.snippet,
+      gpt_summary: item.gpt_summary,
+      sourceType: item.sourceType
+    }));
+    
+    // 生成搜索结果文本
+    let searchResultText = '\n### 🌐 网络搜索结果（按来源权威性排序）\n\n';
+    for (const item of searchResultItems) {
+      searchResultText += `[${item.index}] **【${item.sourceType}】${item.title}**\n`;
+      searchResultText += `来源：${item.url}\n`;
       if (item.snippet) {
         searchResultText += `摘要：${item.snippet}\n`;
       }
-      const itemGptSummary = (item as unknown as Record<string, unknown>).gpt_summary as string | undefined;
-      if (itemGptSummary) {
-        searchResultText += `概要：${itemGptSummary}\n`;
+      if (item.gpt_summary) {
+        searchResultText += `概要：${item.gpt_summary}\n`;
       }
       searchResultText += '\n---\n\n';
     }
@@ -339,11 +375,29 @@ const CITATION_SETTINGS = `
 | 保险知识 | 【知识库：保险】 | 【知识库：保险】惠民保投保要点 |
 | 临床试验 | 【知识库：临床试验教程】 | 【知识库：临床试验教程】如何查询和参加临床试验 |
 
-**【引用来源优先级】**
-1. 医院官方：医院官网 > 医院官方公众号/服务号 > 医院官方小程序 > 医院官方APP
-2. 政府官方：国家层面 > 省市层面 > 地方层面
-3. 指南/共识类：CSCO指南 > NCCN指南 > 专家共识
-4. 知识库：专家库 > 指南库 > 保险库 > 临床试验库
+**【引用来源优先级 - 通用性问题必须优先使用政府官网】**
+⚠️ **【强制要求】当用户问题为通用性政策问题（如"医保怎么报销"、"报销比例"、"异地就医流程"等）时：**
+
+1. **必须优先引用政府官网来源**：
+   - 国家医疗保障局（www.nhsa.gov.cn）
+   - 国家卫生健康委员会（www.nhc.gov.cn）
+   - 各省市医保局官网
+   - 各省市卫健委官网
+
+2. **禁止使用非权威来源**：
+   - ❌ 自媒体文章（如微信公众号、头条号、百家号等个人/自媒体账号发布的内容）
+   - ❌ 商业平台转载的二手信息
+   - ❌ 未经核实的信息
+
+3. **正确示例**：
+   - ✅ "根据国家医疗保障局官网发布的政策，异地就医需先备案..."
+   - ✅ "来源：国家医保局官网（www.nhsa.gov.cn）"
+   - ❌ "根据某公众号报道，医保可以报销..."
+
+4. **信息来源声明格式**（必须使用URL链接，禁止只写医生姓名或平台名称）：
+   - 本回答参考了以下来源：
+   - 1. 国家医疗保障局 - 异地就医备案指南：https://www.nhsa.gov.cn/...
+   - 2. XX省医保局 - 城乡居民基本医疗保险政策：http://ybj.xx.gov.cn/...
 
 **【引用标注规则】**
 - 涉及**医护人员及诊疗相关关键信息**：必须标注具体来源（如：该信息综合自XXX医院官网/官方公众号）
@@ -361,19 +415,21 @@ const CITATION_SETTINGS = `
 - 包含指南：结肠癌、直肠癌、胃癌、成人癌痛
 
 **【免责声明设置】**
+⚠️ **【强制要求】信息来源声明必须使用URL链接，禁止只写医生姓名或平台名称！**
+
 回答末尾必须包含以下精简版免责声明（根据回答内容选择性引用相关来源）：
 
 ---
 
 **📋 信息来源声明**
 
-本回答参考了以下相关来源：
-• 【医院官网/官方公众号/小程序】相关医院官方网站、官方微信公众号/服务号/小程序（如涉及）
-• 【政府官网】各级政府官方网站（如涉及医保、卫健政策）
-• 【CSCO指南2025】2025 CSCO结直肠癌诊疗指南（如涉及诊疗方案）
-• 【NCCN指南2026】美国国立综合癌症网络指南（如涉及国际参考）
-• 【知识库：熊猫群】肿瘤专家信息汇总（如涉及科室推荐、专家信息）
-• 【知识库：保险】带病投保最新保险知识库（如涉及保险问题）
+本回答参考了以下相关来源（均使用URL链接形式）：
+• 【来源：医院官网/官方公众号/小程序】[医院官方网站URL]（如涉及）
+• 【来源：政府官网】[各级政府官方网站URL]（如涉及医保、卫健政策）
+• 【来源：CSCO指南2025】[指南链接]（如涉及诊疗方案）
+• 【来源：NCCN指南2026】[指南链接]（如涉及国际参考）
+• 【来源：知识库：熊猫群】肿瘤专家信息汇总（如涉及科室推荐、专家信息）
+• 【来源：知识库：保险】带病投保最新保险知识库（如涉及保险问题）
 
 **⚠️ 重要提示**
 以上信息仅供参考，不能替代专业医生的诊断和治疗。
