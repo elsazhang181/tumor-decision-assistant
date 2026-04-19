@@ -928,7 +928,8 @@ export default function Home() {
       '住院', '术前', '术后', '恢复', '息肉', '溃疡', '肿块', '肿瘤', '良性', '恶性'];
     
     const guidanceExclusiveKeywords = ['医保', '报销', '费用', '特药', '双通道', '门特', '门规', 
-      '异地就医', '临床试验', '大病保险', '价格', '多少钱', '花费'];
+      '异地就医', '临床试验', '大病保险', '价格', '多少钱', '花费', '原研药', '仿制药', 
+      '开药', '医生不让', '药占比', '医院没有', '买不到', '怎么开', '哪里买'];
     
     // 判断问题是否与各环节相关
     const isSymptomRelated = symptomExclusiveKeywords.some(k => lowerContent.includes(k));
@@ -1580,7 +1581,7 @@ export default function Home() {
                                   <ul className="space-y-1.5">
                                     {message.sources.map((source, idx) => (
                                       <li key={source.index} className="flex items-start gap-2 text-xs">
-                                        <span className="flex-shrink-0 inline-block w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] font-bold mt-0.5">
+                                        <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none">
                                           {idx + 1}
                                         </span>
                                         <a
@@ -1595,16 +1596,6 @@ export default function Home() {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
-                              {/* 重要提示 - 仅在assistant回复时显示 */}
-                              {message.role === 'assistant' && (
-                                <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                                  <span className="text-orange-500 mr-1">⚠️</span>
-                                  {message.content.includes('【用户上传文件') 
-                                    ? '以上信息仅供参考，具体选择需结合患者实际病情、就诊便利性等因素，建议提前通过医院官方渠道预约专家门诊，完善术前评估后再确定治疗方案。'
-                                    : '以上信息仅供参考，不能替代专业医生的诊断和治疗。具体治疗方案请遵医嘱，如有不适请尽快就医。'
-                                  }
                                 </div>
                               )}
                               {/* 复制和下载按钮 - 仅在assistant回复时显示 */}
