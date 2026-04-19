@@ -515,6 +515,23 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     .replace(/(?:^|\n)-{3,}(?:\n|$)/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  // 6. 医患沟通提问清单和记录要点中的数字标注不转链接
+  // 将这些区域中的 [1][2][3] 等格式替换为纯文本（不带链接）
+  filteredContent = filteredContent.replace(
+    /(\[医患沟通提问清单\][\s\S]*?)(\[1\]\s|\[2\]\s|\[3\]\s|\[4\]\s|\[5\]\s|\[6\]\s|\[7\]\s|\[8\]\s|\[9\]\s|\[10\]\s)/g,
+    (match, prefix, numItem) => {
+      // 保留纯文本数字标注，不转链接
+      return prefix + numItem;
+    }
+  );
+  // 额外处理：确保医患沟通提问清单和记录要点中的方括号数字不转链接
+  filteredContent = filteredContent.replace(
+    /(\[记录要点\][\s\S]*?)(?<!\]\s)(\[1\]\s|\[2\]\s|\[3\]\s|\[4\]\s|\[5\]\s|\[6\]\s|\[7\]\s|\[8\]\s|\[9\]\s|\[10\]\s)/g,
+    (match, prefix, numItem) => {
+      return prefix + numItem;
+    }
+  );
   
   // 定义解析数字索引的函数
   const getIndexFromNum = (num: string): number => {
@@ -906,7 +923,9 @@ export default function Home() {
     
     const treatmentExclusiveKeywords = ['化疗', '放疗', '手术', '靶向', '免疫治疗', '免疫', 
       '用药', '药物', '耐药', '疗程', '方案', 'cea', 'ca199', 'ca724', 'ca242', '治疗效果', 
-      '副作用', '不良反应', '效果', '起效', '没效果', '降低', '上升', '指标'];
+      '副作用', '不良反应', '效果', '起效', '没效果', '降低', '上升', '指标',
+      '内镜', 'esd', 'emr', '切除', '抑酸', '胃镜', '肠镜', '结肠镜', '胃部', '肠道',
+      '住院', '术前', '术后', '恢复', '息肉', '溃疡', '肿块', '肿瘤', '良性', '恶性'];
     
     const guidanceExclusiveKeywords = ['医保', '报销', '费用', '特药', '双通道', '门特', '门规', 
       '异地就医', '临床试验', '大病保险', '价格', '多少钱', '花费'];
