@@ -1474,39 +1474,51 @@ export async function POST(request: NextRequest) {
     let searchSourcesData: SearchResult | null = null;
     
     if (shouldSearchWeb(message, stage as Stage)) {
-      // 根据环节和问题类型构建搜索关键词
+      // 提取问题的核心关键词用于搜索
       let searchQuery = message;
       
-      // 科室推荐环节优先搜索专家信息
+      // 1. 移除常见的无效前缀
+      searchQuery = searchQuery.replace(/^(我得了|我是|我有|我想问|请问|咨询|问一下|帮忙|求助|请问一下|问一下医生|你好|您好)/gi, '');
+      
+      // 2. 移除问题后缀
+      searchQuery = searchQuery.replace(/([?？!！。\s]*)$/g, '');
+      
+      // 3. 移除过多的描述性文字，保留核心医疗术语
+      // 移除"怎么办"、"怎么治疗"、"好不好"等问题句式
+      searchQuery = searchQuery.replace(/怎么办|怎么治疗|好不好|能治吗|有没有|是不是|该不该|要不要|好不好治|能不能/gi, '');
+      
+      // 4. 如果问题包含专家姓名，优先搜索专家信息
       if (stage === 'department') {
-        // 提取专家姓名作为搜索关键词
         const expertMatch = message.match(/[\u4e00-\u9fa5]{2,4}(?:主任|教授|医生|大夫|医师)/g);
         if (expertMatch) {
-          // 针对专家问题，使用更精准的搜索策略
           const expertNames = expertMatch.join(' ');
           const hospitalMatch = message.match(/(?:北大人民|北京人民|友谊|肿瘤|协和|阜外|宣武|天坛)[^，,。\s]*/);
           const hospital = hospitalMatch ? hospitalMatch[0] : '';
-          
-          // 优先搜索医疗平台上的专家信息
           searchQuery = `${expertNames} ${hospital} 好大夫在线 39健康网 医生介绍 擅长 出诊`;
         }
       }
       
-      // 添加肿瘤相关限定词，提高搜索精准度
-      const searchPrefix = '消化内镜 胃肠肿瘤 胃肠道 消化道 ';
+      // 5. 添加精准的医疗领域限定词
+      const searchPrefix = '消化内镜 胃肠肿瘤 胃肠道 ';
       const finalSearchQuery = searchPrefix + searchQuery;
       
       const searchResult = await searchWeb(finalSearchQuery);
       
       if (searchResult.text && searchResult.text.length > 0) {
-        // 过滤掉明显不相关的来源（如新闻网站）
+        // 过滤掉明显不相关的来源
         const filteredItems = searchResult.data.items.filter(item => {
           const url = item.url.toLowerCase();
           const snippet = (item.snippet || '').toLowerCase();
+          const title = (item.title || '').toLowerCase();
           // 排除新闻网站、资讯网站
           const excludedKeywords = ['sina', 'qq.com', '163.com', 'sohu.com', 'ifeng', 
-                                   'thepaper', 'news', '日报', '晚报', '大众日报', '今日头条'];
-          return !excludedKeywords.some(kw => url.includes(kw) || snippet.includes(kw));
+                                   'thepaper', 'news', '日报', '晚报', '大众日报', '今日头条',
+                                   '腾讯新闻', '新浪新闻', '网易新闻', '搜狐新闻', '凤凰网'];
+          // 排除标题中明显不相关的内容
+          const excludedTitles = ['肛肠科', '痔疮', '便秘', '腹泻', '肠炎', '结肠炎', '阑尾'];
+          const isExcluded = excludedKeywords.some(kw => url.includes(kw) || snippet.includes(kw)) ||
+                            excludedTitles.some(t => title.includes(t));
+          return !isExcluded;
         });
         
         // 重新编号
@@ -1567,9 +1579,19 @@ ${numberedSearchResult}
 ❌ 在【信息来源】中写医生姓名（如"郑浩轩 主任医师"）← 禁止！必须写URL链接！
 
 **【信息来源声明格式要求 - 必须严格遵守】**：
-- 【信息来源声明】中每个编号后面**必须**是完整的URL链接，格式：[编号] URL（来源类型）
-- ❌ 禁止在【信息来源声明】中写医生姓名、医院名称等非URL内容
-- ❌ 禁止省略URL链接
+- 【信息来源声明】中每个编号后面**必须**使用搜索结果中提供的**完整URL链接**
+- **禁止**修改或省略URL链接
+- **禁止**在【信息来源声明】中写医生姓名或医院名称作为来源
+- **信息来源声明中的标题必须与搜索结果中的标题一致**
+- ❌ 禁止：随意编造来源标题
+- ❌ 禁止：[①] https://xxx.com（北京大学人民医院官网）← URL或标题与搜索结果不符！
+
+**【信息来源声明示例 - 必须严格遵守格式】**：
+[①] https://www.pkuphqd.com/doctor/show-658.html（来源：标题必须与搜索结果完全一致！）
+[②] https://dzrb.dzng.com/article/xxx.html（来源：标题必须与搜索结果完全一致！）
+
+**【搜索结果标题列表 - 必须使用这些标题】**：
+${searchSourcesData?.items.map(item => `[${item.index}] ${item.title}`).join('\n')}
 - ✅ 正确的示例：[①] https://www.pkuh.edu.cn/xxx（北京老年医院官网）
 
 **【禁止行为 - 违反将导致严重后果】**：
