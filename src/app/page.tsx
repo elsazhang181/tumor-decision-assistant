@@ -936,20 +936,19 @@ export default function Home() {
     const isTreatmentRelated = treatmentExclusiveKeywords.some(k => lowerContent.includes(k));
     const isGuidanceRelated = guidanceExclusiveKeywords.some(k => lowerContent.includes(k));
     
-    // 切换逻辑：治疗相关问题优先切换（因为治疗是核心问题）
-    // 只有问题明显属于其他环节时才切换
-    if (isTreatmentRelated && currentStage !== 'treatment' && currentStage !== 'department') {
-      // 治疗相关问题：切换到治疗相关环节
-      setCurrentStage('treatment');
-      toast.info('已切换至「治疗相关」环节', {
-        description: '根据您的问题内容，将为您提供针对性的治疗指导',
-        duration: 3000,
-      });
-    } else if (isGuidanceRelated && currentStage !== 'guidance' && currentStage !== 'department') {
+    // 医保相关问题优先判断：报销应在就医指导范畴内
+    if (isGuidanceRelated && currentStage !== 'guidance' && currentStage !== 'department') {
       // 医保相关问题：切换到就医指导环节
       setCurrentStage('guidance');
       toast.info('已切换至「就医指导」环节', {
         description: '根据您的问题内容，将为您提供医保和费用相关信息',
+        duration: 3000,
+      });
+    } else if (isTreatmentRelated && currentStage !== 'treatment' && currentStage !== 'department') {
+      // 治疗相关问题：切换到治疗相关环节
+      setCurrentStage('treatment');
+      toast.info('已切换至「治疗相关」环节', {
+        description: '根据您的问题内容，将为您提供针对性的治疗指导',
         duration: 3000,
       });
     } else if (isSymptomRelated && currentStage === 'guidance') {
