@@ -634,7 +634,7 @@ const STAGES: Array<{
   {
     id: 'symptom',
     title: '症状自查',
-    description: '系统评估症状，识别危险信号',
+    description: '状况评估，信号识别',
     icon: Stethoscope,
     color: 'from-blue-500 to-blue-600',
     features: ['系统性评估症状特征', '识别紧急危险信号', '整理关键信息供就诊参考', '生成医患沟通提问清单']
@@ -642,7 +642,7 @@ const STAGES: Array<{
   {
     id: 'department',
     title: '科室推荐',
-    description: '推荐科室和医院，提供就医准备',
+    description: '对症匹配，就近择优',
     icon: Hospital,
     color: 'from-purple-500 to-purple-600',
     features: ['匹配合适的就诊科室', '推荐权威医院', '列出就诊准备清单', '生成医患沟通提问清单']
@@ -650,7 +650,7 @@ const STAGES: Array<{
   {
     id: 'treatment',
     title: '治疗相关',
-    description: '治疗流程、检查要点、副作用应对',
+    description: '问诊检查，医患沟通',
     icon: Activity,
     color: 'from-orange-500 to-orange-600',
     features: ['术前检查清单和数据解读', '标准治疗顺序', '化疗副作用应对', '生成医患沟通提问清单']
@@ -658,7 +658,7 @@ const STAGES: Array<{
   {
     id: 'guidance',
     title: '就医指导',
-    description: '异地就医、医保报销、转诊指导',
+    description: '异地医保，转诊保险',
     icon: FileText,
     color: 'from-green-500 to-green-600',
     features: ['异地就医流程指导', '医保报销政策', '转诊须知和材料准备', '生成综合就医提问清单']
