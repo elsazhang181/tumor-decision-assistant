@@ -1143,7 +1143,7 @@ export default function Home() {
               if (parsed.content) {
                 // 后处理：修正【知识库：熊猫群】的错误标注
                 // 张黎明、吕富靖等不在知识库中的专家，禁止标注为【知识库：熊猫群】
-                let correctedContent = parsed.content;
+                const correctedContent = parsed.content;
                 
                 // 检查是否包含不在知识库中的专家被错误标注为【知识库：熊猫群】
                 const incorrectKnowledgeBasePattern = /【知识库：熊猫群】/g;
