@@ -929,7 +929,7 @@ export default function Home() {
     
     const guidanceExclusiveKeywords = ['医保', '报销', '费用', '特药', '双通道', '门特', '门规', 
       '异地就医', '临床试验', '大病保险', '价格', '多少钱', '花费', '原研药', '仿制药', 
-      '开药', '医生不让', '药占比', '医院没有', '买不到', '怎么开', '哪里买'];
+      '开药', '医生不让', '药占比', '医院没有', '买不到', '怎么开', '哪里买', '政策', '新农合', '城乡居民'];
     
     // 判断问题是否与各环节相关
     const isSymptomRelated = symptomExclusiveKeywords.some(k => lowerContent.includes(k));
