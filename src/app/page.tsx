@@ -560,11 +560,13 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     return indexMap[num] || 0;
   };
   
-  // 转换为链接的函数
+  // 转换为链接的函数 - 确保链接可以直接点击打开原文
   const makeLink = (num: string, index: number): string => {
     if (index && sourceMap.has(index)) {
       const source = sourceMap.get(index)!;
-      return `<a href="${source.url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">[${num}]</a>`;
+      const linkUrl = source.url;
+      // 直接使用超链接标签，点击数字即可打开原文
+      return `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors cursor-pointer">[${num}]</a>`;
     }
     return `[${num}]`;
   };
@@ -633,7 +635,8 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     /\((\d+)\)/g,
     (match, num) => {
       const index = getIndexFromNum(num);
-      return `<a href="${sourceMap.has(index) ? sourceMap.get(index)!.url : '#'}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors">(${num})</a>`;
+      const linkUrl = sourceMap.has(index) ? sourceMap.get(index)!.url : '#';
+      return `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors cursor-pointer">(${num})</a>`;
     }
   );
   
@@ -1575,25 +1578,35 @@ export default function Home() {
                               {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
                                 <div className="mt-3 bg-gray-100 dark:bg-slate-800/50 rounded-lg p-3">
                                   <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">
-                                    <span>【信息来源声明】本回答参考了以下来源：</span>
+                                    <span>【信息来源声明】本回答参考了以下来源，点击数字可查看原文：</span>
                                   </div>
                                   <ul className="space-y-1.5">
-                                    {message.sources.map((source, idx) => (
-                                      <li key={source.index} className="flex items-start gap-2 text-xs">
-                                        <span className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none">
-                                          {idx + 1}
-                                        </span>
-                                        <a
-                                          href={source.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-blue-500 hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300 transition-colors line-clamp-1 flex-1"
-                                          title={source.url}
-                                        >
-                                          {source.title || source.url}
-                                        </a>
-                                      </li>
-                                    ))}
+                                    {message.sources.map((source, idx) => {
+                                      const linkUrl = source.url || '#';
+                                      const displayTitle = source.title || source.snippet || '查看原文';
+                                      return (
+                                        <li key={source.index} className="flex items-start gap-2 text-xs">
+                                          <a
+                                            href={linkUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none hover:bg-blue-600 transition-colors cursor-pointer"
+                                            title={`点击查看来源：${linkUrl}`}
+                                          >
+                                            {source.index || idx + 1}
+                                          </a>
+                                          <a
+                                            href={linkUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-500 hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300 transition-colors line-clamp-2 flex-1"
+                                            title={linkUrl}
+                                          >
+                                            {displayTitle}
+                                          </a>
+                                        </li>
+                                      );
+                                    })}
                                   </ul>
                                 </div>
                               )}
