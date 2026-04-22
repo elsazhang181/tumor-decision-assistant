@@ -895,6 +895,14 @@ export default function Home() {
     guidance: false
   });
 
+  // 使用 ref 跟踪最新消息（用于在 async 函数中获取最新状态）
+  const messagesRef = useRef<Message[]>([]);
+  
+  // 同步 messagesRef
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   // 初始化当前环节的消息
   useEffect(() => {
     const history = stageMessages[currentStage];
@@ -1182,12 +1190,10 @@ export default function Home() {
       }]);
     } finally {
       setIsLoading(false);
-      // 保存当前环节的消息到历史
-      if (messages.length > 0) {
-        setStageMessages(prev => ({
-          ...prev,
-          [currentStage]: messages
-        }));
+      // 保存当前环节的消息到历史（使用messagesRef获取最新值，包含用户消息和AI回复）
+      const latestMessages = messagesRef.current;
+      if (latestMessages.length > 0) {
+        setStageMessages(prev => ({ ...prev, [currentStage]: latestMessages }));
       }
       // 保存用户提问到历史记录
       const historyItem: ChatHistoryItem = {
