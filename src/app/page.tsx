@@ -897,12 +897,6 @@ export default function Home() {
 
   // 初始化当前环节的消息
   useEffect(() => {
-    // 避免重复初始化
-    if (initializedRef.current[currentStage]) {
-      return;
-    }
-    initializedRef.current[currentStage] = true;
-    
     const history = stageMessages[currentStage];
     
     if (history.length > 0) {
@@ -912,7 +906,7 @@ export default function Home() {
       // 无历史消息，显示空界面（让用户直接输入）
       setMessages([]);
     }
-  }, [currentStage]); // 只依赖 currentStage
+  }, [currentStage]);
 
   const sendMessage = async (content: string) => {
     if ((!content.trim() && attachedFiles.length === 0) || isLoading) return;
