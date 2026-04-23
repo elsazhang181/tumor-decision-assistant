@@ -54,6 +54,36 @@ interface ChatHistoryItem {
 }
 
 // ============== 历史记录工具函数 ==============
+const STAGE_MESSAGES_KEY = 'cancer-assistant-stage-messages';
+
+const getStageMessages = (): Record<Stage, Message[]> => {
+  if (typeof window === 'undefined') return { symptom: [], department: [], treatment: [], guidance: [] };
+  try {
+    const data = localStorage.getItem(STAGE_MESSAGES_KEY);
+    if (!data) return { symptom: [], department: [], treatment: [], guidance: [] };
+    const messages = JSON.parse(data) as Record<Stage, Message[]>;
+    // 恢复 timestamp
+    Object.keys(messages).forEach(stage => {
+      messages[stage as Stage] = messages[stage as Stage].map(msg => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }));
+    });
+    return messages;
+  } catch {
+    return { symptom: [], department: [], treatment: [], guidance: [] };
+  }
+};
+
+const saveStageMessages = (messages: Record<Stage, Message[]>): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STAGE_MESSAGES_KEY, JSON.stringify(messages));
+  } catch {
+    // 忽略存储错误
+  }
+};
+
 const getHistory = (): ChatHistoryItem[] => {
   if (typeof window === 'undefined') return [];
   try {
@@ -880,11 +910,12 @@ export default function Home() {
     }
   }, [messages]);
 
-  const [stageMessages, setStageMessages] = useState<Record<Stage, Message[]>>({
-    symptom: [],
-    department: [],
-    treatment: [],
-    guidance: []
+  // 从 localStorage 恢复历史消息
+  const [stageMessages, setStageMessages] = useState<Record<Stage, Message[]>>(() => {
+    if (typeof window !== 'undefined') {
+      return getStageMessages();
+    }
+    return { symptom: [], department: [], treatment: [], guidance: [] };
   });
 
   // 使用 ref 跟踪初始化状态
@@ -1193,7 +1224,10 @@ export default function Home() {
       // 保存当前环节的消息到历史（使用messagesRef获取最新值，包含用户消息和AI回复）
       const latestMessages = messagesRef.current;
       if (latestMessages.length > 0) {
-        setStageMessages(prev => ({ ...prev, [currentStage]: latestMessages }));
+        const newStageMessages = { ...stageMessages, [currentStage]: latestMessages };
+        setStageMessages(newStageMessages);
+        // 同时保存到 localStorage
+        saveStageMessages(newStageMessages);
       }
       // 保存用户提问到历史记录
       const historyItem: ChatHistoryItem = {
