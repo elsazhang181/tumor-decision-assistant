@@ -872,6 +872,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false); // 移动端键盘状态
   const [stageConclusions, setStageConclusions] = useState<Record<Stage, string>>({
     symptom: '',
     department: '',
@@ -903,6 +904,33 @@ export default function Home() {
   // 页面加载时初始化历史记录
   useEffect(() => {
     setChatHistoryList(getHistory());
+  }, []);
+
+  // 移动端键盘适配
+  useEffect(() => {
+    // 检测移动端键盘弹出/收起
+    const handleResize = () => {
+      // 使用window.innerHeight变化来判断键盘状态
+      const visualHeight = window.visualViewport?.height || window.innerHeight;
+      const screenHeight = window.screen.height;
+      // 如果可视高度明显小于屏幕高度，说明键盘弹出
+      setIsKeyboardVisible(visualHeight < screenHeight * 0.75);
+    };
+
+    // 使用visualViewport API（移动端浏览器）
+    const visualViewport = window.visualViewport;
+    if (visualViewport) {
+      visualViewport.addEventListener('resize', handleResize);
+      visualViewport.addEventListener('scroll', handleResize);
+      return () => {
+        visualViewport.removeEventListener('resize', handleResize);
+        visualViewport.removeEventListener('scroll', handleResize);
+      };
+    } else {
+      // 降级方案
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
   }, []);
 
   useEffect(() => {
@@ -1382,20 +1410,20 @@ export default function Home() {
       <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md dark:bg-slate-900/80">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-teal-500 text-white shadow-lg">
-                <Brain className="h-6 w-6" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-teal-500 text-white shadow-lg">
+                <Brain className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
                   肿瘤就医决策助手
                 </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  知识库检索 · 医患沟通 · 全程决策辅助
+                <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                  仅供参考，不替代临床诊疗建议
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
+            <Badge variant="outline" className="hidden sm:inline-flex bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">
               <Shield className="mr-1 h-3 w-3" />
               仅辅助决策，不替代诊疗
             </Badge>
@@ -1524,7 +1552,7 @@ export default function Home() {
         {/* Chat Area - Mobile Optimized */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 md:gap-4">
           <div className="lg:col-span-3">
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col h-[calc(100vh-180px)] md:h-[calc(100vh-80px)]">
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col h-[calc(100vh-160px)] sm:h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] lg:h-[calc(100vh-80px)]">
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 py-2 md:py-3 px-3 flex-shrink-0">
                 <CardTitle className="flex items-center justify-between text-sm md:text-base">
                   <div className="flex items-center gap-2">
@@ -1583,10 +1611,10 @@ export default function Home() {
                               )}
                             </div>
                             <div
-                              className={`max-w-[88%] md:max-w-[85%] rounded-xl px-3 py-2 md:px-4 md:py-3 ${
+                              className={`max-w-[90%] sm:max-w-[88%] md:max-w-[85%] rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 ${
                                 message.role === 'user'
-                                  ? 'bg-blue-500 text-white'
-                                  : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100'
+                                  ? 'bg-blue-500 text-white rounded-tr-sm'
+                                  : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100 rounded-tl-sm'
                               }`}
                             >
                               {/* 如果消息包含文件，显示文件信息 */}
@@ -1605,7 +1633,7 @@ export default function Home() {
                                 </div>
                               )}
                               <div 
-                                className="whitespace-pre-wrap text-xs md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none"
+                                className="whitespace-pre-wrap text-sm sm:text-sm md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none break-words"
                                 dangerouslySetInnerHTML={{ 
                                   __html: renderContentWithSources(
                                     message.content.includes('【用户上传文件') 
@@ -1799,10 +1827,10 @@ export default function Home() {
                       size="icon"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isLoading}
-                      className="shrink-0 h-10 w-10 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="shrink-0 h-11 w-11 sm:h-10 sm:w-10 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                       title="上传附件"
                     >
-                      <Paperclip className="h-4 w-4 text-gray-500" />
+                      <Paperclip className="h-5 w-5 sm:h-4 sm:w-4 text-gray-500" />
                     </Button>
                     <Input
                       ref={inputRef}
@@ -1811,18 +1839,18 @@ export default function Home() {
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="输入您的问题..."
                       disabled={isLoading}
-                      className="flex-1 text-sm md:text-base"
+                      className="flex-1 text-base sm:text-sm md:text-base h-11 sm:h-10"
                     />
                     <Button 
                       type="submit" 
                       disabled={(!input.trim() && attachedFiles.length === 0) || isLoading}
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 h-11 w-11 sm:h-10 sm:w-10"
                       size="icon"
                     >
-                      <Send className="h-4 w-4" />
+                      <Send className="h-5 w-5 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-gray-400 hidden sm:block">
                     支持多文件上传，txt、word、excel、pdf、图片格式，总大小最大 10MB
                   </p>
                 </form>
