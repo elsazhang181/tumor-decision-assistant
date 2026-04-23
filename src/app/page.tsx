@@ -880,6 +880,7 @@ export default function Home() {
   });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isSendingRef = useRef(false); // 跟踪是否有消息正在发送，保护消息不被初始化清空
   
   // 二维码弹窗状态
   const [selectedHospital, setSelectedHospital] = useState<typeof HOSPITALS_QR.hospitals[0] | null>(null);
@@ -936,6 +937,9 @@ export default function Home() {
 
   // 初始化当前环节的消息
   useEffect(() => {
+    // 如果正在发送消息，不初始化，避免清空正在显示的用户消息
+    if (isSendingRef.current) return;
+    
     const history = stageMessages[currentStage];
     
     if (history.length > 0) {
@@ -1017,6 +1021,7 @@ export default function Home() {
       }
     }
 
+    isSendingRef.current = true; // 标记正在发送，防止初始化清空消息
     setIsLoading(true);
 
     // 清空文件内容变量
@@ -1241,6 +1246,8 @@ export default function Home() {
       saveHistory(historyItem);
       // 刷新历史记录列表
       setChatHistoryList(getHistory());
+      // 清除发送标记
+      isSendingRef.current = false;
     }
   };
 
