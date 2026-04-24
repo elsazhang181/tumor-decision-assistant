@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "pnpm run build",
+  "buildCommand": "./scripts/build.sh",
   "installCommand": "pnpm install",
   "regions": ["sin1"],
   "functions": {
