@@ -1,0 +1,11 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install",
+  "regions": ["sin1"],
+  "functions": {
+    "src/app/api/chat/**": {
+      "maxDuration": 60
+    }
+  }
+}
