@@ -1,7 +1,7 @@
 {
   "framework": "nextjs",
   "buildCommand": "./scripts/build.sh",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --include=dev",
   "regions": ["sin1"],
   "functions": {
     "src/app/api/chat/**": {
