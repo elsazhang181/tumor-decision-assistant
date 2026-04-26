@@ -1201,39 +1201,32 @@ export default function Home() {
         const chunk = decoder.decode(value);
         const lines = chunk.split('\n');
 
+        let currentEvent = '';
         for (const line of lines) {
+          // 解析 event 行
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim();
+            continue;
+          }
+          // 解析 data 行
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') continue;
             
             try {
               const parsed = JSON.parse(data);
-              if (parsed.content) {
-                // 后处理：修正【知识库：熊猫群】的错误标注
-                // 张黎明、吕富靖等不在知识库中的专家，禁止标注为【知识库：熊猫群】
-                const correctedContent = parsed.content;
-                
-                // 检查是否包含不在知识库中的专家被错误标注为【知识库：熊猫群】
-                const incorrectKnowledgeBasePattern = /【知识库：熊猫群】/g;
-                if (correctedContent.match(incorrectKnowledgeBasePattern)) {
-                  // 如果sources为空或只有【知识库：熊猫群】，说明这些专家不在知识库中
-                  // 需要将【知识库：熊猫群】替换为搜索来源标注
-                  // 这里标记需要后端修复
-                  console.warn('检测到可能的知识库标注错误：包含【知识库：熊猫群】但专家不在库中');
-                }
-                
-                assistantContent += correctedContent;
+              
+              // Coze API 流式响应格式：event 为 conversation.message.delta 时包含 content
+              if (currentEvent === 'conversation.message.delta' && parsed.content) {
+                assistantContent += parsed.content;
+                setMessages(prev => 
+                  prev.map(m => 
+                    m.id === assistantMessage.id 
+                      ? { ...m, content: assistantContent }
+                      : m
+                  )
+                );
               }
-              if (parsed.sources && Array.isArray(parsed.sources)) {
-                assistantSources = parsed.sources;
-              }
-              setMessages(prev => 
-                prev.map(m => 
-                  m.id === assistantMessage.id 
-                    ? { ...m, content: assistantContent, sources: assistantSources }
-                    : m
-                )
-              );
             } catch {
               // 忽略解析错误
             }
