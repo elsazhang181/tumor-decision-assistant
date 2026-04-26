@@ -1,8 +1,9 @@
 {
   "framework": "nextjs",
-  "buildCommand": "./scripts/build.sh",
-  "installCommand": "pnpm install --include=dev",
+  "buildCommand": "pnpm install && pnpm next build",
+  "installCommand": "pnpm install",
   "regions": ["sin1"],
+  "nodeVersion": "20",
   "functions": {
     "src/app/api/chat/**": {
       "maxDuration": 60
