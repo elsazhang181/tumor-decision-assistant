@@ -1225,8 +1225,8 @@ export default function Home() {
               // Coze API 流式响应格式
               // Bot 启用深度思考模式时，先返回 reasoning_content（思考过程），然后返回 content（最终回答）
               if (currentEvent === 'conversation.message.delta') {
-                if (parsed.reasoning_content) {
-                  // 思考过程 - 累积显示
+                // 如果有 reasoning_content，说明还在思考阶段
+                if (parsed.reasoning_content !== undefined) {
                   reasoningContent += parsed.reasoning_content;
                   setMessages(prev => 
                     prev.map(m => 
@@ -1235,16 +1235,24 @@ export default function Home() {
                         : m
                     )
                   );
-                } else if (parsed.content !== undefined) {
-                  // 最终回答 - 累积显示
-                  assistantContent += parsed.content;
-                  setMessages(prev => 
-                    prev.map(m => 
-                      m.id === assistantMessage.id 
-                        ? { ...m, content: assistantContent, isThinking: false }
-                        : m
-                    )
-                  );
+                } 
+                // 如果有 content（即使是空字符串），说明思考结束，开始输出最终回答
+                else if (parsed.content !== undefined) {
+                  // 如果之前有思考内容，最终回答时需要合并或直接替换
+                  // Coze 的最终回答会完整输出，所以直接用 content
+                  if (parsed.content) {
+                    assistantContent += parsed.content;
+                  }
+                  // 当 content 非空时，说明最终回答开始，更新消息
+                  if (parsed.content) {
+                    setMessages(prev => 
+                      prev.map(m => 
+                        m.id === assistantMessage.id 
+                          ? { ...m, content: assistantContent, isThinking: false }
+                          : m
+                      )
+                    );
+                  }
                 }
               }
             } catch {
