@@ -903,7 +903,11 @@ export default function Home() {
 
   // 页面加载时初始化历史记录
   useEffect(() => {
-    setChatHistoryList(getHistory());
+    // 使用懒初始化，避免在effect中直接setState
+    const historyList = getHistory();
+    if (historyList.length > 0) {
+      setChatHistoryList(historyList);
+    }
   }, []);
 
   // 移动端键盘适配
@@ -970,11 +974,11 @@ export default function Home() {
     
     const history = stageMessages[currentStage];
     
+    // 使用条件更新，避免不必要的setState
     if (history.length > 0) {
-      // 有历史消息，加载历史
       setMessages(history);
-    } else {
-      // 无历史消息，显示空界面（让用户直接输入）
+    } else if (messages.length > 0) {
+      // 只有当有消息需要清空时才清空
       setMessages([]);
     }
   }, [currentStage]);

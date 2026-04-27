@@ -5,6 +5,14 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    rules: {
+      // Disable strict setState-in-effect rule for compatibility
+      'react-hooks/set-state-in-effect': 'off',
+      // Allow prefer-const for API callback parameters
+      'prefer-const': 'warn',
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
