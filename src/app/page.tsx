@@ -501,6 +501,7 @@ interface Message {
   timestamp: Date;
   stage?: Stage;
   sources?: SourceItem[];
+  isThinking?: boolean; // 是否正在深度思考
 }
 
 // ============== 渲染带链接的内容 ==============
@@ -1185,6 +1186,7 @@ export default function Home() {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let assistantContent = '';
+      let reasoningContent = ''; // 深度思考内容
       let assistantSources: SourceItem[] = [];
 
       const assistantMessage: Message = {
@@ -1220,16 +1222,30 @@ export default function Home() {
             try {
               const parsed = JSON.parse(data);
               
-              // Coze API 流式响应格式：event 为 conversation.message.delta 时包含 content
-              if (currentEvent === 'conversation.message.delta' && parsed.content) {
-                assistantContent += parsed.content;
-                setMessages(prev => 
-                  prev.map(m => 
-                    m.id === assistantMessage.id 
-                      ? { ...m, content: assistantContent }
-                      : m
-                  )
-                );
+              // Coze API 流式响应格式
+              // Bot 启用深度思考模式时，先返回 reasoning_content（思考过程），然后返回 content（最终回答）
+              if (currentEvent === 'conversation.message.delta') {
+                if (parsed.reasoning_content) {
+                  // 思考过程 - 累积显示
+                  reasoningContent += parsed.reasoning_content;
+                  setMessages(prev => 
+                    prev.map(m => 
+                      m.id === assistantMessage.id 
+                        ? { ...m, content: reasoningContent, isThinking: true }
+                        : m
+                    )
+                  );
+                } else if (parsed.content) {
+                  // 最终回答 - 直接替换
+                  assistantContent = parsed.content;
+                  setMessages(prev => 
+                    prev.map(m => 
+                      m.id === assistantMessage.id 
+                        ? { ...m, content: assistantContent, isThinking: false }
+                        : m
+                    )
+                  );
+                }
               }
             } catch {
               // 忽略解析错误
@@ -1607,11 +1623,20 @@ export default function Home() {
                                 <Bot className="h-4 w-4 md:h-5 md:w-5" />
                               )}
                             </div>
+                            {/* 思考状态指示器 */}
+                            {message.role === 'assistant' && message.isThinking && (
+                              <div className="absolute -bottom-1 left-6 flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/50 rounded-full text-[10px] text-amber-700 dark:text-amber-400">
+                                <Brain className="h-3 w-3 animate-pulse" />
+                                <span>深度思考中...</span>
+                              </div>
+                            )}
                             <div
                               className={`max-w-[90%] sm:max-w-[88%] md:max-w-[85%] rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 ${
                                 message.role === 'user'
                                   ? 'bg-blue-500 text-white rounded-tr-sm'
-                                  : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100 rounded-tl-sm'
+                                  : message.isThinking 
+                                    ? 'bg-amber-50 dark:bg-amber-900/20 text-gray-900 dark:text-gray-100 rounded-tl-sm border border-amber-200 dark:border-amber-800'
+                                    : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-gray-100 rounded-tl-sm'
                               }`}
                             >
                               {/* 如果消息包含文件，显示文件信息 */}

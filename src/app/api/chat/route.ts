@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     // 默认Bot ID
     const targetBotId = botId || process.env.COZE_BOT_ID || '1118647974625609';
 
-    // 构建Coze API请求
+    // 构建Coze API请求 - 使用 v3/chat 端点的正确格式
     const cozeResponse = await fetch(`${COZE_API_BASE}/v3/chat`, {
       method: 'POST',
       headers: {
@@ -36,10 +36,15 @@ export async function POST(request: NextRequest) {
         bot_id: targetBotId,
         user_id: 'web-user-' + Date.now(),
         conversation_id: conversationId || undefined,
-        query: message,
         stream: true,
         auto_save_history: true,
-        additional_messages: [],
+        additional_messages: [
+          {
+            role: 'user',
+            content: message,
+            content_type: 'text',
+          },
+        ],
       }),
     });
 
