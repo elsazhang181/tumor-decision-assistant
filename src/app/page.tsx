@@ -1209,14 +1209,14 @@ export default function Home() {
 
         let currentEvent = '';
         for (const line of lines) {
-          // 解析 event 行
-          if (line.startsWith('event: ')) {
-            currentEvent = line.slice(7).trim();
+          // 解析 event 行 (Coze返回格式: event:xxx 无空格)
+          if (line.startsWith('event:')) {
+            currentEvent = line.slice(6).trim();
             continue;
           }
           // 解析 data 行
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
+          if (line.startsWith('data:')) {
+            const data = line.slice(5);
             if (data === '[DONE]') continue;
             
             try {
