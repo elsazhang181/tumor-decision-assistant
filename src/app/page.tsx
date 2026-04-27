@@ -1235,9 +1235,9 @@ export default function Home() {
                         : m
                     )
                   );
-                } else if (parsed.content) {
-                  // 最终回答 - 直接替换
-                  assistantContent = parsed.content;
+                } else if (parsed.content !== undefined) {
+                  // 最终回答 - 累积显示
+                  assistantContent += parsed.content;
                   setMessages(prev => 
                     prev.map(m => 
                       m.id === assistantMessage.id 
