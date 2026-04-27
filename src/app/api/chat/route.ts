@@ -34,10 +34,12 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         bot_id: targetBotId,
-        user_id: 'vercel-user',
+        user_id: 'web-user-' + Date.now(),
         conversation_id: conversationId || undefined,
         query: message,
         stream: true,
+        auto_save_history: true,
+        additional_messages: [],
       }),
     });
 
