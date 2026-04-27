@@ -1002,7 +1002,8 @@ export default function Home() {
     
     const guidanceExclusiveKeywords = ['医保', '报销', '费用', '特药', '双通道', '门特', '门规', 
       '异地就医', '临床试验', '大病保险', '价格', '多少钱', '花费', '原研药', '仿制药', 
-      '开药', '医生不让', '药占比', '医院没有', '买不到', '怎么开', '哪里买', '政策', '新农合', '城乡居民'];
+      '开药', '医生不让', '药占比', '医院没有', '买不到', '怎么开', '哪里买', '政策', '新农合', 
+      '城乡居民', '挂号', '预约', '北肿', '北京肿瘤', '就诊', '转诊', '住院', '床位'];
     
     // 判断问题是否与各环节相关
     const isSymptomRelated = symptomExclusiveKeywords.some(k => lowerContent.includes(k));
@@ -1673,6 +1674,7 @@ export default function Home() {
                                   )
                                 }}
                               />
+
                               {/* 来源列表 - 仅在assistant回复且有sources时显示 */}
                               {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
                                 <div className="mt-3 bg-gray-100 dark:bg-slate-800/50 rounded-lg p-3">
@@ -1707,6 +1709,34 @@ export default function Home() {
                                       );
                                     })}
                                   </ul>
+                                </div>
+                              )}
+                              {/* 北肿挂号链接 - 当回复涉及挂号、就医等关键词时显示 */}
+                              {message.role === 'assistant' && /北肿|肿瘤医院|挂号|就医|就诊|化疗|放疗|手术|住院|复查/i.test(message.content) && (
+                                <div className="mt-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white">
+                                        <Hospital className="h-4 w-4" />
+                                      </div>
+                                      <div>
+                                        <div className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                                          北京大学肿瘤医院（北肿）
+                                        </div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                          点击预约挂号
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <a
+                                      href="https://www.bjcancer.org/patient/services/register/"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+                                    >
+                                      立即预约 <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                  </div>
                                 </div>
                               )}
                               {/* 复制和下载按钮 - 仅在assistant回复时显示 */}
