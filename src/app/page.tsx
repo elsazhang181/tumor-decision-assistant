@@ -1711,8 +1711,8 @@ export default function Home() {
                                   </ul>
                                 </div>
                               )}
-                              {/* 北肿挂号链接 - 当回复涉及挂号、就医等关键词时显示 */}
-                              {message.role === 'assistant' && /北肿|肿瘤医院|挂号|就医|就诊|化疗|放疗|手术|住院|复查/i.test(message.content) && (
+                              {/* 北肿挂号链接 - 当回复明确提到北京大学肿瘤医院时显示 */}
+                              {message.role === 'assistant' && /北京大学肿瘤医院|北京肿瘤医院|北肿|bjcancer/i.test(message.content) && (
                                 <div className="mt-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-2">
