@@ -1729,7 +1729,7 @@ export default function Home() {
                                       </div>
                                     </div>
                                     <a
-                                      href="https://www.bjcancer.org/patient/services/register/"
+                                      href="https://www.bjcancer.org"
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
