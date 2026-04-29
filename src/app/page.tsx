@@ -1610,8 +1610,24 @@ export default function Home() {
               <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-2 md:p-4" ref={scrollRef}>
                     <div className="space-y-3 md:space-y-4">
-                    {messages.map((message) => {
-                      const hospitals = message.role === 'assistant' ? extractHospitalsFromMessage(message.content) : [];
+                    {messages.map((message, msgIndex) => {
+                      // 找到当前AI回复之前的用户问题
+                      const currentIndex = msgIndex;
+                      const prevUserMessage = currentIndex > 0 ? messages[currentIndex - 1] : null;
+                      const userQuestionText = prevUserMessage ? prevUserMessage.content : '';
+                      
+                      // 优先从用户提问中提取医院，只有用户提问没有时才从AI回复提取
+                      let hospitals: typeof HOSPITALS_QR.hospitals = [];
+                      if (message.role === 'assistant') {
+                        const userHospitals = extractHospitalsFromMessage(userQuestionText);
+                        if (userHospitals.length > 0) {
+                          // 用户提问中已有医院，优先使用
+                          hospitals = userHospitals;
+                        } else {
+                          // 用户提问没有医院，才检查AI回复
+                          hospitals = extractHospitalsFromMessage(message.content);
+                        }
+                      }
                       return (
                         <div key={message.id}>
                           <div
@@ -1711,8 +1727,15 @@ export default function Home() {
                                   </ul>
                                 </div>
                               )}
-                              {/* 北肿挂号链接 - 当回复明确提到北京大学肿瘤医院时显示 */}
-                              {message.role === 'assistant' && /北京大学肿瘤医院|北京肿瘤医院|北肿|bjcancer/i.test(message.content) && (
+                              {/* 北肿挂号链接 - 只在用户提问或回复明确提到北京大学肿瘤医院时显示 */}
+                              {message.role === 'assistant' && (() => {
+                                // 优先检查用户提问，只有用户提问没有时才检查AI回复
+                                const beijingCancerPatterns = /北京大学肿瘤医院|北京肿瘤医院|北肿|bjcancer/i;
+                                const userMentioned = beijingCancerPatterns.test(userQuestionText);
+                                const aiMentioned = beijingCancerPatterns.test(message.content);
+                                const shouldShowBeijingCancer = userMentioned || (!userQuestionText && aiMentioned);
+                                
+                                return shouldShowBeijingCancer ? (
                                 <div className="mt-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-2">
@@ -1738,7 +1761,8 @@ export default function Home() {
                                     </a>
                                   </div>
                                 </div>
-                              )}
+                                ) : null;
+                              })()}
                               {/* 复制和下载按钮 - 仅在assistant回复时显示 */}
                               {message.role === 'assistant' && (() => {
                                 // 找到当前AI回复之前的用户问题
