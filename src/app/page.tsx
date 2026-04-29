@@ -968,7 +968,7 @@ export default function Home() {
     messagesRef.current = messages;
   }, [messages]);
 
-  // 初始化当前环节的消息
+  // 初始化当前环节的消息（依赖于currentStage切换时加载对应模块的历史）
   useEffect(() => {
     // 如果正在发送消息，不初始化，避免清空正在显示的用户消息
     if (isSendingRef.current) return;
@@ -978,11 +978,9 @@ export default function Home() {
     // 使用条件更新，避免不必要的setState
     if (history.length > 0) {
       setMessages(history);
-    } else if (messages.length > 0) {
-      // 只有当有消息需要清空时才清空
-      setMessages([]);
     }
-  }, [currentStage]);
+    // 注意：不再无条件清空消息，保留用户可能正在编辑的内容
+  }, [currentStage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendMessage = async (content: string) => {
     if ((!content.trim() && attachedFiles.length === 0) || isLoading) return;
@@ -990,20 +988,22 @@ export default function Home() {
     // 智能判断问题类型并自动切换环节（所有环节适用）
     const lowerContent = content.toLowerCase();
     
-    // 定义各环节的专属关键词
+    // 定义各环节的专属关键词（按优先级排序：更具体的关键词放前面）
     const symptomExclusiveKeywords = ['症状', '难受', '不舒服', '指标异常', '报告解读', 
-      'ca125', 'ca153', 'afp', '血红蛋白', '白细胞', '血小板', '肝功能', '肾功能'];
+      'ca125', 'ca153', 'afp', '血红蛋白', '白细胞', '血小板', '肝功能', '肾功能', '血糖'];
     
-    const treatmentExclusiveKeywords = ['化疗', '放疗', '手术', '靶向', '免疫治疗', '免疫', 
-      '用药', '药物', '耐药', '疗程', '方案', 'cea', 'ca199', 'ca724', 'ca242', '治疗效果', 
-      '副作用', '不良反应', '效果', '起效', '没效果', '降低', '上升', '指标',
-      '内镜', 'esd', 'emr', '切除', '抑酸', '胃镜', '肠镜', '结肠镜', '胃部', '肠道',
-      '住院', '术前', '术后', '恢复', '息肉', '溃疡', '肿块', '肿瘤', '良性', '恶性'];
-    
+    // 就医指导专属关键词（药物购买、医保、挂号等）- 优先级最高
     const guidanceExclusiveKeywords = ['医保', '报销', '费用', '特药', '双通道', '门特', '门规', 
       '异地就医', '临床试验', '大病保险', '价格', '多少钱', '花费', '原研药', '仿制药', 
-      '开药', '医生不让', '药占比', '医院没有', '买不到', '怎么开', '哪里买', '政策', '新农合', 
-      '城乡居民', '挂号', '预约', '北肿', '北京肿瘤', '就诊', '转诊', '住院', '床位'];
+      '开药', '医生不让', '药占比', '医院没有', '买不到', '怎么开', '哪里买', '哪里能买',
+      '政策', '新农合', '城乡居民', '挂号', '预约', '北肿', '北京肿瘤', '就诊', '转诊', '床位',
+      '奥沙利铂', '进口', '国产', '集采', '药', '靶向药', '买药', '开药', '取药', '药房', '药店'];
+    
+    const treatmentExclusiveKeywords = ['化疗', '放疗', '手术', '靶向', '免疫治疗', '免疫', 
+      '耐药', '疗程', '方案', 'cea', 'ca199', 'ca724', 'ca242', '治疗效果', 
+      '副作用', '不良反应', '效果', '起效', '没效果', '降低', '上升',
+      '内镜', 'esd', 'emr', '切除', '抑酸', '胃镜', '肠镜', '结肠镜', '胃部', '肠道',
+      '术前', '术后', '恢复', '息肉', '溃疡', '肿块', '良性', '恶性', '恶性'];
     
     // 判断问题是否与各环节相关
     const isSymptomRelated = symptomExclusiveKeywords.some(k => lowerContent.includes(k));
@@ -1011,21 +1011,22 @@ export default function Home() {
     const isGuidanceRelated = guidanceExclusiveKeywords.some(k => lowerContent.includes(k));
     
     // 医保相关问题优先判断：报销应在就医指导范畴内
+    // 药物购买问题也应在就医指导范畴内（优先级高于治疗相关）
     if (isGuidanceRelated && currentStage !== 'guidance' && currentStage !== 'department') {
-      // 医保相关问题：切换到就医指导环节
+      // 医保/药物购买相关问题：切换到就医指导环节
       setCurrentStage('guidance');
       toast.info('已切换至「就医指导」环节', {
         description: '根据您的问题内容，将为您提供医保和费用相关信息',
         duration: 3000,
       });
-    } else if (isTreatmentRelated && currentStage !== 'treatment' && currentStage !== 'department') {
-      // 治疗相关问题：切换到治疗相关环节
+    } else if (isTreatmentRelated && !isGuidanceRelated && currentStage !== 'treatment' && currentStage !== 'department') {
+      // 治疗相关问题（且非药物购买）：切换到治疗相关环节
       setCurrentStage('treatment');
       toast.info('已切换至「治疗相关」环节', {
         description: '根据您的问题内容，将为您提供针对性的治疗指导',
         duration: 3000,
       });
-    } else if (isSymptomRelated && currentStage === 'guidance') {
+    } else if (isSymptomRelated && !isGuidanceRelated && !isTreatmentRelated && currentStage === 'guidance') {
       // 只有在就医指导环节时，症状问题才切换到症状自查
       setCurrentStage('symptom');
       toast.info('已切换至「症状自查」环节', {
