@@ -317,12 +317,11 @@ function HospitalQRDialoDialog({ hospital, onClose }: HospitalQRDialogProps) {
         </div>
         <div className="p-4 space-y-4">
           <div className="relative w-full aspect-square bg-gray-50 dark:bg-slate-700 rounded-xl overflow-hidden">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={hospital.qrCode}
               alt={`${hospital.name}小程序/服务号二维码`}
-              fill
-              className="object-contain"
-              sizes="(max-width: 448px) 100vw, 448px"
+              className="w-full h-full object-contain"
             />
           </div>
           <div className="text-center space-y-2">
@@ -357,7 +356,7 @@ interface HospitalRecommendCardProps {
 }
 
 function HospitalRecommendCard({ hospitals, onSelectHospital }: HospitalRecommendCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true); // 默认展开，让用户第一时间看到
   
   if (hospitals.length === 0) return null;
   
@@ -370,7 +369,10 @@ function HospitalRecommendCard({ hospitals, onSelectHospital }: HospitalRecommen
         <div className="flex items-center gap-2">
           <QrCode className="h-4 w-4 text-blue-500" />
           <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
-            可扫码获取官方服务（{hospitals.length}家医院）
+            {hospitals.length === 1 
+              ? `${hospitals[0].name} - 扫码预约挂号` 
+              : `可扫码预约挂号（${hospitals.length}家医院）`
+            }
           </span>
         </div>
         <ChevronRight className={`h-4 w-4 text-blue-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
@@ -383,13 +385,12 @@ function HospitalRecommendCard({ hospitals, onSelectHospital }: HospitalRecommen
               onClick={() => onSelectHospital(hospital)}
               className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors text-left"
             >
-              <div className="relative w-12 h-12 bg-white rounded-lg overflow-hidden shadow-sm flex-shrink-0">
-                <Image
+              <div className="relative w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm flex-shrink-0 border border-gray-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={hospital.qrCode}
                   alt={hospital.name}
-                  fill
-                  className="object-contain"
-                  sizes="48px"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -399,9 +400,9 @@ function HospitalRecommendCard({ hospitals, onSelectHospital }: HospitalRecommen
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {hospital.platform} · {hospital.city}
                 </p>
-              </div>
-              <div className="text-xs text-blue-500 flex-shrink-0">
-                点击查看
+                <p className="text-xs text-blue-500 mt-1">
+                  点击查看大图，长按扫码
+                </p>
               </div>
             </button>
           ))}
@@ -1688,42 +1689,6 @@ export default function Home() {
                                   </ul>
                                 </div>
                               )}
-                              {/* 北肿挂号链接 - 只在用户提问或回复明确提到北京大学肿瘤医院时显示 */}
-                              {message.role === 'assistant' && (() => {
-                                // 优先检查用户提问，只有用户提问没有时才检查AI回复
-                                const beijingCancerPatterns = /北京大学肿瘤医院|北京肿瘤医院|北肿|bjcancer/i;
-                                const userMentioned = beijingCancerPatterns.test(userQuestionText);
-                                const aiMentioned = beijingCancerPatterns.test(message.content);
-                                const shouldShowBeijingCancer = userMentioned || (!userQuestionText && aiMentioned);
-                                
-                                return shouldShowBeijingCancer ? (
-                                <div className="mt-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-                                  <div className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center gap-2">
-                                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white">
-                                        <Hospital className="h-4 w-4" />
-                                      </div>
-                                      <div>
-                                        <div className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                                          北京大学肿瘤医院（北肿）
-                                        </div>
-                                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                                          点击预约挂号
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <a
-                                      href="https://www.bjcancer.org"
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
-                                    >
-                                      立即预约 <ExternalLink className="w-3 h-3" />
-                                    </a>
-                                  </div>
-                                </div>
-                                ) : null;
-                              })()}
                               {/* 复制和下载按钮 - 仅在assistant回复时显示 */}
                               {message.role === 'assistant' && (() => {
                                 // 找到当前AI回复之前的用户问题
