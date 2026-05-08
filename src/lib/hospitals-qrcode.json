@@ -1,8 +1,8 @@
 {
   "meta": {
-    "description": "省级三甲医院及肿瘤专科医院官方小程序/服务号信息及放号时间",
-    "version": "2025-04",
-    "usage": "推荐就诊医院时，可引用对应医院的放号时间和官方小程序/服务号二维码"
+    "description": "全国肿瘤专科医院及三甲医院官方小程序/服务号二维码信息",
+    "version": "2025-05",
+    "usage": "用户提问涉及相关医院时，展示对应医院的预约挂号二维码"
   },
   "hospitals": [
     {
@@ -11,119 +11,119 @@
       "type": "肿瘤专科",
       "region": "华北",
       "city": "北京",
-      "qrCode": "/images/hospitals/北大肿瘤-小程序.jpg",
+      "qrCode": "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277926418409797_IhVSTY9ND0.jpg?x-expires=1778213441&x-signature=eeJYC60Z32eozdC%2BVuJTmii0qUU%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询", "住院服务"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"北肿智慧医院\"小程序、京医通、114",
-        "注意事项": ["京医通每日6:00开放当日号源", "专家号需提前7天预约"]
-      }
+      "features": ["预约挂号", "线上问诊", "报告查询", "住院服务"]
     },
     {
-      "name": "北京协和医院",
-      "shortName": "协和医院",
+      "name": "中国医学科学院肿瘤医院",
+      "shortName": "东肿",
+      "type": "肿瘤专科",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778210854296801482_cZrn56WFT3.jpeg?x-expires=1778214484&x-signature=TurOvh4p7w3wbqX5HKW6CCIjFGk%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "线上问诊", "报告查询"]
+    },
+    {
+      "name": "北京大学第一医院",
+      "shortName": "北大一院",
       "type": "综合三甲",
       "region": "华北",
       "city": "北京",
-      "qrCode": "/images/hospitals/北京协和小程序.jpg",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778211152153706074_Pis4ufFIZV.jpg?x-expires=1778214768&x-signature=5g%2Fdh4MhZjq5KAK26O4l1inIKas%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "智能导诊", "报告查询", "线上问诊"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "北京协和医院官方APP、114电话/网站",
-        "注意事项": ["协和APP放号时间7:00-23:00", "部分科室号源紧张需提前预约"]
-      }
+      "features": ["预约挂号", "报告查询", "线上问诊"]
     },
     {
-      "name": "解放军总医院（301医院）",
+      "name": "北京大学人民医院",
+      "shortName": "北大人民",
+      "type": "综合三甲",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277926417699613_tmBHQsCWrQ.png?x-expires=1777387632&x-signature=avCooGVtjWenWaWyYElWPGg6AOE%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "北京协和医院",
+      "shortName": "协和",
+      "type": "综合三甲",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777827830112779473_Ehy4efi45v.jpg?x-expires=1777831468&x-signature=0qfWWgrkIv%2BtxI8IZVU%2BYCy9oQA%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "智能导诊", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "中日友好医院",
+      "shortName": "中日医院",
+      "type": "综合三甲",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778211339328889736_OXnUVeVZdV.jpeg?x-expires=1778214941&x-signature=L64IoXSm97texIQQoiavfGlafIc%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "北京大学第三医院",
+      "shortName": "北医三院",
+      "type": "综合三甲",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778211477721455083_Yxr5vBQ6u3.png?x-expires=1778215080&x-signature=scwv6RbVL%2FjqU05G%2BTErslvD%2BBw%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "首都医科大学北京友谊医院",
+      "shortName": "友谊医院",
+      "type": "综合三甲",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778212151446066391_wevWtr0xNw.png?x-expires=1778215772&x-signature=YuBVh9KED5YRFFNTv%2Fe%2FEfm9Wy0%3D",
+      "platform": "微信服务号",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "北京清华长庚医院",
+      "shortName": "清华长庚",
+      "type": "综合三甲",
+      "region": "华北",
+      "city": "北京",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778212248945030870_uOEwsWJXNW.jpeg?x-expires=1778215872&x-signature=dbi3rF6UPW8Oed4Zq6ieB60v7QE%3D",
+      "platform": "微信服务号",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "解放军总医院",
       "shortName": "301医院",
       "type": "综合三甲",
       "region": "华北",
       "city": "北京",
-      "qrCode": "/images/hospitals/解放军总医院（301医院）服务号-服务-智慧门诊.png",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277928777435209_qOvx46w0b5.png?x-expires=1778213441&x-signature=Az7O%2BzA7D3YO4tBnnJtXYYFIHiA%3D",
       "platform": "微信服务号",
-      "features": ["预约挂号", "智慧门诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"解放军总医院301医院\"服务号、智慧门诊小程序",
-        "注意事项": ["部分专家号需持相关证件现场预约", "当日号源有限建议提前预约"]
-      }
+      "features": ["预约挂号", "智慧门诊", "报告查询"]
     },
     {
-      "name": "北京大学人民医院",
-      "shortName": "北大人民医院",
+      "name": "北京西苑医院",
+      "shortName": "西苑医院",
       "type": "综合三甲",
       "region": "华北",
       "city": "北京",
-      "qrCode": "/images/hospitals/北京大学人民医院服务号-就医服务.png",
+      "qrCode": "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778210266013039997_48wyxVtPfO.jpg?x-expires=1778213873&x-signature=hsiyCA5i2EUEui7Cof7nhtRAs5I%3D",
       "platform": "微信服务号",
-      "features": ["就医服务", "预约挂号", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"北京大学人民医院\"服务号、114",
-        "注意事项": ["微信服务号放号时间7:00-17:00", "当日号源6:00后可挂"]
-      }
-    },
-    {
-      "name": "天津医科大学肿瘤医院",
-      "shortName": "天津肿瘤",
-      "type": "肿瘤专科",
-      "region": "华北",
-      "city": "天津",
-      "qrCode": "/images/hospitals/天津医科大学肿瘤医院小程序.jpeg",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"天津肿瘤医院\"小程序、金医宝APP",
-        "注意事项": ["天津市医保患者可用金医宝挂号", "部分专家号需提前电话预约"]
-      }
-    },
-    {
-      "name": "河北省肿瘤医院",
-      "shortName": "河北肿瘤",
-      "type": "肿瘤专科",
-      "region": "华北",
-      "city": "石家庄",
-      "qrCode": "/images/hospitals/河北省肿瘤医院服务号-服务-预约挂号.gif",
-      "platform": "微信服务号",
-      "features": ["预约挂号", "就医服务"],
-      "registrationInfo": {
-        "放号时间": "每天早8:00开放未来7天号源",
-        "挂号方式": "微信搜索\"河北省肿瘤医院\"服务号",
-        "注意事项": ["河北省医保患者可用河北医保挂号"]
-      }
-    },
-    {
-      "name": "山西省肿瘤医院",
-      "shortName": "山西肿瘤",
-      "type": "肿瘤专科",
-      "region": "华北",
-      "city": "太原",
-      "qrCode": "/images/hospitals/山西省肿瘤医院服务号（左）-服务-预约挂号.jpeg",
-      "platform": "微信服务号",
-      "features": ["预约挂号", "就医服务"],
-      "registrationInfo": {
-        "放号时间": "每天早8:00开放未来7天号源",
-        "挂号方式": "微信搜索\"山西省肿瘤医院\"服务号",
-        "注意事项": ["山西省医保患者可用山西医保挂号"]
-      }
+      "features": ["预约挂号", "报告查询"]
     },
     {
       "name": "上海复旦大学附属肿瘤医院",
-      "shortName": "上海肿瘤",
+      "shortName": "复旦肿瘤",
       "type": "肿瘤专科",
       "region": "华东",
       "city": "上海",
-      "qrCode": "/images/hospitals/上海复旦大学附属肿瘤医院小程序.jpeg",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询", "住院服务"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来14天号源",
-        "挂号方式": "微信搜索\"复旦大学附属肿瘤医院\"小程序、微医APP",
-        "注意事项": ["浦东院区和徐汇院区号源分开", "专家号源紧张需提前预约"]
-      }
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778164302220977327_PXPWoTiu3B.jpg?x-expires=1778168040&x-signature=PRP9FcOe288z3H3Iw9t6o30nG08%3D",
+      "platform": "微信服务号",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
     },
     {
       "name": "上海市胸科医院",
@@ -131,14 +131,9 @@
       "type": "专科三甲",
       "region": "华东",
       "city": "上海",
-      "qrCode": "/images/hospitals/上海市胸科医院服务号-服务-互联网医院.jpeg",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778164332112611666_7FhHVX4CUx.jpg?x-expires=1778168040&x-signature=6Z2%2B%2B0%2FOk9sSWmboyet7My8xBWI%3D",
       "platform": "微信服务号",
-      "features": ["互联网医院", "线上问诊", "预约挂号"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"上海市胸科医院\"服务号",
-        "注意事项": ["上海市医保患者可直接持卡就医"]
-      }
+      "features": ["预约挂号", "报告查询"]
     },
     {
       "name": "浙江省肿瘤医院",
@@ -146,329 +141,39 @@
       "type": "肿瘤专科",
       "region": "华东",
       "city": "杭州",
-      "qrCode": "/images/hospitals/浙江省肿瘤医院公众号服务号二维码-服务-网络医院.png",
-      "platform": "微信服务号",
-      "features": ["网络医院", "线上问诊", "预约挂号"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"浙江省肿瘤医院\"服务号、浙里办APP、支付宝",
-        "注意事项": ["浙江省医保患者可用浙里办挂号", "复查患者可通过网络医院复诊"]
-      }
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778164282679812326_3JUh9vu2vg.jpg?x-expires=1778168040&x-signature=xsFEkdcDfjhPG%2Fw%2FBJxUNWpc7jY%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
     },
     {
       "name": "浙江大学医学院附属第二医院",
-      "shortName": "浙大二院",
+      "shortName": "浙二",
       "type": "综合三甲",
       "region": "华东",
       "city": "杭州",
-      "qrCode": "/images/hospitals/浙江大学医学院附属第二医院小程序.jpeg",
+      "qrCode": "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277926807922476_7dJZmUwO2V.jpeg?x-expires=1778168040&x-signature=TQJT1P%2BrzByuOkbcnShR6dZN2p8%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"浙大二院\"小程序、浙里办APP",
-        "注意事项": ["解放路院区和滨江院区号源分开"]
-      }
-    },
-    {
-      "name": "江苏省人民医院",
-      "shortName": "南医大一附院",
-      "type": "综合三甲",
-      "region": "华东",
-      "city": "南京",
-      "qrCode": "/images/hospitals/江苏省人民医院南医大一附院小程序.jpeg",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"江苏省人民医院\"小程序、南京12320",
-        "注意事项": ["江苏省医保患者可用江苏医保挂号"]
-      }
-    },
-    {
-      "name": "江苏省肿瘤医院",
-      "shortName": "江苏肿瘤",
-      "type": "肿瘤专科",
-      "region": "华东",
-      "city": "南京",
-      "qrCode": "/images/hospitals/江苏省肿瘤医院小程序.png",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来7天号源",
-        "挂号方式": "微信搜索\"江苏省肿瘤医院\"小程序",
-        "注意事项": ["部分专家号需提前电话预约"]
-      }
-    },
-    {
-      "name": "安徽省肿瘤医院",
-      "shortName": "安徽肿瘤",
-      "type": "肿瘤专科",
-      "region": "华东",
-      "city": "合肥",
-      "qrCode": "/images/hospitals/安徽省肿瘤医院服务号-服务-就医服务.jpeg",
-      "platform": "微信服务号",
-      "features": ["就医服务", "预约挂号"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来7天号源",
-        "挂号方式": "微信搜索\"安徽省肿瘤医院\"服务号",
-        "注意事项": ["安徽省医保患者可用安徽医保挂号"]
-      }
-    },
-    {
-      "name": "山东省肿瘤医院",
-      "shortName": "山东肿瘤",
-      "type": "肿瘤专科",
-      "region": "华东",
-      "city": "济南",
-      "qrCode": "/images/hospitals/山东省肿瘤医院服务号二维码-服务-医疗服务.jpeg",
-      "platform": "微信服务号",
-      "features": ["医疗服务", "预约挂号"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"山东省肿瘤医院\"服务号",
-        "注意事项": ["山东省医保患者可用山东医保挂号"]
-      }
-    },
-    {
-      "name": "青岛大学附属医院",
-      "shortName": "青大附院",
-      "type": "综合三甲",
-      "region": "华东",
-      "city": "青岛",
-      "qrCode": "/images/hospitals/青岛大学附属医院服务号-服务-智慧就医.jpeg",
-      "platform": "微信服务号",
-      "features": ["智慧就医", "预约挂号", "互联网医院"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"青岛大学附属医院\"服务号",
-        "注意事项": ["市南院区、崂山院区、西海岸院区号源分开"]
-      }
-    },
-    {
-      "name": "福建省肿瘤医院",
-      "shortName": "福建肿瘤",
-      "type": "肿瘤专科",
-      "region": "华东",
-      "city": "福州",
-      "qrCode": "/images/hospitals/福建省肿瘤医院小程序.jpeg",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"福建省肿瘤医院\"小程序",
-        "注意事项": ["福建省医保患者可用福建医保挂号"]
-      }
-    },
-    {
-      "name": "江西省肿瘤医院",
-      "shortName": "江西肿瘤",
-      "type": "肿瘤专科",
-      "region": "华东",
-      "city": "南昌",
-      "qrCode": "/images/hospitals/江西省肿瘤医院小程序.png",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来7天号源",
-        "挂号方式": "微信搜索\"江西省肿瘤医院\"小程序",
-        "注意事项": ["江西省医保患者可用江西医保挂号"]
-      }
-    },
-    {
-      "name": "广州中山大学附属肿瘤医院",
-      "shortName": "中肿",
-      "type": "肿瘤专科",
-      "region": "华南",
-      "city": "广州",
-      "qrCode": "/images/hospitals/广州中山大学附属肿瘤医院小程序.jpeg",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询", "住院服务"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来14天号源",
-        "挂号方式": "微信搜索\"中肿掌上就医\"小程序",
-        "注意事项": ["越秀院区和黄埔院区号源分开", "专家号源紧张需提前预约"]
-      }
+      "features": ["预约挂号", "报告查询", "线上问诊"]
     },
     {
       "name": "广东省人民医院",
-      "shortName": "省医",
+      "shortName": "广东省医",
       "type": "综合三甲",
       "region": "华南",
       "city": "广州",
-      "qrCode": "/images/hospitals/广东省人民医院小程序.jpeg",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777827864842707237_tghEyoq2pY.jpg?x-expires=1778168040&x-signature=pukupX8zUgICwI6sjMOhVboBNmc%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"广东省人民医院\"小程序",
-        "注意事项": ["广东省医保患者可用广东医保挂号"]
-      }
+      "features": ["预约挂号", "报告查询", "线上问诊"]
     },
     {
-      "name": "广西医科大学附属肿瘤医院",
-      "shortName": "广西肿瘤",
+      "name": "广州中山大学附属肿瘤医院",
+      "shortName": "中山肿瘤",
       "type": "肿瘤专科",
-      "region": "华南",
-      "city": "南宁",
-      "qrCode": "/images/hospitals/广西医科大学附属肿瘤医院小程序.png",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来7天号源",
-        "挂号方式": "微信搜索\"广西医科大学附属肿瘤医院\"小程序",
-        "注意事项": ["广西医保患者可用广西医保挂号"]
-      }
-    },
-    {
-      "name": "南方医科大学南方医院",
-      "shortName": "南方医院",
-      "type": "综合三甲",
       "region": "华南",
       "city": "广州",
-      "qrCode": "/images/hospitals/南方医科大学南方医院小程序.jpeg",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277928606018150_92mqZxxP44.jpeg?x-expires=1778211604&x-signature=1K5Ql3YXayfwfblg3FB17PbQcxM%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"南方医科大学南方医院\"小程序",
-        "注意事项": ["广东省医保患者可用广东医保挂号"]
-      }
-    },
-    {
-      "name": "华中科技大学同济医院",
-      "shortName": "同济医院",
-      "type": "综合三甲",
-      "region": "华中",
-      "city": "武汉",
-      "qrCode": "/images/hospitals/华中科技大学同济医院支付宝小程序.png",
-      "platform": "支付宝小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"华中科技大学同济医院\"服务号、掌上同济APP、支付宝",
-        "注意事项": ["光谷院区、中法新城院区、硚口院区号源分开", "湖北省医保患者可用湖北医保挂号"]
-      }
-    },
-    {
-      "name": "武汉大学中南医院",
-      "shortName": "中南医院",
-      "type": "综合三甲",
-      "region": "华中",
-      "city": "武汉",
-      "qrCode": "/images/hospitals/武汉大学中南医院小程序.png",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"武汉大学中南医院\"小程序",
-        "注意事项": ["湖北省医保患者可用湖北医保挂号"]
-      }
-    },
-    {
-      "name": "湖北省肿瘤医院",
-      "shortName": "湖北肿瘤",
-      "type": "肿瘤专科",
-      "region": "华中",
-      "city": "武汉",
-      "qrCode": "/images/hospitals/湖北省肿瘤医院公众号-服务-掌上医院.jpeg",
-      "platform": "微信公众号",
-      "features": ["掌上医院", "预约挂号"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来7天号源",
-        "挂号方式": "微信搜索\"湖北省肿瘤医院\"公众号",
-        "注意事项": ["湖北省医保患者可用湖北医保挂号"]
-      }
-    },
-    {
-      "name": "湖南省肿瘤医院",
-      "shortName": "湖南肿瘤",
-      "type": "肿瘤专科",
-      "region": "华中",
-      "city": "长沙",
-      "qrCode": "/images/hospitals/湖南省肿瘤医院服务号-服务-互联网医院.jpeg",
-      "platform": "微信服务号",
-      "features": ["互联网医院", "预约挂号"],
-      "registrationInfo": {
-        "放号时间": "每天早8:00开放未来7天号源",
-        "挂号方式": "微信搜索\"湖南省肿瘤医院\"服务号、健康通平台",
-        "注意事项": ["湖南省医保患者可用湘医保挂号", "互联网医院支持复诊开药"]
-      }
-    },
-    {
-      "name": "河南省肿瘤医院",
-      "shortName": "河南肿瘤",
-      "type": "肿瘤专科",
-      "region": "华中",
-      "city": "郑州",
-      "qrCode": "/images/hospitals/河南省肿瘤医院小程序.jpeg",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"河南省肿瘤医院\"小程序",
-        "注意事项": ["河南省医保患者可用河南医保挂号"]
-      }
-    },
-    {
-      "name": "陆军军医大学西南医院",
-      "shortName": "西南医院",
-      "type": "综合三甲",
-      "region": "西南",
-      "city": "重庆",
-      "qrCode": "/images/hospitals/陆军军医大学西南医院小程序.jpeg",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"陆军军医大学西南医院\"小程序",
-        "注意事项": ["军人及家属优先挂号"]
-      }
-    },
-    {
-      "name": "重庆大学附属肿瘤医院",
-      "shortName": "重庆肿瘤",
-      "type": "肿瘤专科",
-      "region": "西南",
-      "city": "重庆",
-      "qrCode": "/images/hospitals/重庆大学附属肿瘤医院小程序.jpeg",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来7天号源",
-        "挂号方式": "微信搜索\"重庆大学附属肿瘤医院\"小程序",
-        "注意事项": ["重庆市医保患者可用重庆医保挂号"]
-      }
-    },
-    {
-      "name": "四川省肿瘤医院",
-      "shortName": "四川肿瘤",
-      "type": "肿瘤专科",
-      "region": "西南",
-      "city": "成都",
-      "qrCode": "/images/hospitals/四川省肿瘤医院服务号-服务-就医服务.png",
-      "platform": "微信服务号",
-      "features": ["就医服务", "预约挂号", "线上问诊"],
-      "registrationInfo": {
-        "放号时间": "每天早8:00开放未来7天号源",
-        "挂号方式": "微信搜索\"四川省肿瘤医院\"服务号、天府通APP",
-        "注意事项": ["四川省医保患者可用天府通挂号", "互联网医院支持复诊开药"]
-      }
-    },
-    {
-      "name": "西安交通大学第一附属医院",
-      "shortName": "西安交大一附院",
-      "type": "综合三甲",
-      "region": "西北",
-      "city": "西安",
-      "qrCode": "/images/hospitals/西安交通大学第一附属医院小程序.png",
-      "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早6:00开放未来7天号源",
-        "挂号方式": "微信搜索\"交大一附院\"小程序、智慧好医院APP、114",
-        "注意事项": ["陕西省医保患者可用陕西医保挂号", "国际陆港院区和主院区号源分开"]
-      }
+      "features": ["预约挂号", "报告查询", "线上问诊"]
     },
     {
       "name": "陕西省肿瘤医院",
@@ -476,104 +181,109 @@
       "type": "肿瘤专科",
       "region": "西北",
       "city": "西安",
-      "qrCode": "/images/hospitals/陕西省肿瘤医院小程序.jpeg",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277926946279846_GtFdy6FTwu.jpeg?x-expires=1778211604&x-signature=5EOT%2FRyVvtGve9e9LZmNb5eF3Ec%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"陕西省肿瘤医院\"小程序",
-        "注意事项": ["陕西省医保患者可用陕西医保挂号"]
-      }
+      "features": ["预约挂号", "报告查询"]
     },
     {
-      "name": "甘肃省肿瘤医院",
-      "shortName": "甘肃肿瘤",
-      "type": "肿瘤专科",
+      "name": "西安交通大学第一附属医院",
+      "shortName": "交大一附院",
+      "type": "综合三甲",
       "region": "西北",
-      "city": "兰州",
-      "qrCode": "/images/hospitals/甘肃省肿瘤医院小程序.jpeg",
+      "city": "西安",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277927281382124_5ouWwgEbGD.png?x-expires=1778168040&x-signature=f9t0ypx0V8ns0QCIATMNheTYN0o%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊"],
-      "registrationInfo": {
-        "放号时间": "每天早8:00开放未来7天号源",
-        "挂号方式": "微信搜索\"甘肃省肿瘤医院\"小程序",
-        "注意事项": ["甘肃省医保患者可用甘肃医保挂号"]
-      }
+      "features": ["预约挂号", "报告查询", "线上问诊"]
     },
     {
-      "name": "云南省肿瘤医院",
-      "shortName": "云南肿瘤",
+      "name": "四川省肿瘤医院",
+      "shortName": "四川肿瘤",
       "type": "肿瘤专科",
       "region": "西南",
-      "city": "昆明",
-      "qrCode": "/images/hospitals/云南省肿瘤医院小程序.png",
+      "city": "成都",
+      "qrCode": "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777812742268111486_oIN9wUWqCX.png?x-expires=1778168040&x-signature=cJul74TGUcmCael8g3r37%2B%2FIf64%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来7天号源",
-        "挂号方式": "微信搜索\"云南省肿瘤医院\"小程序",
-        "注意事项": ["云南省医保患者可用云南医保挂号"]
-      }
+      "features": ["预约挂号", "报告查询", "线上问诊"]
     },
     {
-      "name": "贵州省肿瘤医院",
-      "shortName": "贵州肿瘤",
+      "name": "河南省肿瘤医院",
+      "shortName": "河南肿瘤",
       "type": "肿瘤专科",
-      "region": "西南",
-      "city": "贵阳",
-      "qrCode": "/images/hospitals/贵州省肿瘤医院小程序.jpeg",
+      "region": "华中",
+      "city": "郑州",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778164249249912402_YCbVh0DrUN.jpg?x-expires=1778168040&x-signature=LBh1vCjabc3NwJuVV82Dad%2BJYo0%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来7天号源",
-        "挂号方式": "微信搜索\"贵州省肿瘤医院\"小程序",
-        "注意事项": ["贵州省医保患者可用贵州医保挂号"]
-      }
+      "features": ["预约挂号", "报告查询"]
     },
     {
-      "name": "哈尔滨医科大学附属肿瘤医院",
-      "shortName": "哈医大肿瘤",
+      "name": "广西医科大学附属肿瘤医院",
+      "shortName": "广西肿瘤",
       "type": "肿瘤专科",
-      "region": "东北",
-      "city": "哈尔滨",
-      "qrCode": "/images/hospitals/哈尔滨医科大学附属肿瘤医院服务号-服务-互联网医院.gif",
-      "platform": "微信服务号",
-      "features": ["互联网医院", "预约挂号"],
-      "registrationInfo": {
-        "放号时间": "每天早8:00开放未来7天号源",
-        "挂号方式": "微信搜索\"哈尔滨医科大学附属肿瘤医院\"服务号",
-        "注意事项": ["黑龙江省医保患者可用黑龙江医保挂号", "互联网医院支持复诊咨询"]
-      }
-    },
-    {
-      "name": "吉林省肿瘤医院",
-      "shortName": "吉林肿瘤",
-      "type": "肿瘤专科",
-      "region": "东北",
-      "city": "长春",
-      "qrCode": "/images/hospitals/吉林省肿瘤医院服务号-服务-预约挂号.png",
-      "platform": "微信服务号",
-      "features": ["预约挂号"],
-      "registrationInfo": {
-        "放号时间": "每天早7:30开放未来7天号源",
-        "挂号方式": "微信搜索\"吉林省肿瘤医院\"服务号",
-        "注意事项": ["吉林省医保患者可用吉林医保挂号"]
-      }
-    },
-    {
-      "name": "辽宁省肿瘤医院",
-      "shortName": "辽宁肿瘤",
-      "type": "肿瘤专科",
-      "region": "东北",
-      "city": "沈阳",
-      "qrCode": "/images/hospitals/辽宁省肿瘤医院小程序.png",
+      "region": "华南",
+      "city": "南宁",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277929116891617_Ti76TxX0v4.png?x-expires=1777387632&x-signature=aRJbH8Kh9S%2B74foIRK96aKvCUn0%3D",
       "platform": "微信小程序",
-      "features": ["预约挂号", "线上问诊", "报告查询"],
-      "registrationInfo": {
-        "放号时间": "每天早7:00开放未来7天号源",
-        "挂号方式": "微信搜索\"辽宁省肿瘤医院\"小程序",
-        "注意事项": ["辽宁省医保患者可用辽宁医保挂号"]
-      }
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "华中科技大学同济医院",
+      "shortName": "同济医院",
+      "type": "综合三甲",
+      "region": "华中",
+      "city": "武汉",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277928770758192_UJSQpP8pnq.png?x-expires=1777387632&x-signature=4SvI7ZztX7Fkh8I74Cn%2B0%2FGGWUc%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "江苏省肿瘤医院",
+      "shortName": "江苏肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "南京",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777812376423666803_yETFWUOvep.png?x-expires=1777815983&x-signature=SscimbbjWwaOOrDYqyNEYcy%2BUPY%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "江苏省人民医院",
+      "shortName": "江苏省人民",
+      "type": "综合三甲",
+      "region": "华东",
+      "city": "南京",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277928202745062_CFtHxvVTbI.jpeg?x-expires=1778211604&x-signature=YpKlr1cSTTV%2BiOEGPYk6PgwlcBY%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "山西省肿瘤医院",
+      "shortName": "山西肿瘤",
+      "type": "肿瘤专科",
+      "region": "华北",
+      "city": "太原",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778164386312486353_sBfYxRSVym.jpg?x-expires=1778168040&x-signature=q%2BNQxnQ%2Fo5v0Gqk54QiU%2BNUdDoE%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "山东省肿瘤医院",
+      "shortName": "山东肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "济南",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1778164339943365712_Suddbu0JVv.jpg?x-expires=1778168040&x-signature=W6hFp9xiDrBIrNOaJ%2BvOl3SOlNM%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "青岛大学附属医院",
+      "shortName": "青大附院",
+      "type": "综合三甲",
+      "region": "华东",
+      "city": "青岛",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277926577952826_sFFtXtyGZW.png?x-expires=1778211604&x-signature=s681RqzFzWiq6pTbZBDYZc1KKtY%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
     },
     {
       "name": "新疆医科大学附属肿瘤医院",
@@ -581,49 +291,149 @@
       "type": "肿瘤专科",
       "region": "西北",
       "city": "乌鲁木齐",
-      "qrCode": "/images/hospitals/新疆医科大学附属肿瘤医院服务号-服务-互联网医院.jpeg",
-      "platform": "微信服务号",
-      "features": ["互联网医院", "预约挂号"],
-      "registrationInfo": {
-        "放号时间": "每天早8:00开放未来7天号源",
-        "挂号方式": "微信搜索\"新疆医科大学附属肿瘤医院\"服务号",
-        "注意事项": ["新疆医保患者可用新疆医保挂号", "互联网医院支持复诊开药"]
-      }
+      "qrCode": "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277927486558307_W76JHTVUZu.jpeg?x-expires=1778168040&x-signature=PTEoUOpCMCfascDesN77vHSWFds%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "云南省肿瘤医院",
+      "shortName": "云南肿瘤",
+      "type": "肿瘤专科",
+      "region": "西南",
+      "city": "昆明",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277927979005514_UqOdfUiO9U.png?x-expires=1778168040&x-signature=MDbJjZitD1DZUht4591c0LNUYnA%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "贵州省肿瘤医院",
+      "shortName": "贵州肿瘤",
+      "type": "肿瘤专科",
+      "region": "西南",
+      "city": "贵阳",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277927024408127_JNXT6Ed0VU.jpeg?x-expires=1778211604&x-signature=OlOxEqSSL9cX7hx9HtidVbNrcZQ%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "武汉大学中南医院",
+      "shortName": "中南医院",
+      "type": "综合三甲",
+      "region": "华中",
+      "city": "武汉",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277929603224414_8U6ife6ZuB.png?x-expires=1778168040&x-signature=TIWsJj3AsJLGSZza9%2F1iMuaM1R8%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "天津医科大学肿瘤医院",
+      "shortName": "天津肿瘤",
+      "type": "肿瘤专科",
+      "region": "华北",
+      "city": "天津",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277926787358673_DOs7wmHt9U.jpeg?x-expires=1778168040&x-signature=QdHSj%2B5ai%2FNDHkLpRDwAcRUwATk%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "重庆大学附属肿瘤医院",
+      "shortName": "重庆肿瘤",
+      "type": "肿瘤专科",
+      "region": "西南",
+      "city": "重庆",
+      "qrCode": "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277926449429533_g6cFxsmpds.jpeg?x-expires=1778211604&x-signature=BHkQgwS8PUqvmBSxE9vdRXh0F8g%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "湖北省肿瘤医院",
+      "shortName": "湖北肿瘤",
+      "type": "肿瘤专科",
+      "region": "华中",
+      "city": "武汉",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277928575815028_UTcDONw0Nx.jpeg?x-expires=1778213441&x-signature=6r47yqvcsBHr3LkVgxDWDHMRC9A%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "福建省肿瘤医院",
+      "shortName": "福建肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "福州",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277928766663485_97oXsPXPhW.jpeg?x-expires=1778211604&x-signature=sAuIvyD8Hz2Fgg53mbrtZxdYUdw%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "南方医科大学南方医院",
+      "shortName": "南方医院",
+      "type": "综合三甲",
+      "region": "华南",
+      "city": "广州",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277927890367860_2nDObuXUvn.jpeg?x-expires=1778211604&x-signature=oQG5tnYJfvHl9BiakrO2mNBhGmk%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "陆军军医大学西南医院",
+      "shortName": "西南医院",
+      "type": "综合三甲",
+      "region": "西南",
+      "city": "重庆",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277927889574777_2CT8ptpcgX.jpeg?x-expires=1778213441&x-signature=R0uJapZ4I7gULJ8zt7FNQ8frKUM%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "辽宁省肿瘤医院",
+      "shortName": "辽宁肿瘤",
+      "type": "肿瘤专科",
+      "region": "东北",
+      "city": "沈阳",
+      "qrCode": "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277929504737264_5SiBoyTw0R.png?x-expires=1778213441&x-signature=CSoVzU0AUdWsUVqwRL%2BV3e%2F83DY%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "安徽省肿瘤医院",
+      "shortName": "安徽肿瘤",
+      "type": "肿瘤专科",
+      "region": "华东",
+      "city": "合肥",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277926419999687_uRIUqTxmG0.jpeg?x-expires=1778213441&x-signature=lExQWf2dCCpLYlQaq%2Bvl4mxJ3kE%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "甘肃省肿瘤医院",
+      "shortName": "甘肃肿瘤",
+      "type": "肿瘤专科",
+      "region": "西北",
+      "city": "兰州",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277927599609979_xuxUxsYUco.jpeg?x-expires=1778213441&x-signature=i8WuKVZKAhtymZis3VTvpF9cfJ8%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
+    },
+    {
+      "name": "湖南省肿瘤医院",
+      "shortName": "湖南肿瘤",
+      "type": "肿瘤专科",
+      "region": "华中",
+      "city": "长沙",
+      "qrCode": "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277927161063022_HFEorgm4qV.jpeg?x-expires=1778213441&x-signature=bbIQIW5yQBUSM1t2mWiFXaTq2Bs%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询", "线上问诊"]
+    },
+    {
+      "name": "吉林省肿瘤医院",
+      "shortName": "吉林肿瘤",
+      "type": "肿瘤专科",
+      "region": "东北",
+      "city": "长春",
+      "qrCode": "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/FileBizType.BIZ_BOT_DATASET/1118647974625609_1777277927829596072_qI6NX3H7TV.png?x-expires=1778213441&x-signature=870%2F4g8IHSaGaJR735xAIJ7fQuY%3D",
+      "platform": "微信小程序",
+      "features": ["预约挂号", "报告查询"]
     }
-  ],
-  "registrationRules": {
-    "title": "全国医院放号时间参考",
-    "commonPatterns": [
-      {
-        "pattern": "北京地区多数三甲医院",
-        "放号时间": "每天7:00开放未来7天号源",
-        "代表医院": "北京协和医院、北京大学肿瘤医院、301医院等"
-      },
-      {
-        "pattern": "上海地区部分医院",
-        "放号时间": "每天7:00-7:30开放未来7-14天号源",
-        "代表医院": "复旦大学附属肿瘤医院、上海交通大学医学院附属瑞金医院等"
-      },
-      {
-        "pattern": "其他省会城市三甲医院",
-        "放号时间": "每天7:00-8:00开放未来7天号源",
-        "代表医院": "多数省级人民医院、省肿瘤医院等"
-      }
-    ],
-    "tips": [
-      "放号时间因医院而异，建议提前查询目标医院官方信息",
-      "热门科室（肿瘤内科、专家门诊）号源紧张，建议提前7-14天预约",
-      "部分医院当日号源于凌晨或早上6:00开放",
-      "异地就医患者建议提前用医保卡在当地挂号平台建档"
-    ]
-  },
-  "citationRules": {
-    "title": "挂号相关问题引用规则",
-    "rules": [
-      "涉及具体医院的放号时间、挂号方式，必须引用该医院的官方信息",
-      "格式：【来源：XX医院官方公众号/小程序/APP/官网】",
-      "如无法获取某医院的官方信息，说明信息来源并建议用户自行查询",
-      "通用挂号流程可引用政府官方平台信息（如国家医保服务平台）"
-    ]
-  }
+  ]
 }
