@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { toast, Toaster } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -289,12 +289,58 @@ type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
 const HOSPITALS_QR = hospitalsQRData;
 
 // ============== 医院二维码弹窗组件 ==============
+// 二维码图片组件 - 带有加载失败回退
+function QRImageWithFallback({ src, alt, hospitalName, onFetchQR }: {
+  src: string;
+  alt: string;
+  hospitalName: string;
+  onFetchQR: (name: string) => Promise<string | null>;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+
+  const handleError = async () => {
+    if (retrying) {
+      setImgError(true);
+      return;
+    }
+    setRetrying(true);
+    const url = await onFetchQR(hospitalName);
+    if (url) {
+      setImgError(false);
+    } else {
+      setImgError(true);
+    }
+  };
+
+  if (imgError) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300">
+        <QrCode className="h-5 w-5 mb-0.5" />
+        <span className="text-[8px] leading-tight">点击查看</span>
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      className="w-full h-full object-contain"
+      onError={handleError}
+    />
+  );
+}
+
 interface HospitalQRDialogProps {
   hospital: typeof HOSPITALS_QR.hospitals[0] | null;
   onClose: () => void;
+  qrUrlCache: Record<string, string>;
+  onFetchQR: (hospitalName: string) => Promise<string | null>;
 }
 
-function HospitalQRDialoDialog({ hospital, onClose }: HospitalQRDialogProps) {
+function HospitalQRDialoDialog({ hospital, onClose, qrUrlCache, onFetchQR }: HospitalQRDialogProps) {
   if (!hospital) return null;
   
   return (
@@ -317,11 +363,11 @@ function HospitalQRDialoDialog({ hospital, onClose }: HospitalQRDialogProps) {
         </div>
         <div className="p-4 space-y-4">
           <div className="relative w-full aspect-square bg-gray-50 dark:bg-slate-700 rounded-xl overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={hospital.qrCode}
+            <QRImageWithFallback
+              src={qrUrlCache[hospital.name] || hospital.qrCode}
               alt={`${hospital.name}小程序/服务号二维码`}
-              className="w-full h-full object-contain"
+              hospitalName={hospital.name}
+              onFetchQR={onFetchQR}
             />
           </div>
           <div className="text-center space-y-2">
@@ -353,9 +399,11 @@ function HospitalQRDialoDialog({ hospital, onClose }: HospitalQRDialogProps) {
 interface HospitalRecommendCardProps {
   hospitals: typeof HOSPITALS_QR.hospitals;
   onSelectHospital: (hospital: typeof HOSPITALS_QR.hospitals[0]) => void;
+  hospitalQRUrlCache: Record<string, string>;
+  fetchHospitalQRUrl: (hospitalName: string) => Promise<string | null>;
 }
 
-function HospitalRecommendCard({ hospitals, onSelectHospital }: HospitalRecommendCardProps) {
+function HospitalRecommendCard({ hospitals, onSelectHospital, hospitalQRUrlCache, fetchHospitalQRUrl }: HospitalRecommendCardProps) {
   const [isExpanded, setIsExpanded] = useState(true); // 默认展开，让用户第一时间看到
   
   if (hospitals.length === 0) return null;
@@ -385,12 +433,12 @@ function HospitalRecommendCard({ hospitals, onSelectHospital }: HospitalRecommen
               onClick={() => onSelectHospital(hospital)}
               className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors text-left"
             >
-              <div className="relative w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm flex-shrink-0 border border-gray-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={hospital.qrCode}
+              <div className="relative w-16 h-16 bg-white rounded-lg overflow-hidden shadow-sm flex-shrink-0 border border-gray-100 flex items-center justify-center">
+                <QRImageWithFallback
+                  src={hospitalQRUrlCache[hospital.name] || hospital.qrCode}
                   alt={hospital.name}
-                  className="w-full h-full object-contain"
+                  hospitalName={hospital.name}
+                  onFetchQR={fetchHospitalQRUrl}
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -848,6 +896,9 @@ export default function Home() {
   // 二维码弹窗状态
   const [selectedHospital, setSelectedHospital] = useState<typeof HOSPITALS_QR.hospitals[0] | null>(null);
   
+  // 医院二维码S3 URL缓存（解决签名过期问题）
+  const [hospitalQRUrlCache, setHospitalQRUrlCache] = useState<Record<string, string>>({});
+  
   // 历史记录面板状态
   const [showHistory, setShowHistory] = useState(false);
   
@@ -862,6 +913,37 @@ export default function Home() {
   
   // 当前消息中的医院列表（用于显示推荐卡片）
   const [messageHospitals, setMessageHospitals] = useState<typeof HOSPITALS_QR.hospitals>([]);
+
+  // 获取医院二维码的有效S3 URL
+  const fetchHospitalQRUrl = useCallback(async (hospitalName: string): Promise<string | null> => {
+    // 如果缓存中已有，直接返回
+    if (hospitalQRUrlCache[hospitalName]) {
+      return hospitalQRUrlCache[hospitalName];
+    }
+    try {
+      const res = await fetch(`/api/hospital-qrcodes?hospital=${encodeURIComponent(hospitalName)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          setHospitalQRUrlCache(prev => ({ ...prev, [hospitalName]: data.url }));
+          return data.url;
+        }
+      }
+    } catch {
+      // API失败时静默处理
+    }
+    return null;
+  }, [hospitalQRUrlCache]);
+
+  // 当messageHospitals变化时，预加载所有二维码URL
+  useEffect(() => {
+    if (messageHospitals.length === 0) return;
+    messageHospitals.forEach(hospital => {
+      if (!hospitalQRUrlCache[hospital.name]) {
+        fetchHospitalQRUrl(hospital.name);
+      }
+    });
+  }, [messageHospitals, hospitalQRUrlCache, fetchHospitalQRUrl]);
 
   // 页面加载时初始化历史记录
   useEffect(() => {
@@ -1755,7 +1837,9 @@ export default function Home() {
                           {hospitals.length > 0 && (
                             <HospitalRecommendCard 
                               hospitals={hospitals} 
-                              onSelectHospital={setSelectedHospital} 
+                              onSelectHospital={setSelectedHospital}
+                              hospitalQRUrlCache={hospitalQRUrlCache}
+                              fetchHospitalQRUrl={fetchHospitalQRUrl}
                             />
                           )}
                         </div>
@@ -1999,7 +2083,9 @@ export default function Home() {
       {/* 医院二维码弹窗 */}
       <HospitalQRDialoDialog 
         hospital={selectedHospital} 
-        onClose={() => setSelectedHospital(null)} 
+        onClose={() => setSelectedHospital(null)}
+        qrUrlCache={hospitalQRUrlCache}
+        onFetchQR={fetchHospitalQRUrl}
       />
 
       {/* 历史记录面板 */}
