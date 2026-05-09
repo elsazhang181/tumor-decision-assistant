@@ -439,11 +439,13 @@ function HospitalRecommendCard({ hospitals, onSelectHospital }: HospitalRecommen
 function extractHospitalsFromMessage(message: string): typeof HOSPITALS_QR.hospitals {
   const matchedHospitals: typeof HOSPITALS_QR.hospitals = [];
   const normalizedMessage = message.replace(/\s/g, ''); // 移除空格
-  const matchedNames = new Set<string>();
+  const matchedKeys = new Set<string>();
   
   // 遍历所有医院，匹配全称、简称和常见别名
   for (const hospital of HOSPITALS_QR.hospitals) {
-    if (matchedNames.has(hospital.name)) continue;
+    // 同一医院可有多个二维码（如预约挂号+线上问诊），按 name+qrCode 去重
+    const dedupKey = hospital.name + '|' + hospital.qrCode;
+    if (matchedKeys.has(dedupKey)) continue;
     
     // 生成匹配关键词：全称、简称、去"省/市/大学"等简称
     const patterns = [
@@ -462,7 +464,7 @@ function extractHospitalsFromMessage(message: string): typeof HOSPITALS_QR.hospi
       const normalizedPattern = pattern.replace(/\s/g, '');
       if (normalizedPattern && normalizedMessage.includes(normalizedPattern)) {
         matchedHospitals.push(hospital);
-        matchedNames.add(hospital.name);
+        matchedKeys.add(dedupKey);
         break;
       }
     }

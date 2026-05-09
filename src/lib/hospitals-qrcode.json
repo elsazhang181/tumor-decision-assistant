@@ -283,8 +283,18 @@
       "region": "华东",
       "city": "青岛",
       "qrCode": "/qrcodes/qingdao.png",
+      "platform": "微信服务号",
+      "features": ["预约挂号", "智慧就医", "报告查询"]
+    },
+    {
+      "name": "青岛大学附属医院",
+      "shortName": "青大附院",
+      "type": "综合三甲",
+      "region": "华东",
+      "city": "青岛",
+      "qrCode": "/qrcodes/qingdao-online.png",
       "platform": "微信小程序",
-      "features": ["预约挂号", "报告查询"]
+      "features": ["线上问诊", "互联网医院"]
     },
     {
       "name": "新疆医科大学附属肿瘤医院",
