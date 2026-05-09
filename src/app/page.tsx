@@ -498,14 +498,58 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     sources.forEach(s => sourceMap.set(s.index, s));
   }
   
-  // 无sources或无内容时直接返回
-  if (!sourceMap.size || !content) {
-    return content;
+  if (!content) return content;
+
+  // === 步骤0: 从回复文本中提取 [N]URL 格式的引用，构建本地sourceMap并删除原始URL行 ===
+  let extractedContent = content;
+  
+  // 0a. 处理 [N](url) Markdown链接格式 → 提取到sourceMap，替换为 [N]
+  extractedContent = extractedContent.replace(
+    /\[(\d+)\]\((https?:\/\/[^\s\)]+)\)/g,
+    (match, numStr, url) => {
+      const idx = parseInt(numStr, 10);
+      if (!sourceMap.has(idx)) {
+        sourceMap.set(idx, { index: idx, url, title: `来源${idx}`, snippet: '' });
+      }
+      return `[${numStr}]`;
+    }
+  );
+  
+  // 0b. 处理 [N]https://... 格式 → 提取URL到sourceMap，删除整行
+  // 匹配行首的 [N]https://... （URL可能跟其他文字在同一行，只删除URL部分）
+  extractedContent = extractedContent.replace(
+    /\[(\d+)\]\s*(https?:\/\/[^\s\n\]]+)/g,
+    (match, numStr, url) => {
+      const idx = parseInt(numStr, 10);
+      if (!sourceMap.has(idx)) {
+        sourceMap.set(idx, { index: idx, url, title: `来源${idx}`, snippet: '' });
+      }
+      return `[${numStr}]`;
+    }
+  );
+  
+  // 0c. 删除仅含 [N]URL 的空行（底部参考文献列表）
+  extractedContent = extractedContent.replace(
+    /\n\s*\[\d+\]\s*https?:\/\/[^\n]*/g,
+    ''
+  );
+  // 也处理行首的情况
+  extractedContent = extractedContent.replace(
+    /^\s*\[\d+\]\s*https?:\/\/[^\n]*\n?/gm,
+    ''
+  );
+  
+  // 0d. 清理多余空行
+  extractedContent = extractedContent.replace(/\n{3,}/g, '\n\n').trim();
+
+  // 如果没有sourceMap也没有内容，直接返回
+  if (!sourceMap.size) {
+    return extractedContent;
   }
   
   // 过滤掉回复内容中的【信息来源】和【重要提示】段落（保留底部声明列表）
   // 逐条过滤，避免误删重要内容
-  let filteredContent = content;
+  let filteredContent = extractedContent;
 
   // 1. 过滤 【信息来源声明】 段落标题及后续列表（保留标题后的单个链接行，删除多行列表）
   filteredContent = filteredContent
@@ -620,20 +664,22 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
   
-  // 3. 处理不带括号的点号数字：1. 2. 3. 或 ①. ②. ③.
+  // 3. 处理不带括号的点号数字：1. 2. 3.（仅替换sourceMap中存在的序号，避免误改普通列表）
   processedContent = processedContent.replace(
-    /(\d+)\.\s*/g,
+    /(\d+)\.\s/g,
     (match, num) => {
       const index = getIndexFromNum(num);
+      if (!sourceMap.has(index)) return match; // 普通列表项，不替换
       return makeLink(num, index) + ' ';
     }
   );
   
-  // 4. 处理不带括号也不带点的纯数字：1、2、3（中文顿号分隔）
+  // 4. 处理不带括号也不带点的纯数字：1、2、3（中文顿号分隔，仅替换sourceMap中存在的序号）
   processedContent = processedContent.replace(
-    /(\d+)、\s*/g,
+    /(\d+)、\s/g,
     (match, num) => {
       const index = getIndexFromNum(num);
+      if (!sourceMap.has(index)) return match;
       return makeLink(num, index) + ' ';
     }
   );
