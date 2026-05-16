@@ -698,27 +698,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
   
-  // 7. 渲染【段落标题】为带样式的标签（新增七段式格式支持）
-  const sectionConfig: Record<string, { icon: string; color: string; bg: string }> = {
-    '结论': { icon: '💡', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
-    '通俗解释': { icon: '📖', color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
-    '关键决策点': { icon: '🔑', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
-    '选项分析': { icon: '⚖️', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
-    '依据': { icon: '📚', color: 'text-teal-700', bg: 'bg-teal-50 border-teal-200' },
-    '医患沟通建议清单': { icon: '💬', color: 'text-green-700', bg: 'bg-green-50 border-green-200' },
-    '重点关注事项': { icon: '⚠️', color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
-  };
-
-  processedContent = processedContent.replace(
-    /【(结论|通俗解释|关键决策点|选项分析|依据|医患沟通建议清单|重点关注事项)】/g,
-    (match, title) => {
-      const cfg = sectionConfig[title];
-      if (cfg) {
-        return `\n<div class="flex items-center gap-1.5 mt-4 mb-2 px-3 py-1.5 rounded-lg border ${cfg.bg} ${cfg.color} font-bold text-sm">${cfg.icon} ${title}</div>`;
-      }
-      return match;
-    }
-  );
+  // 7. 【段落标题】保持原格式，不做样式化渲染
 
   // 8. 渲染【需医生确认】为醒目标签
   processedContent = processedContent.replace(
