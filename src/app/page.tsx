@@ -547,13 +547,15 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   let filteredContent = extractedContent;
 
   // 1. 过滤 【信息来源声明】 段落标题及后续列表（保留标题后的单个链接行，删除多行列表）
+  // 负向前瞻包含所有合法段落标题，避免误删其他段落内容
+  const sectionTitlePattern = '【结论】|【通俗解释】|【关键决策点】|【选项分析】|【依据】|【医患沟通建议清单】|【医患沟通提问清单】|【重点关注事项】|【记录要点】|【重要提示】|【信息来源声明】|---';
   filteredContent = filteredContent
     // 删除独立的 [信息来源声明] 整行及后续连续的非标题行
-    .replace(/(?:^|\n)\[信息来源声明\][^\n]*(?:\n(?!\s*(?:---|\[医患沟通提问清单\]|\[记录要点\]|\[重要提示\]))[^\n]*)*/gi, '');
+    .replace(new RegExp(`(?:^|\\n)\\[信息来源声明\\][^\\n]*(?:\\n(?!\\s*(?:${sectionTitlePattern}]))[^\\n]*)*`, 'gi'), '');
 
   // 2. 过滤 【信息来源】 段落
   filteredContent = filteredContent
-    .replace(/(?:^|\n)(?:●【信息来源】|【信息来源】|●【来源】|【来源】)[^\n]*(?:\n(?!\s*(?:---|\[医患沟通提问清单\]|\[记录要点\]|\[重要提示\]))[^\n]*)*/gi, '');
+    .replace(new RegExp(`(?:^|\\n)(?:●【信息来源】|【信息来源】|●【来源】|【来源】)[^\\n]*(?:\\n(?!\\s*(?:${sectionTitlePattern}]))[^\\n]*)*`, 'gi'), '');
 
   // 3. 过滤 【来源：xxx】 格式（单行）
   filteredContent = filteredContent
@@ -561,7 +563,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
 
   // 4. 过滤 **⚠️ 重要提示** 或 【重要提示】 段落（整段删除）
   filteredContent = filteredContent
-    .replace(/(?:^|\n)(?:\*\*)?[⚠️]*\s*重要提示[^\n]*(?:\n(?!\s*(?:---|\[医患沟通提问清单\]|\[记录要点\]|\[信息来源声明\]))[^\n]*)*/gi, '');
+    .replace(new RegExp(`(?:^|\\n)(?:\\*\\*)?[⚠️]*\\s*重要提示[^\\n]*(?:\\n(?!\\s*(?:${sectionTitlePattern}]))[^\\n]*)*`, 'gi'), '');
 
   // 5. 清理多余的空行和分隔符
   filteredContent = filteredContent
