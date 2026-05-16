@@ -541,11 +541,6 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   
   // 0d. 清理多余空行
   extractedContent = extractedContent.replace(/\n{3,}/g, '\n\n').trim();
-
-  // 如果没有sourceMap也没有内容，直接返回
-  if (!sourceMap.size) {
-    return extractedContent;
-  }
   
   // 过滤掉回复内容中的【信息来源】和【重要提示】段落（保留底部声明列表）
   // 逐条过滤，避免误删重要内容
@@ -577,16 +572,16 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
-  // 6. 医患沟通提问清单和记录要点中的数字标注不转链接
+  // 6. 医患沟通建议清单/提问清单和记录要点中的数字标注不转链接
   // 将这些区域中的 [1][2][3] 等格式替换为纯文本（不带链接）
   filteredContent = filteredContent.replace(
-    /(\[医患沟通提问清单\][\s\S]*?)(\[1\]\s|\[2\]\s|\[3\]\s|\[4\]\s|\[5\]\s|\[6\]\s|\[7\]\s|\[8\]\s|\[9\]\s|\[10\]\s)/g,
+    /(\[医患沟通(?:建议清单|提问清单)\][\s\S]*?)(\[1\]\s|\[2\]\s|\[3\]\s|\[4\]\s|\[5\]\s|\[6\]\s|\[7\]\s|\[8\]\s|\[9\]\s|\[10\]\s)/g,
     (match, prefix, numItem) => {
       // 保留纯文本数字标注，不转链接
       return prefix + numItem;
     }
   );
-  // 额外处理：确保医患沟通提问清单和记录要点中的方括号数字不转链接
+  // 额外处理：确保医患沟通建议清单/提问清单和记录要点中的方括号数字不转链接
   filteredContent = filteredContent.replace(
     /(\[记录要点\][\s\S]*?)(?<!\]\s)(\[1\]\s|\[2\]\s|\[3\]\s|\[4\]\s|\[5\]\s|\[6\]\s|\[7\]\s|\[8\]\s|\[9\]\s|\[10\]\s)/g,
     (match, prefix, numItem) => {
@@ -703,6 +698,104 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
   
+  // 7. 渲染【段落标题】为带样式的标签（新增七段式格式支持）
+  const sectionConfig: Record<string, { icon: string; color: string; bg: string }> = {
+    '结论': { icon: '💡', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
+    '通俗解释': { icon: '📖', color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
+    '关键决策点': { icon: '🔑', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
+    '选项分析': { icon: '⚖️', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
+    '依据': { icon: '📚', color: 'text-teal-700', bg: 'bg-teal-50 border-teal-200' },
+    '医患沟通建议清单': { icon: '💬', color: 'text-green-700', bg: 'bg-green-50 border-green-200' },
+    '重点关注事项': { icon: '⚠️', color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
+  };
+
+  processedContent = processedContent.replace(
+    /【(结论|通俗解释|关键决策点|选项分析|依据|医患沟通建议清单|重点关注事项)】/g,
+    (match, title) => {
+      const cfg = sectionConfig[title];
+      if (cfg) {
+        return `\n<div class="flex items-center gap-1.5 mt-4 mb-2 px-3 py-1.5 rounded-lg border ${cfg.bg} ${cfg.color} font-bold text-sm">${cfg.icon} ${title}</div>`;
+      }
+      return match;
+    }
+  );
+
+  // 8. 渲染【需医生确认】为醒目标签
+  processedContent = processedContent.replace(
+    /【需医生确认】/g,
+    '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300">⚠️ 需医生确认</span>'
+  );
+
+  // 9. 渲染可信度徽章为带样式的标签
+  processedContent = processedContent.replace(
+    /🏛️\s*\[政府官网\]/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 border border-blue-200">🏛️ 政府官网</span>'
+  );
+  processedContent = processedContent.replace(
+    /🏥\s*\[医院指南\]/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 border border-green-200">🏥 医院指南</span>'
+  );
+  processedContent = processedContent.replace(
+    /📰\s*\[行业媒体\]/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-yellow-100 text-yellow-700 border border-yellow-200">📰 行业媒体</span>'
+  );
+  processedContent = processedContent.replace(
+    /⚠️\s*\[待验证\]/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 border border-red-200">⚠️ 待验证</span>'
+  );
+
+  // 10. 渲染时效性标签
+  processedContent = processedContent.replace(
+    /\[时效性：高\]/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">时效性：高</span>'
+  );
+  processedContent = processedContent.replace(
+    /\[时效性：中\]/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">时效性：中</span>'
+  );
+  processedContent = processedContent.replace(
+    /\[时效性：低\]/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">时效性：低</span>'
+  );
+  // 兼容其他时效性描述
+  processedContent = processedContent.replace(
+    /\[时效性：([^\]]+)\]/g,
+    (match, desc) => {
+      // 如果已经处理过的就跳过
+      if (desc === '高' || desc === '中' || desc === '低') return match;
+      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">时效性：${desc}</span>`;
+    }
+  );
+
+  // 11. 渲染医患沟通三级分类标签
+  processedContent = processedContent.replace(
+    /【必问】/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">必问</span>'
+  );
+  processedContent = processedContent.replace(
+    /【选问】/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">选问</span>'
+  );
+  processedContent = processedContent.replace(
+    /【紧急问】/g,
+    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 animate-pulse">🚨 紧急问</span>'
+  );
+
+  // 12. 渲染重点关注事项子标签
+  processedContent = processedContent.replace(
+    /^(\s*)(警示信号|时间线|决策树|复查提醒)[：:]/gm,
+    (match, indent, label) => {
+      const labelConfig: Record<string, string> = {
+        '警示信号': 'bg-red-100 text-red-700 border-red-200',
+        '时间线': 'bg-blue-100 text-blue-700 border-blue-200',
+        '决策树': 'bg-purple-100 text-purple-700 border-purple-200',
+        '复查提醒': 'bg-green-100 text-green-700 border-green-200',
+      };
+      const cls = labelConfig[label] || 'bg-gray-100 text-gray-700 border-gray-200';
+      return `${indent}<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${cls} border mr-1">${label}</span>:`;
+    }
+  );
+
   return processedContent;
 };
 
