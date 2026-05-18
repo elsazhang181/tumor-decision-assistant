@@ -548,7 +548,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
 
   // 1. 过滤 【信息来源声明】 段落标题及后续列表（保留标题后的单个链接行，删除多行列表）
   // 负向前瞻包含所有合法段落标题，避免误删其他段落内容
-  const sectionTitlePattern = '【信息摘要】|【结论】|【通俗解释】|【关键决策点】|【选项分析】|【依据】|【医患沟通建议清单】|【医患沟通提问清单】|【重点关注事项】|【记录要点】|【重要提示】|【信息来源声明】|---';
+  const sectionTitlePattern = '【结论】|【通俗解释】|【关键决策点】|【依据】|【医患沟通建议清单】|【医患沟通提问清单】|【重点关注事项】|【记录要点】|【重要提示】|【信息来源声明】|---';
   filteredContent = filteredContent
     // 删除独立的 [信息来源声明] 整行及后续连续的非标题行
     .replace(new RegExp(`(?:^|\\n)\\[信息来源声明\\][^\\n]*(?:\\n(?!\\s*(?:${sectionTitlePattern}]))[^\\n]*)*`, 'gi'), '');
@@ -976,8 +976,8 @@ function extractConclusion(answer: string): string {
     return '';
   }
   
-  // 尝试提取【信息摘要】或【结论】部分
-  const summaryMatch = answer.match(/【(?:信息摘要|结论)】\s*([^\n【]+)/);
+  // 尝试提取【结论】部分
+  const summaryMatch = answer.match(/【结论】\s*([^\n【]+)/);
   if (summaryMatch) {
     return summaryMatch[1].trim().substring(0, 80);
   }
