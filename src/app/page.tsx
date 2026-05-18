@@ -629,22 +629,37 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     return `[${num}]`;
   };
   
-  // 匹配各种编号格式
-  let processedContent = filteredContent;
+  // 匹配各种编号格式 - 只在【依据】段中将[N]转为链接，其他段保持纯文本
+  
+  // 按【依据】分割内容，链接转换仅在【依据】段中生效
+  const evidenceMatch = filteredContent.match(/【依据】/);
+  let contentBeforeEvidence = '';
+  let contentFromEvidence = filteredContent;
+  if (evidenceMatch && evidenceMatch.index !== undefined) {
+    contentBeforeEvidence = filteredContent.substring(0, evidenceMatch.index);
+    contentFromEvidence = filteredContent.substring(evidenceMatch.index);
+  }
+  
+  // 在【依据】之前的部分：将[N]转为纯文本数字，避免显示为链接
+  contentBeforeEvidence = contentBeforeEvidence
+    .replace(/\[([1-9]|10)\]/g, '($1)')  // [1] → (1) 纯文本编号
+    .replace(/【([1-9]|10)】/g, '($1)');  // 【1】 → (1) 纯文本编号
+  
+  // 只对【依据】及其后续内容做链接转换
+  let evidenceContent = contentFromEvidence;
 
-  // 0. 先处理 emoji 数字格式 1️⃣ 2️⃣ 3️⃣ 等
-  processedContent = processedContent.replace(
+  // 0. 先处理 emoji 数字格式 1️⃣ 2️⃣ 3️⃣ 等（仅在依据段）
+  evidenceContent = evidenceContent.replace(
     /[\u0031-\u0039]\uFE0F\u20E3/g,
     (match) => {
-      // 提取数字
       const num = match.replace(/\uFE0F|\u20E3/g, '');
       const index = parseInt(num, 10);
       return makeLink(num, index);
     }
   );
   
-  // 1. 处理全角方括号【1】【2】【3】或【①】【②】【③】
-  processedContent = processedContent.replace(
+  // 1. 处理全角方括号【1】【2】【3】或【①】【②】【③】（仅在依据段）
+  evidenceContent = evidenceContent.replace(
     /【([1-9]|10|[一二三四五六七八九十①-⑨]|[\u2460-\u2469]|[\u2470-\u2473])】/g, 
     (match, num) => {
       const index = getIndexFromNum(num);
@@ -652,8 +667,8 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
   
-  // 2. 处理半角方括号[1][2][3]或[①][②][③]或[一][二][三]
-  processedContent = processedContent.replace(
+  // 2. 处理半角方括号[1][2][3]或[①][②][③]或[一][二][三]（仅在依据段）
+  evidenceContent = evidenceContent.replace(
     /\[([1-9]|10|[一二三四五六七八九十]|[\u2460-\u2469]|[\u2470-\u2473])\]/g, 
     (match, num) => {
       const index = getIndexFromNum(num);
@@ -662,7 +677,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   );
   
   // 3. 处理不带括号的点号数字：1. 2. 3.（仅替换sourceMap中存在的序号，避免误改普通列表）
-  processedContent = processedContent.replace(
+  evidenceContent = evidenceContent.replace(
     /(\d+)\.\s/g,
     (match, num) => {
       const index = getIndexFromNum(num);
@@ -672,7 +687,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   );
   
   // 4. 处理不带括号也不带点的纯数字：1、2、3（中文顿号分隔，仅替换sourceMap中存在的序号）
-  processedContent = processedContent.replace(
+  evidenceContent = evidenceContent.replace(
     /(\d+)、\s/g,
     (match, num) => {
       const index = getIndexFromNum(num);
@@ -682,7 +697,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   );
   
   // 5. 处理不带括号的纯数字（前后有空格或换行）：① ② ③
-  processedContent = processedContent.replace(
+  evidenceContent = evidenceContent.replace(
     /([\u2460-\u2469]|[\u2470-\u2473])\s+/g,
     (match, num) => {
       const index = getIndexFromNum(num);
@@ -690,8 +705,8 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
   
-  // 6. 处理括号中的纯数字 (1) (2) (3)
-  processedContent = processedContent.replace(
+  // 6. 处理括号中的纯数字 (1) (2) (3)（仅在依据段）
+  evidenceContent = evidenceContent.replace(
     /\((\d+)\)/g,
     (match, num) => {
       const index = getIndexFromNum(num);
@@ -699,6 +714,9 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
       return `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline decoration-blue-300 hover:decoration-blue-500 transition-colors cursor-pointer">(${num})</a>`;
     }
   );
+  
+  // 合并【依据】前后的内容
+  let processedContent = contentBeforeEvidence + evidenceContent;
   
   // 7. 【段落标题】保持原格式，不做样式化渲染
 
