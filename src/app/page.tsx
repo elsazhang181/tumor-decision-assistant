@@ -767,21 +767,6 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
 
-  // 11. 渲染重点关注事项子标签
-  processedContent = processedContent.replace(
-    /^(\s*)(警示信号|时间线|决策树|复查提醒)[：:]/gm,
-    (match, indent, label) => {
-      const labelConfig: Record<string, string> = {
-        '警示信号': 'bg-red-100 text-red-700 border-red-200',
-        '时间线': 'bg-blue-100 text-blue-700 border-blue-200',
-        '决策树': 'bg-purple-100 text-purple-700 border-purple-200',
-        '复查提醒': 'bg-green-100 text-green-700 border-green-200',
-      };
-      const cls = labelConfig[label] || 'bg-gray-100 text-gray-700 border-gray-200';
-      return `${indent}<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${cls} border mr-1">${label}</span>:`;
-    }
-  );
-
   return processedContent;
 };
 
