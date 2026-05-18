@@ -767,21 +767,7 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
 
-  // 11. 渲染医患沟通三级分类标签
-  processedContent = processedContent.replace(
-    /【必问】/g,
-    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">必问</span>'
-  );
-  processedContent = processedContent.replace(
-    /【选问】/g,
-    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">选问</span>'
-  );
-  processedContent = processedContent.replace(
-    /【紧急问】/g,
-    '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 animate-pulse">🚨 紧急问</span>'
-  );
-
-  // 12. 渲染重点关注事项子标签
+  // 11. 渲染重点关注事项子标签
   processedContent = processedContent.replace(
     /^(\s*)(警示信号|时间线|决策树|复查提醒)[：:]/gm,
     (match, indent, label) => {
