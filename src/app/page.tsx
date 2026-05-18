@@ -824,7 +824,7 @@ const STAGES: Array<{
 ];
 
 const WELCOME_MESSAGES: Record<Stage, string> = {
-  symptom: `您好！我是您的肿瘤就医决策助手，全程陪伴您的就医过程。
+  symptom: `您好！我是您的健康就医决策助手，全程陪伴您的就医过程。
 
 ## 📋 第一步：症状自查
 
@@ -1546,7 +1546,7 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-                  肿瘤就医决策助手
+                  健康就医决策助手
                 </h1>
                 <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
                   仅供参考，不替代临床诊疗建议
