@@ -77,11 +77,13 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/eslint-parser": "^7.28.6",
     "@tailwindcss/postcss": "^4",
     "@types/pg": "^8.16.0",
     "@types/xlsx": "^0.0.36",
     "eslint": "^9",
-    "eslint-config-next": "16.1.1",
+    "eslint-config-next": "16.2.6",
     "only-allow": "^1.2.2",
     "shadcn": "latest",
     "tailwindcss": "^4",
