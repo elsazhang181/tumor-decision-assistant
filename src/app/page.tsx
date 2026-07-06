@@ -12,6 +12,8 @@ import {
   MessageCircle,
   Send,
   User,
+  Users,
+  UserPlus,
   Bot,
   AlertCircle,
   Stethoscope,
@@ -38,6 +40,138 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import hospitalsQRData from '@/lib/hospitals-qrcode.json';
+
+// ============== 对话模式类型 ==============
+type ChatMode = 'instant' | 'patient' | 'multi-patient';
+
+// 患者会话数据
+interface PatientSession {
+  id: string;                    // 患者唯一标识
+  name: string;                  // 患者姓名
+  stage: string;                 // 疾病阶段（如 T1N1cM0）
+  conversationId: string | null; // Coze 会话ID
+  lastActive: number;            // 最后活跃时间
+  messageCount: number;          // 消息数量
+}
+
+// 患者会话存储键名
+const PATIENT_SESSIONS_KEY = 'health-assistant-patient-sessions';
+const CURRENT_MODE_KEY = 'health-assistant-current-mode';
+const CURRENT_PATIENT_KEY = 'health-assistant-current-patient';
+
+// 获取所有患者会话
+const getPatientSessions = (): PatientSession[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem(PATIENT_SESSIONS_KEY);
+    if (!data) return [];
+    return JSON.parse(data) as PatientSession[];
+  } catch {
+    return [];
+  }
+};
+
+// 保存患者会话列表
+const savePatientSessions = (sessions: PatientSession[]): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PATIENT_SESSIONS_KEY, JSON.stringify(sessions));
+  } catch {
+    // 忽略存储错误
+  }
+};
+
+// 创建新患者会话
+const createPatientSession = (name: string, stage: string): PatientSession => {
+  const session: PatientSession = {
+    id: `patient-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    name,
+    stage,
+    conversationId: null,
+    lastActive: Date.now(),
+    messageCount: 0,
+  };
+  const sessions = getPatientSessions();
+  sessions.unshift(session);
+  savePatientSessions(sessions);
+  return session;
+};
+
+// 更新患者会话的 conversation_id
+const updatePatientConversationId = (patientId: string, conversationId: string): void => {
+  const sessions = getPatientSessions();
+  const index = sessions.findIndex(s => s.id === patientId);
+  if (index !== -1) {
+    sessions[index].conversationId = conversationId;
+    sessions[index].lastActive = Date.now();
+    savePatientSessions(sessions);
+  }
+};
+
+// 更新患者会话的消息计数
+const updatePatientMessageCount = (patientId: string): void => {
+  const sessions = getPatientSessions();
+  const index = sessions.findIndex(s => s.id === patientId);
+  if (index !== -1) {
+    sessions[index].messageCount += 1;
+    sessions[index].lastActive = Date.now();
+    savePatientSessions(sessions);
+  }
+};
+
+// 删除患者会话
+const deletePatientSession = (patientId: string): void => {
+  const sessions = getPatientSessions().filter(s => s.id !== patientId);
+  savePatientSessions(sessions);
+};
+
+// 获取当前模式
+const getCurrentMode = (): ChatMode => {
+  if (typeof window === 'undefined') return 'instant';
+  try {
+    const mode = localStorage.getItem(CURRENT_MODE_KEY);
+    if (mode === 'instant' || mode === 'patient' || mode === 'multi-patient') {
+      return mode;
+    }
+    return 'instant';
+  } catch {
+    return 'instant';
+  }
+};
+
+// 保存当前模式
+const saveCurrentMode = (mode: ChatMode): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(CURRENT_MODE_KEY, mode);
+  } catch {
+    // 忽略存储错误
+  }
+};
+
+// 获取当前选中的患者ID
+const getCurrentPatientId = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(CURRENT_PATIENT_KEY);
+  } catch {
+    return null;
+  }
+};
+
+// 保存当前选中的患者ID
+const saveCurrentPatientId = (patientId: string | null): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (patientId) {
+      localStorage.setItem(CURRENT_PATIENT_KEY, patientId);
+    } else {
+      localStorage.removeItem(CURRENT_PATIENT_KEY);
+    }
+  } catch {
+    // 忽略存储错误
+  }
+};
 
 // ============== 历史记录存储键名 ==============
 const HISTORY_STORAGE_KEY = 'cancer-assistant-chat-history';
@@ -964,6 +1098,15 @@ function generateWelcomeMessage(targetStage: Stage): string {
 }
 
 export default function Home() {
+  // ============== 对话模式状态 ==============
+  const [chatMode, setChatMode] = useState<ChatMode>('instant');
+  const [patientSessions, setPatientSessions] = useState<PatientSession[]>([]);
+  const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
+  const [showPatientSidebar, setShowPatientSidebar] = useState(false);
+  const [showNewPatientDialog, setShowNewPatientDialog] = useState(false);
+  const [newPatientName, setNewPatientName] = useState('');
+  const [newPatientStage, setNewPatientStage] = useState('');
+
   const [currentStage, setCurrentStage] = useState<Stage>('symptom');
   const [completedStages, setCompletedStages] = useState<Stage[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -977,6 +1120,8 @@ export default function Home() {
     guidance: ''
   });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const assistantContentRef = useRef<string>('');
+  const reasoningContentRef = useRef<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const isSendingRef = useRef(false); // 跟踪是否有消息正在发送，保护消息不被初始化清空
   
@@ -998,12 +1143,26 @@ export default function Home() {
   // 当前消息中的医院列表（用于显示推荐卡片）
   const [messageHospitals, setMessageHospitals] = useState<typeof HOSPITALS_QR.hospitals>([]);
 
-  // 页面加载时初始化历史记录
+  // 页面加载时初始化历史记录和模式
   useEffect(() => {
     // 使用懒初始化，避免在effect中直接setState
     const historyList = getHistory();
     if (historyList.length > 0) {
       setChatHistoryList(historyList);
+    }
+    
+    // 初始化对话模式
+    const savedMode = getCurrentMode();
+    setChatMode(savedMode);
+    
+    // 初始化患者会话列表
+    const sessions = getPatientSessions();
+    setPatientSessions(sessions);
+    
+    // 恢复当前选中的患者
+    const savedPatientId = getCurrentPatientId();
+    if (savedPatientId && sessions.find(s => s.id === savedPatientId)) {
+      setCurrentPatientId(savedPatientId);
     }
   }, []);
 
@@ -1236,7 +1395,7 @@ export default function Home() {
       : fullMessage;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: 'user',
       content: fullMessageWithAttachments,
       timestamp: new Date(),
@@ -1267,28 +1426,53 @@ export default function Home() {
     };
 
     try {
+      // 根据模式构建请求参数
+      const requestBody: Record<string, unknown> = { 
+        message: fullMessage,
+        history: historyMessages,
+        stage: currentStage,
+        context: fullContext,
+        attachments: attachments,
+        mode: chatMode,  // 传递当前模式
+      };
+      
+      // 模式B/C：传递患者会话信息
+      if (chatMode === 'patient' || chatMode === 'multi-patient') {
+        const currentPatient = patientSessions.find(s => s.id === currentPatientId);
+        if (currentPatient) {
+          requestBody.conversationId = currentPatient.conversationId || undefined;
+          requestBody.userId = currentPatient.id;
+          requestBody.metaData = {
+            patient_id: currentPatient.id,
+            patient_name: currentPatient.name,
+            stage: currentPatient.stage,
+          };
+        }
+      }
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: fullMessage,
-          history: historyMessages,
-          stage: currentStage,
-          context: fullContext,
-          attachments: attachments  // 发送图片附件
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) throw new Error('请求失败');
 
+      // 从响应头获取 conversation_id（模式B/C）
+      const receivedConversationId = response.headers.get('X-Conversation-Id');
+      if (receivedConversationId && (chatMode === 'patient' || chatMode === 'multi-patient')) {
+        handleConversationIdReceived(receivedConversationId);
+      }
+
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let assistantContent = '';
-      let reasoningContent = ''; // 深度思考内容
+      // 重置 refs
+      assistantContentRef.current = '';
+      reasoningContentRef.current = '';
       let assistantSources: SourceItem[] = [];
 
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: crypto.randomUUID(),
         role: 'assistant',
         content: '',
         timestamp: new Date(),
@@ -1325,11 +1509,11 @@ export default function Home() {
               if (currentEvent === 'conversation.message.delta') {
                 // 如果有 reasoning_content，说明还在思考阶段
                 if (parsed.reasoning_content !== undefined) {
-                  reasoningContent += parsed.reasoning_content;
+                  reasoningContentRef.current += parsed.reasoning_content;
                   setMessages(prev => 
                     prev.map(m => 
                       m.id === assistantMessage.id 
-                        ? { ...m, content: reasoningContent, isThinking: true }
+                        ? { ...m, content: reasoningContentRef.current, isThinking: true }
                         : m
                     )
                   );
@@ -1339,14 +1523,14 @@ export default function Home() {
                   // 如果之前有思考内容，最终回答时需要合并或直接替换
                   // Coze 的最终回答会完整输出，所以直接用 content
                   if (parsed.content) {
-                    assistantContent += parsed.content;
+                    assistantContentRef.current += parsed.content;
                   }
                   // 当 content 非空时，说明最终回答开始，更新消息
                   if (parsed.content) {
                     setMessages(prev => 
                       prev.map(m => 
                         m.id === assistantMessage.id 
-                          ? { ...m, content: assistantContent, isThinking: false }
+                          ? { ...m, content: assistantContentRef.current, isThinking: false }
                           : m
                       )
                     );
@@ -1520,6 +1704,95 @@ export default function Home() {
     }
   };
 
+  // ============== 模式切换处理 ==============
+  const handleModeChange = (mode: ChatMode) => {
+    setChatMode(mode);
+    saveCurrentMode(mode);
+    
+    // 切换到模式B或C时，如果没有患者会话，提示创建
+    if ((mode === 'patient' || mode === 'multi-patient') && patientSessions.length === 0) {
+      setShowNewPatientDialog(true);
+    }
+    
+    // 切换到模式A时，清空当前患者选择
+    if (mode === 'instant') {
+      setCurrentPatientId(null);
+      saveCurrentPatientId(null);
+    }
+    
+    // 清空当前消息（切换模式时重置对话）
+    setMessages([]);
+  };
+
+  // ============== 患者管理处理 ==============
+  const handleCreatePatient = () => {
+    if (!newPatientName.trim()) {
+      toast.error('请输入患者姓名');
+      return;
+    }
+    
+    const session = createPatientSession(newPatientName.trim(), newPatientStage.trim());
+    setPatientSessions(getPatientSessions());
+    setCurrentPatientId(session.id);
+    saveCurrentPatientId(session.id);
+    
+    // 清空输入
+    setNewPatientName('');
+    setNewPatientStage('');
+    setShowNewPatientDialog(false);
+    
+    toast.success(`已创建患者会话：${session.name}`);
+  };
+
+  const handleSelectPatient = (patientId: string) => {
+    setCurrentPatientId(patientId);
+    saveCurrentPatientId(patientId);
+    
+    // 切换到该患者时，清空当前消息
+    setMessages([]);
+    
+    // 在移动端自动关闭侧边栏
+    if (window.innerWidth < 768) {
+      setShowPatientSidebar(false);
+    }
+  };
+
+  const handleDeletePatient = (patientId: string) => {
+    if (confirm('确定删除该患者会话？删除后无法恢复。')) {
+      deletePatientSession(patientId);
+      setPatientSessions(getPatientSessions());
+      
+      // 如果删除的是当前选中的患者，切换到第一个或清空
+      if (currentPatientId === patientId) {
+        const remaining = getPatientSessions();
+        if (remaining.length > 0) {
+          setCurrentPatientId(remaining[0].id);
+          saveCurrentPatientId(remaining[0].id);
+        } else {
+          setCurrentPatientId(null);
+          saveCurrentPatientId(null);
+        }
+      }
+      
+      toast.success('患者会话已删除');
+    }
+  };
+
+  // 获取当前患者的 conversation_id
+  const getCurrentPatientConversationId = (): string | null => {
+    if (!currentPatientId) return null;
+    const patient = patientSessions.find(s => s.id === currentPatientId);
+    return patient?.conversationId || null;
+  };
+
+  // 更新当前患者的 conversation_id
+  const handleConversationIdReceived = (conversationId: string) => {
+    if (currentPatientId && (chatMode === 'patient' || chatMode === 'multi-patient')) {
+      updatePatientConversationId(currentPatientId, conversationId);
+      setPatientSessions(getPatientSessions());
+    }
+  };
+
   const currentStageInfo = STAGES.find(s => s.id === currentStage);
 
   return (
@@ -1550,8 +1823,224 @@ export default function Home() {
         </div>
       </header>
 
+      {/* ============== 模式选择器 ============== */}
+      <div className="border-b bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            <button
+              onClick={() => handleModeChange('instant')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                chatMode === 'instant'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600'
+              }`}
+            >
+              <Search className="h-3.5 w-3.5" />
+              即时问答
+            </button>
+            <button
+              onClick={() => handleModeChange('patient')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                chatMode === 'patient'
+                  ? 'bg-green-500 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600'
+              }`}
+            >
+              <User className="h-3.5 w-3.5" />
+              患者随访
+            </button>
+            <button
+              onClick={() => handleModeChange('multi-patient')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                chatMode === 'multi-patient'
+                  ? 'bg-purple-500 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600'
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              多患者管理
+            </button>
+            
+            {/* 模式B/C：显示当前患者信息和侧边栏切换 */}
+            {(chatMode === 'patient' || chatMode === 'multi-patient') && (
+              <>
+                <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 mx-1" />
+                {currentPatientId && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    当前：{patientSessions.find(s => s.id === currentPatientId)?.name || '未选择'}
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowPatientSidebar(!showPatientSidebar)}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-gray-300"
+                >
+                  <Users className="h-3 w-3" />
+                  患者列表
+                </button>
+                <button
+                  onClick={() => setShowNewPatientDialog(true)}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300"
+                >
+                  + 新患者
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ============== 患者侧边栏（模式B/C） ============== */}
+      {showPatientSidebar && (chatMode === 'patient' || chatMode === 'multi-patient') && (
+        <div className="fixed inset-0 z-40 flex" onClick={() => setShowPatientSidebar(false)}>
+          <div 
+            className="h-full w-72 bg-white dark:bg-slate-800 shadow-2xl flex flex-col border-r border-gray-200 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-white">患者列表</h3>
+              <button 
+                onClick={() => setShowPatientSidebar(false)}
+                className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              {patientSessions.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <Users className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">暂无患者会话</p>
+                  <button
+                    onClick={() => {
+                      setShowPatientSidebar(false);
+                      setShowNewPatientDialog(true);
+                    }}
+                    className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+                  >
+                    创建第一个患者
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {patientSessions.map(session => (
+                    <div
+                      key={session.id}
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
+                        currentPatientId === session.id
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                          : 'hover:bg-gray-50 dark:hover:bg-slate-700'
+                      }`}
+                      onClick={() => handleSelectPatient(session.id)}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                            {session.name}
+                          </span>
+                          {session.conversationId && (
+                            <span className="h-2 w-2 rounded-full bg-green-500" title="已建立会话" />
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {session.stage || '未设置分期'} · {session.messageCount}条消息
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePatient(session.id);
+                        }}
+                        className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500"
+                        title="删除患者"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============== 新建患者对话框 ============== */}
+      {showNewPatientDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowNewPatientDialog(false)}>
+          <div 
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-sm w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">新建患者会话</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  患者姓名 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newPatientName}
+                  onChange={(e) => setNewPatientName(e.target.value)}
+                  placeholder="请输入患者姓名"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  疾病分期（可选）
+                </label>
+                <input
+                  type="text"
+                  value={newPatientStage}
+                  onChange={(e) => setNewPatientStage(e.target.value)}
+                  placeholder="如：T2N1M0、II期等"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowNewPatientDialog(false);
+                  setNewPatientName('');
+                  setNewPatientStage('');
+                }}
+                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleCreatePatient}
+                className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              >
+                创建
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="container mx-auto px-2 md:px-4 py-2 md:py-4 max-w-6xl">
-        {/* Stage Navigation - Mobile Optimized */}
+        {/* 模式A提示：即时问答模式说明 */}
+        {chatMode === 'instant' && (
+          <div className="mb-2 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              <strong>即时问答模式</strong>：每次提问独立处理，不保留上下文。适合快速查询指南条款、医保政策等。
+            </p>
+          </div>
+        )}
+        
+        {/* 模式B/C提示：患者随访模式说明 */}
+        {(chatMode === 'patient' || chatMode === 'multi-patient') && !currentPatientId && (
+          <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <p className="text-xs text-green-700 dark:text-green-300">
+              <strong>患者随访模式</strong>：请先创建或选择一个患者会话，系统将保留完整对话上下文。
+            </p>
+          </div>
+        )}
+        {/* Stage Navigation - Mobile Optimized (仅模式B/C显示) */}
+        {chatMode !== 'instant' && (
         <div className="mb-2 md:mb-4">
           <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
             <CardContent className="p-2 md:p-4">
@@ -1654,6 +2143,7 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
+        )}
 
         {/* 历史记录入口 - 放在四个模块下方 */}
         <div className="mb-2 md:mb-3">
@@ -1669,6 +2159,38 @@ export default function Home() {
         </div>
 
         {/* Chat Area - Mobile Optimized */}
+        {/* 模式B/C：未选择患者时显示提示 */}
+        {(chatMode === 'patient' || chatMode === 'multi-patient') && !currentPatientId ? (
+          <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg">
+            <CardContent className="p-8 text-center">
+              <Users className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                请先选择或创建患者会话
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                患者随访模式需要绑定患者身份，以便保留完整的对话上下文。
+              </p>
+              <div className="flex justify-center gap-3">
+                <Button
+                  onClick={() => setShowNewPatientDialog(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  创建新患者
+                </Button>
+                {patientSessions.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowPatientSidebar(true)}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    选择已有患者
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 md:gap-4">
           <div className="lg:col-span-3">
             <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg flex flex-col h-[calc(100vh-160px)] sm:h-[calc(100vh-140px)] md:h-[calc(100vh-80px)] lg:h-[calc(100vh-80px)]">
@@ -1676,32 +2198,43 @@ export default function Home() {
                 <CardTitle className="flex items-center justify-between text-sm md:text-base">
                   <div className="flex items-center gap-2">
                     <MessageCircle className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
-                    <span className="text-sm md:text-base">{currentStageInfo?.title}</span>
-                    <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
-                      {STAGES.findIndex(s => s.id === currentStage) + 1}/{STAGES.length}
-                    </Badge>
+                    <span className="text-sm md:text-base">
+                      {chatMode === 'instant' ? '即时问答' : currentStageInfo?.title}
+                    </span>
+                    {chatMode !== 'instant' && (
+                      <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
+                        {STAGES.findIndex(s => s.id === currentStage) + 1}/{STAGES.length}
+                      </Badge>
+                    )}
+                    {chatMode === 'instant' && (
+                      <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                        无上下文
+                      </Badge>
+                    )}
                   </div>
-                  <div className="flex gap-1 md:gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handlePrevStage}
-                      disabled={currentStage === 'symptom'}
-                      className="h-7 md:h-8 px-1 md:px-2 text-xs"
-                    >
-                      <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
-                      <span className="hidden md:inline">上一环节</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleNextStage}
-                      disabled={currentStage === 'guidance'}
-                      className="h-7 md:h-8 px-1 md:px-2 text-xs bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-                    >
-                      <span className="hidden md:inline">下一环节</span>
-                      <ChevronRight className="h-3 w-3 md:h-4 md:w-4 md:ml-1" />
-                    </Button>
-                  </div>
+                  {chatMode !== 'instant' && (
+                    <div className="flex gap-1 md:gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handlePrevStage}
+                        disabled={currentStage === 'symptom'}
+                        className="h-7 md:h-8 px-1 md:px-2 text-xs"
+                      >
+                        <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                        <span className="hidden md:inline">上一环节</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleNextStage}
+                        disabled={currentStage === 'guidance'}
+                        className="h-7 md:h-8 px-1 md:px-2 text-xs bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                      >
+                        <span className="hidden md:inline">下一环节</span>
+                        <ChevronRight className="h-3 w-3 md:h-4 md:w-4 md:ml-1" />
+                      </Button>
+                    </div>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
@@ -2129,6 +2662,7 @@ export default function Home() {
             </Card>
           </div>
         </div>
+        )}
       </main>
 
       {/* 医院二维码弹窗 */}
