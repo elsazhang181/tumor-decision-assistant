@@ -116,6 +116,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 检查响应类型 - 如果不是流式响应，可能是错误响应
+    const contentType = cozeResponse.headers.get('content-type') || '';
+    if (!contentType.includes('text/event-stream')) {
+      // 非流式响应，可能是错误 JSON
+      const responseBody = await cozeResponse.text();
+      try {
+        const errorJson = JSON.parse(responseBody);
+        if (errorJson.code && errorJson.code !== 0) {
+          return NextResponse.json(
+            { error: errorJson.msg || 'Coze API 返回错误', code: errorJson.code },
+            { status: 400 }
+          );
+        }
+      } catch {
+        // 非 JSON 响应
+      }
+      return NextResponse.json(
+        { error: '意外的响应格式' },
+        { status: 500 }
+      );
+    }
+
     // 解析流式响应
     const reader = cozeResponse.body?.getReader();
     if (!reader) {

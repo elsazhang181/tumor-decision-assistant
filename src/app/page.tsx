@@ -1484,6 +1484,7 @@ export default function Home() {
         const lines = chunk.split('\n');
 
         let currentEvent = '';
+        let hasError = false;
         for (const line of lines) {
           // 解析 event 行 (Coze返回格式: event:xxx 无空格)
           if (line.startsWith('event:')) {
@@ -1497,6 +1498,13 @@ export default function Home() {
             
             try {
               const parsed = JSON.parse(data);
+              
+              // 检测 Coze API 错误响应（非 SSE 格式的错误 JSON）
+              if (parsed.code && parsed.code !== 0 && parsed.msg) {
+                hasError = true;
+                console.error('Coze API error:', parsed.msg);
+                break;
+              }
               
               // 处理后端注入的 conversation_id 事件
               if (parsed.type === 'conversation_id' && parsed.conversation_id) {
@@ -1544,6 +1552,19 @@ export default function Home() {
             }
           }
         }
+        if (hasError) break;
+      }
+      
+      // 检查是否收到了有效内容
+      if (!assistantContentRef.current && !reasoningContentRef.current) {
+        // 没有收到任何有效内容，显示错误提示
+        setMessages(prev => 
+          prev.map(m => 
+            m.id === assistantMessage.id 
+              ? { ...m, content: '抱歉，服务暂时不可用，请稍后再试。如问题持续，请联系管理员检查 API 配置。', isThinking: false }
+              : m
+          )
+        );
       }
       
       // 注意：关键结论会在环节切换时自动携带到下一个环节
