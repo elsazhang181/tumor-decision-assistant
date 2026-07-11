@@ -79,8 +79,6 @@ export async function POST(request: NextRequest) {
       user_id: finalUserId,
       stream: true,
       auto_save_history: finalAutoSaveHistory,
-      // 启用联网搜索和知识库搜索
-      model: 'Doubao-lite-16k',
       additional_messages: [
         {
           role: 'user',
@@ -118,8 +116,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 解析流式响应以获取 conversation_id
-    // Coze API 会在第一个事件中返回 conversation_id
+    // 解析流式响应
     const reader = cozeResponse.body?.getReader();
     if (!reader) {
       return NextResponse.json(
@@ -128,59 +125,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 创建转换流，提取 conversation_id 并转发响应
+    // 创建转换流：转发 Coze API 数据到客户端，同时提取 conversation_id
+    let extractedConversationId = '';
     const transformStream = new TransformStream({
-      async transform(chunk, controller) {
-        // 转发原始数据
-        controller.enqueue(chunk);
-      }
-    });
+      async start(controller) {
+        const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
+        let buffer = '';
 
-    // 异步读取流以提取 conversation_id
-    const streamPromise = (async () => {
-      const decoder = new TextDecoder();
-      let buffer = '';
-      
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          buffer += decoder.decode(value, { stream: true });
-          
-          // 解析 SSE 事件，提取 conversation_id
-          const lines = buffer.split('\n');
-          for (const line of lines) {
-            if (line.startsWith('data:')) {
-              try {
-                const data = JSON.parse(line.slice(5).trim());
-                if (data.conversation_id) {
-                  // 通过响应头返回 conversation_id
-                  return data.conversation_id;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            // 转发数据块到客户端
+            controller.enqueue(value);
+
+            // 解析 SSE 事件，提取 conversation_id
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data:')) {
+                try {
+                  const data = JSON.parse(line.slice(5).trim());
+                  if (data.conversation_id && !extractedConversationId) {
+                    extractedConversationId = data.conversation_id;
+                    // 通过自定义 SSE 事件发送给客户端
+                    controller.enqueue(
+                      encoder.encode(
+                        `data: ${JSON.stringify({ type: 'conversation_id', conversation_id: extractedConversationId })}\n\n`
+                      )
+                    );
+                  }
+                } catch {
+                  // 忽略解析错误
                 }
-              } catch {
-                // 忽略解析错误
               }
             }
           }
+        } catch (err) {
+          console.error('Stream processing error:', err);
+        } finally {
+          controller.terminate();
         }
-      } catch {
-        // 忽略读取错误
-      }
-      return null;
-    })();
+      },
+    });
 
-    // 返回流式响应，并在响应头中包含 conversation_id
-    const response = new Response(transformStream.readable, {
+    // 返回流式响应（立即返回，不阻塞等待流完成）
+    return new Response(transformStream.readable, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'X-Conversation-Id': await streamPromise || '',
       },
     });
-
-    return response;
 
   } catch (error) {
     console.error('Chat API error:', error);

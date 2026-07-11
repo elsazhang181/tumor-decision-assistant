@@ -1458,12 +1458,6 @@ export default function Home() {
 
       if (!response.ok) throw new Error('请求失败');
 
-      // 从响应头获取 conversation_id（模式B/C）
-      const receivedConversationId = response.headers.get('X-Conversation-Id');
-      if (receivedConversationId && (chatMode === 'patient' || chatMode === 'multi-patient')) {
-        handleConversationIdReceived(receivedConversationId);
-      }
-
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       // 重置 refs
@@ -1503,6 +1497,14 @@ export default function Home() {
             
             try {
               const parsed = JSON.parse(data);
+              
+              // 处理后端注入的 conversation_id 事件
+              if (parsed.type === 'conversation_id' && parsed.conversation_id) {
+                if (chatMode === 'patient' || chatMode === 'multi-patient') {
+                  handleConversationIdReceived(parsed.conversation_id);
+                }
+                continue;
+              }
               
               // Coze API 流式响应格式
               // Bot 启用深度思考模式时，先返回 reasoning_content（思考过程），然后返回 content（最终回答）
