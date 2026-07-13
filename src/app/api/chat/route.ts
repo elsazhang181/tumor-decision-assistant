@@ -5,8 +5,8 @@ const COZE_API_BASE = process.env.COZE_API_BASE_URL || 'https://api.coze.cn';
 const COZE_API_TOKEN = process.env.COZE_API_TOKEN || 'pat_XGRZfUI7AZvh8ulwyMrf3p537rx4eny8gRIhuw2VdGpm74NiJNVqpdwWANJWIliK';
 const COZE_BOT_ID = process.env.COZE_BOT_ID || '7633265670037323818';
 
-// 流式输出标志
-export const runtime = 'edge';
+// 使用 Node.js 运行时以确保外部 API 调用兼容性
+export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 // 对话模式类型
@@ -25,14 +25,8 @@ export async function POST(request: NextRequest) {
       metaData                    // 患者元数据（模式B/C需要）
     } = body;
 
-    // 获取API Token
-    const apiToken = process.env.COZE_API_TOKEN;
-    if (!apiToken) {
-      return NextResponse.json(
-        { error: 'COZE_API_TOKEN not configured' },
-        { status: 500 }
-      );
-    }
+    // 使用顶部定义的 COZE_API_TOKEN（已包含默认值回退）
+    const apiToken = COZE_API_TOKEN;
 
     // 默认Bot ID
     const targetBotId = botId || COZE_BOT_ID;
@@ -150,6 +144,7 @@ export async function POST(request: NextRequest) {
 
     // 创建转换流：转发 Coze API 数据到客户端，同时提取 conversation_id
     let extractedConversationId = '';
+    let isClosed = false;
     const transformStream = new TransformStream({
       async start(controller) {
         const decoder = new TextDecoder();
@@ -160,25 +155,35 @@ export async function POST(request: NextRequest) {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
+            if (isClosed) break;
 
             // 转发数据块到客户端
-            controller.enqueue(value);
+            try {
+              controller.enqueue(value);
+            } catch {
+              isClosed = true;
+              break;
+            }
 
             // 解析 SSE 事件，提取 conversation_id
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
             for (const line of lines) {
-              if (line.startsWith('data:')) {
+              if (line.startsWith('data:') && !isClosed) {
                 try {
                   const data = JSON.parse(line.slice(5).trim());
                   if (data.conversation_id && !extractedConversationId) {
                     extractedConversationId = data.conversation_id;
                     // 通过自定义 SSE 事件发送给客户端
-                    controller.enqueue(
-                      encoder.encode(
-                        `data: ${JSON.stringify({ type: 'conversation_id', conversation_id: extractedConversationId })}\n\n`
-                      )
-                    );
+                    try {
+                      controller.enqueue(
+                        encoder.encode(
+                          `data: ${JSON.stringify({ type: 'conversation_id', conversation_id: extractedConversationId })}\n\n`
+                        )
+                      );
+                    } catch {
+                      isClosed = true;
+                    }
                   }
                 } catch {
                   // 忽略解析错误
@@ -189,7 +194,13 @@ export async function POST(request: NextRequest) {
         } catch (err) {
           console.error('Stream processing error:', err);
         } finally {
-          controller.terminate();
+          if (!isClosed) {
+            try {
+              controller.terminate();
+            } catch {
+              // 忽略关闭错误
+            }
+          }
         }
       },
     });
