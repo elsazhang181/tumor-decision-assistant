@@ -21,14 +21,14 @@ export async function POST(request: NextRequest) {
       botId,
       mode = 'instant',           // 'instant' | 'patient' | 'multi-patient'
       autoSaveHistory,            // 是否保存历史（默认根据模式决定）
-      userId,                     // 用户标识（模式B/C需要）
-      metaData                    // 患者元数据（模式B/C需要）
+      userId,                     // 用户标识（模式 B/C 需要）
+      metaData                    // 患者元数据（模式 B/C 需要）
     } = body;
 
     // 使用顶部定义的 COZE_API_TOKEN（已包含默认值回退）
     const apiToken = COZE_API_TOKEN;
 
-    // 默认Bot ID
+    // 默认 Bot ID
     const targetBotId = botId || COZE_BOT_ID;
 
     // 根据模式确定参数
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     switch (mode) {
       case 'instant':
-        // 模式A：即时问答（无上下文）
+        // 模式 A：即时问答（无上下文）
         // 不传 conversation_id，系统自动生成临时会话
         finalConversationId = undefined;
         finalAutoSaveHistory = false;
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         break;
       
       case 'patient':
-        // 模式B：患者随访（有上下文）
+        // 模式 B：患者随访（有上下文）
         // 必须传 conversation_id 和 userId
         finalConversationId = conversationId || undefined;
         finalAutoSaveHistory = autoSaveHistory ?? true;
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         break;
       
       case 'multi-patient':
-        // 模式C：多患者并行管理
+        // 模式 C：多患者并行管理
         // 必须传 conversation_id 和 userId
         finalConversationId = conversationId || undefined;
         finalAutoSaveHistory = autoSaveHistory ?? true;
@@ -83,25 +83,41 @@ export async function POST(request: NextRequest) {
       ],
     };
 
-    // 仅在模式B/C时传入 conversation_id
+    // 仅在模式 B/C 时传入 conversation_id
     if (finalConversationId) {
       requestBody.conversation_id = finalConversationId;
     }
 
-    // 仅在模式B/C时传入 meta_data
+    // 仅在模式 B/C 时传入 meta_data
     if (metaData && (mode === 'patient' || mode === 'multi-patient')) {
       requestBody.meta_data = metaData;
     }
 
-    // 构建Coze API请求 - 使用 v3/chat 端点
-    const cozeResponse = await fetch(`${COZE_API_BASE}/v3/chat`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
+    // 构建 Coze API 请求 - 使用 v3/chat 端点，添加超时控制
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 50000); // 50 秒超时
+
+    let cozeResponse;
+    try {
+      cozeResponse = await fetch(`${COZE_API_BASE}/v3/chat`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+    } catch (fetchError: unknown) {
+      clearTimeout(timeoutId);
+      const errorMsg = fetchError instanceof Error ? fetchError.message : 'Unknown error';
+      console.error('Coze API fetch error:', errorMsg);
+      return NextResponse.json(
+        { error: `无法连接 Coze API: ${errorMsg}` },
+        { status: 503 }
+      );
+    }
+    clearTimeout(timeoutId);
 
     if (!cozeResponse.ok) {
       const error = await cozeResponse.text();
