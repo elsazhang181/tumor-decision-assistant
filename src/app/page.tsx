@@ -2571,34 +2571,69 @@ export default function Home() {
           <div className="lg:hidden space-y-3">
             {/* 本环节可帮助您 */}
             <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-center gap-2">
-                  {currentStageInfo && (
-                    <>
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
-                        <currentStageInfo.icon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {currentStageInfo.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {currentStageInfo.description}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
-                  <ul className="space-y-1">
-                    {currentStageInfo?.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
-                        <span className="text-blue-500 mt-0.5">•</span>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <CardContent className="p-3 space-y-3">
+                {/* 即时问答模式：显示所有四个模块 */}
+                {chatMode === 'instant' ? (
+                  <div className="space-y-3">
+                    {STAGES.map((stage) => {
+                      const Icon = stage.icon;
+                      return (
+                        <div key={stage.id} className="flex items-start gap-2">
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {stage.title}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                              {stage.description}
+                            </p>
+                            <ul className="space-y-1">
+                              {stage.features.map((feature, idx) => (
+                                <li key={idx} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                                  <span className="text-blue-500 mt-0.5">•</span>
+                                  <span>{feature}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <>
+                    {/* 患者随访模式：显示当前环节 */}
+                    <div className="flex items-center gap-2">
+                      {currentStageInfo && (
+                        <>
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
+                            <currentStageInfo.icon className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {currentStageInfo.title}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {currentStageInfo.description}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
+                      <ul className="space-y-1">
+                        {currentStageInfo?.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                            <span className="text-blue-500 mt-0.5">•</span>
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -2623,36 +2658,70 @@ export default function Home() {
                 <CardTitle className="text-sm font-semibold">本环节可帮助您</CardTitle>
               </CardHeader>
               <CardContent className="p-3 space-y-3">
-                {/* 模块图标和描述 */}
-                <div className="flex items-center gap-3">
-                  {currentStageInfo && (
-                    <>
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
-                        <currentStageInfo.icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {currentStageInfo.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {currentStageInfo.description}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-                
-                {/* 功能列表 */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                  <ul className="space-y-1.5">
-                    {currentStageInfo?.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
-                        <span className="text-blue-500 mt-0.5">•</span>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {/* 即时问答模式：显示所有四个模块 */}
+                {chatMode === 'instant' ? (
+                  <div className="space-y-3">
+                    {STAGES.map((stage) => {
+                      const Icon = stage.icon;
+                      return (
+                        <div key={stage.id} className="flex items-start gap-3">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {stage.title}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                              {stage.description}
+                            </p>
+                            <ul className="space-y-1">
+                              {stage.features.map((feature, idx) => (
+                                <li key={idx} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                                  <span className="text-blue-500 mt-0.5">•</span>
+                                  <span>{feature}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <>
+                    {/* 患者随访模式：显示当前环节 */}
+                    <div className="flex items-center gap-3">
+                      {currentStageInfo && (
+                        <>
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
+                            <currentStageInfo.icon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {currentStageInfo.title}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {currentStageInfo.description}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* 功能列表 */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                      <ul className="space-y-1.5">
+                        {currentStageInfo?.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                            <span className="text-blue-500 mt-0.5">•</span>
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                )}
                 
                 {/* 依据指南 */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
@@ -2663,21 +2732,23 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* 完成进度 */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-gray-500">完成进度</span>
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      {completedStages.length}/{STAGES.length}
-                    </span>
+                {/* 完成进度（仅患者随访模式显示） */}
+                {chatMode !== 'instant' && (
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-gray-500">完成进度</span>
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                        {completedStages.length}/{STAGES.length}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
+                        style={{ width: `${(completedStages.length / STAGES.length) * 100}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
-                      style={{ width: `${(completedStages.length / STAGES.length) * 100}%` }}
-                    />
-                  </div>
-                </div>
+                )}
 
                 {/* 免责声明 */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
