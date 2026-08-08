@@ -2075,22 +2075,23 @@ export default function Home() {
             </p>
           </div>
         )}
-        {/* Stage Navigation - Mobile Optimized (仅模式B/C显示) */}
-        {chatMode !== 'instant' && (
+        {/* Stage Navigation - Mobile Optimized (所有模式显示) */}
         <div className="mb-2 md:mb-4">
           <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
             <CardContent className="p-2 md:p-4">
               {/* Desktop: horizontal layout */}
               <div className="hidden md:flex items-center justify-between">
                 {STAGES.map((stage, index) => {
-                  const isCompleted = completedStages.includes(stage.id);
-                  const isCurrent = currentStage === stage.id;
+                  const isCompleted = chatMode !== 'instant' && completedStages.includes(stage.id);
+                  const isCurrent = chatMode === 'instant' 
+                    ? selectedInstantStage === stage.id 
+                    : currentStage === stage.id;
                   const Icon = stage.icon;
                   
                   return (
                     <div key={stage.id} className="flex items-center flex-1">
                       <button
-                        onClick={() => handleStageChange(stage.id)}
+                        onClick={() => chatMode === 'instant' ? setSelectedInstantStage(stage.id) : handleStageChange(stage.id)}
                         className={`flex items-center gap-3 flex-1 p-3 rounded-lg transition-all ${
                           isCurrent 
                             ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-blue-500 dark:border-blue-400'
@@ -2131,19 +2132,20 @@ export default function Home() {
                 })}
               </div>
               
-              {/* Mobile: vertical stacked layout with description */}
+              {/* Mobile: 2x2 grid layout */}
               <div className="md:hidden">
-                {/* Stage grid - 2x2 layout with icon+title+description */}
                 <div className="grid grid-cols-2 gap-2">
-                  {STAGES.map((stage, index) => {
-                    const isCompleted = completedStages.includes(stage.id);
-                    const isCurrent = currentStage === stage.id;
+                  {STAGES.map((stage) => {
+                    const isCompleted = chatMode !== 'instant' && completedStages.includes(stage.id);
+                    const isCurrent = chatMode === 'instant' 
+                      ? selectedInstantStage === stage.id 
+                      : currentStage === stage.id;
                     const Icon = stage.icon;
                     
                     return (
                       <button
                         key={stage.id}
-                        onClick={() => handleStageChange(stage.id)}
+                        onClick={() => chatMode === 'instant' ? setSelectedInstantStage(stage.id) : handleStageChange(stage.id)}
                         className={`flex flex-col items-center p-3 rounded-xl transition-all ${
                           isCurrent 
                             ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-lg'
@@ -2179,7 +2181,6 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
-        )}
 
         {/* 历史记录入口 - 放在四个模块下方 */}
         <div className="mb-2 md:mb-3">
@@ -2574,35 +2575,41 @@ export default function Home() {
 
           {/* Mobile: Help info below chat */}
           <div className="lg:hidden space-y-3">
-            {/* 即时问答模式：显示四个可点击模块 */}
+            {/* 即时问答模式：显示四个模块导航（与患者随访统一设计） */}
             {chatMode === 'instant' ? (
               <>
                 <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
                   <CardContent className="p-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      {STAGES.map((stage) => {
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                      {STAGES.map((stage, idx) => {
                         const Icon = stage.icon;
-                        const isSelected = selectedInstantStage === stage.id;
+                        const isActive = selectedInstantStage === stage.id;
                         return (
-                          <button
-                            key={stage.id}
-                            onClick={() => setSelectedInstantStage(isSelected ? null : stage.id)}
-                            className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all ${
-                              isSelected
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-700/50 hover:border-blue-300'
-                            }`}
-                          >
-                            <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white mb-2`}>
-                              <Icon className="h-5 w-5" />
-                            </div>
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white text-center">
-                              {stage.title}
-                            </h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
-                              {stage.description}
-                            </p>
-                          </button>
+                          <React.Fragment key={stage.id}>
+                            <button
+                              onClick={() => setSelectedInstantStage(stage.id)}
+                              className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 transition-all shrink-0 ${
+                                isActive
+                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-700/50 hover:border-blue-300'
+                              }`}
+                            >
+                              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <div className="text-left">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {stage.title}
+                                </h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {stage.description}
+                                </p>
+                              </div>
+                            </button>
+                            {idx < STAGES.length - 1 && (
+                              <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
+                            )}
+                          </React.Fragment>
                         );
                       })}
                     </div>
@@ -2705,105 +2712,43 @@ export default function Home() {
                 <CardTitle className="text-sm font-semibold">本环节可帮助您</CardTitle>
               </CardHeader>
               <CardContent className="p-3 space-y-3">
-                {/* 即时问答模式：显示四个模块卡片，点击显示详情 */}
-                {chatMode === 'instant' ? (
-                  <div className="space-y-3">
-                    {/* 模块卡片网格 */}
-                    <div className="grid grid-cols-2 gap-2">
-                      {STAGES.map((stage) => {
-                        const Icon = stage.icon;
-                        const isSelected = selectedInstantStage === stage.id;
-                        return (
-                          <button
-                            key={stage.id}
-                            onClick={() => setSelectedInstantStage(isSelected ? null : stage.id)}
-                            className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
-                              isSelected
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                            }`}
-                          >
-                            <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white mb-1.5`}>
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <span className="text-xs font-medium text-gray-900 dark:text-white text-center">
-                              {stage.title}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {/* 选中模块的详细说明 */}
-                    {selectedInstantStage && (() => {
-                      const stage = STAGES.find(s => s.id === selectedInstantStage);
-                      if (!stage) return null;
-                      const Icon = stage.icon;
-                      return (
-                        <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                {stage.title}
-                              </h3>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {stage.description}
-                              </p>
-                            </div>
-                          </div>
-                          <ul className="space-y-1.5">
-                            {stage.features.map((feature, idx) => (
-                              <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
-                                <span className="text-blue-500 mt-0.5">•</span>
-                                <span>{feature}</span>
-                              </li>
-                            ))}
-                          </ul>
+                {/* 统一显示当前环节信息（即时问答和患者随访模式共用） */}
+                {(() => {
+                  const displayStage = chatMode === 'instant' 
+                    ? STAGES.find(s => s.id === selectedInstantStage) || STAGES[0]
+                    : currentStageInfo;
+                  if (!displayStage) return null;
+                  const Icon = displayStage.icon;
+                  return (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${displayStage.color} text-white`}>
+                          <Icon className="h-5 w-5" />
                         </div>
-                      );
-                    })()}
-                    {!selectedInstantStage && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
-                        点击模块查看详情
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    {/* 患者随访模式：显示当前环节 */}
-                    <div className="flex items-center gap-3">
-                      {currentStageInfo && (
-                        <>
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
-                            <currentStageInfo.icon className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                              {currentStageInfo.title}
-                            </h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {currentStageInfo.description}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    
-                    {/* 功能列表 */}
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                      <ul className="space-y-1.5">
-                        {currentStageInfo?.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
-                            <span className="text-blue-500 mt-0.5">•</span>
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </>
-                )}
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {displayStage.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {displayStage.description}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* 功能列表 */}
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                        <ul className="space-y-1.5">
+                          {displayStage.features.map((feature, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                              <span className="text-blue-500 mt-0.5">•</span>
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </>
+                  );
+                })()}
                 
                 {/* 依据指南 */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
