@@ -12,11 +12,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: '肿瘤就医决策助手',
-    template: '%s | 肿瘤就医决策助手',
+    default: '健康就医决策助手',
+    template: '%s | 健康就医决策助手',
   },
   description:
-    '肿瘤就医决策助手 - 基于AI的专业就医决策辅助工具，帮助患者了解症状、推荐科室、解答治疗疑问、指导就医流程。',
+    '健康就医决策助手 - 基于AI的专业就医决策辅助工具，帮助患者了解症状、推荐科室、解答治疗疑问、指导就医流程。',
   keywords: [
     '肿瘤就医',
     '就医决策',
