@@ -249,13 +249,18 @@ export async function GET(request: NextRequest) {
     const test = searchParams.get('test');
     
     if (test === 'connection') {
-      // 测试 API 连接
-      const testResponse = await fetch(`${COZE_API_BASE}/v3/bots/list`, {
-        method: 'GET',
+      // 测试 API 连接 - 使用正确的端点
+      const testResponse = await fetch(`${COZE_API_BASE}/v3/chat/list`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${COZE_API_TOKEN}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          bot_id: COZE_BOT_ID,
+          page_num: 1,
+          page_size: 1,
+        }),
       });
       
       const status = testResponse.status;
@@ -267,7 +272,7 @@ export async function GET(request: NextRequest) {
         baseUrl: COZE_API_BASE,
         botId: COZE_BOT_ID,
         tokenLength: COZE_API_TOKEN.length,
-        responseBody: body.substring(0, 500),
+        responseBody: body.substring(0, 1000),
       });
     }
     
