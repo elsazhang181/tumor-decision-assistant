@@ -121,6 +121,7 @@ export async function POST(request: NextRequest) {
 
     if (!cozeResponse.ok) {
       const error = await cozeResponse.text();
+      console.error('Coze API error response:', cozeResponse.status, error);
       return NextResponse.json(
         { error: `Coze API error: ${error}` },
         { status: cozeResponse.status }
@@ -129,9 +130,11 @@ export async function POST(request: NextRequest) {
 
     // 检查响应类型 - 如果不是流式响应，可能是错误响应
     const contentType = cozeResponse.headers.get('content-type') || '';
+    console.log('Coze API response content-type:', contentType);
     if (!contentType.includes('text/event-stream')) {
       // 非流式响应，可能是错误 JSON
       const responseBody = await cozeResponse.text();
+      console.error('Coze API non-stream response:', responseBody);
       try {
         const errorJson = JSON.parse(responseBody);
         if (errorJson.code && errorJson.code !== 0) {
@@ -239,9 +242,35 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 获取会话列表
+// 测试 Coze API 连接
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const test = searchParams.get('test');
+    
+    if (test === 'connection') {
+      // 测试 API 连接
+      const testResponse = await fetch(`${COZE_API_BASE}/v3/bots/list`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${COZE_API_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const status = testResponse.status;
+      const body = await testResponse.text();
+      
+      return NextResponse.json({
+        success: testResponse.ok,
+        status,
+        baseUrl: COZE_API_BASE,
+        botId: COZE_BOT_ID,
+        tokenLength: COZE_API_TOKEN.length,
+        responseBody: body.substring(0, 500),
+      });
+    }
+    
     const apiToken = process.env.COZE_API_TOKEN;
     if (!apiToken) {
       return NextResponse.json(
@@ -250,7 +279,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get('conversationId');
 
     if (!conversationId) {
