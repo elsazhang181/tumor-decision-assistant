@@ -154,3 +154,154 @@ input, textarea, select {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* Markdown 内容样式 */
+.markdown-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+  color: inherit;
+}
+
+.markdown-content h1 {
+  font-size: 1.5em;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  padding-bottom: 0.3em;
+}
+
+.markdown-content h2 {
+  font-size: 1.3em;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  padding-bottom: 0.3em;
+}
+
+.markdown-content h3 {
+  font-size: 1.15em;
+}
+
+.markdown-content h4 {
+  font-size: 1.05em;
+}
+
+.markdown-content p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.7;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  padding-left: 1.5em;
+}
+
+.markdown-content ul {
+  list-style-type: disc;
+}
+
+.markdown-content ol {
+  list-style-type: decimal;
+}
+
+.markdown-content li {
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
+  line-height: 1.6;
+}
+
+.markdown-content li > p {
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+}
+
+.markdown-content blockquote {
+  margin: 0.8em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid var(--border, #e5e7eb);
+  background-color: var(--muted, #f3f4f6);
+  color: var(--muted-foreground, #6b7280);
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.markdown-content code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.875em;
+  padding: 0.2em 0.4em;
+  background-color: var(--muted, #f3f4f6);
+  border-radius: 0.25rem;
+}
+
+.markdown-content pre {
+  margin: 0.8em 0;
+  padding: 1em;
+  background-color: var(--muted, #f3f4f6);
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.markdown-content pre code {
+  padding: 0;
+  background-color: transparent;
+  font-size: 0.85em;
+}
+
+.markdown-content hr {
+  margin: 1.5em 0;
+  border: none;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.markdown-content strong {
+  font-weight: 600;
+}
+
+.markdown-content em {
+  font-style: italic;
+}
+
+.markdown-content a {
+  color: var(--primary, #2563eb);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-content a:hover {
+  opacity: 0.8;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  font-size: 0.9em;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid var(--border, #e5e7eb);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: var(--muted, #f3f4f6);
+  font-weight: 600;
+}
+
+/* 确保列表项中的链接和徽章正常显示 */
+.markdown-content li a,
+.markdown-content li span {
+  display: inline;
+}

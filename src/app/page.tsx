@@ -2341,7 +2341,7 @@ export default function Home() {
                                 </div>
                               )}
                               <div 
-                                className="whitespace-pre-wrap text-sm sm:text-sm md:text-sm leading-relaxed prose prose-xs dark:prose-invert max-w-none break-words"
+                                className="text-sm sm:text-base md:text-base leading-relaxed prose prose-sm dark:prose-invert max-w-none break-words markdown-content"
                                 dangerouslySetInnerHTML={{ 
                                   __html: renderContentWithSources(
                                     message.content.includes('【用户上传文件') 
