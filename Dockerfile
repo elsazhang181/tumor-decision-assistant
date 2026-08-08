@@ -22,5 +22,8 @@ RUN pnpm build
 # 暴露端口
 EXPOSE 3000
 
+# 设置环境变量
+ENV PORT=3000
+
 # 启动服务
 CMD ["pnpm", "start"]

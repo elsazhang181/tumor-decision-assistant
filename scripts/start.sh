@@ -3,7 +3,8 @@ set -eu
 
 COZE_WORKSPACE_PATH="${COZE_WORKSPACE_PATH:-$(pwd)}"
 
-PORT=5000
+# Railway 使用 PORT 环境变量，默认 3000
+PORT="${PORT:-3000}"
 DEPLOY_RUN_PORT="${DEPLOY_RUN_PORT:-$PORT}"
 
 
