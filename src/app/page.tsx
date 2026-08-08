@@ -2585,7 +2585,7 @@ export default function Home() {
                         const Icon = stage.icon;
                         const isActive = selectedInstantStage === stage.id;
                         return (
-                          <>
+                          <React.Fragment key={stage.id}>
                             <button
                               onClick={() => setSelectedInstantStage(stage.id)}
                               className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 transition-all shrink-0 ${
@@ -2674,7 +2674,7 @@ export default function Home() {
                             {currentStageInfo.description}
                           </p>
                         </div>
-                      </>
+                      </React.Fragment>
                     )}
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
