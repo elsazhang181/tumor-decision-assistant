@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { marked } from 'marked';
 import { toast, Toaster } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -2609,7 +2609,7 @@ export default function Home() {
                             {idx < STAGES.length - 1 && (
                               <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
                             )}
-                          </>
+                          </React.Fragment>
                         );
                       })}
                     </div>
@@ -2674,7 +2674,7 @@ export default function Home() {
                             {currentStageInfo.description}
                           </p>
                         </div>
-                      </React.Fragment>
+                      </>
                     )}
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
