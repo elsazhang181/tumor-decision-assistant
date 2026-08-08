@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "bash ./scripts/build.sh",
-    "dev": "bash ./scripts/dev.sh",
+    "build": "sh ./scripts/build.sh",
+    "dev": "sh ./scripts/dev.sh",
     "preinstall": "npx only-allow pnpm",
     "lint": "eslint",
-    "start": "bash ./scripts/start.sh",
+    "start": "sh ./scripts/start.sh",
     "ts-check": "tsc -p tsconfig.json",
     "lint:build": "eslint . --quiet",
     "validate": "pnpm run --parallel '/^(ts-check|lint:build)$/'"
