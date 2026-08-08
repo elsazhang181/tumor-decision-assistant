@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { marked } from 'marked';
 import { toast, Toaster } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -901,7 +902,14 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
     }
   );
 
-  return processedContent;
+  // 11. 将 Markdown 转换为 HTML（标题、粗体、列表等）
+  try {
+    const htmlContent = marked.parse(processedContent) as string;
+    return htmlContent;
+  } catch {
+    // 如果 Markdown 解析失败，返回原始内容
+    return processedContent;
+  }
 };
 
 const STAGES: Array<{
