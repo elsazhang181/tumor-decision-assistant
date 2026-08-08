@@ -2182,6 +2182,47 @@ export default function Home() {
           </Card>
         </div>
 
+        {/* 当前模块说明 - 在所有模式下都可见 */}
+        {(() => {
+          const displayStage = chatMode === 'instant' 
+            ? STAGES.find(s => s.id === selectedInstantStage) || STAGES[0]
+            : currentStageInfo;
+          if (!displayStage) return null;
+          const Icon = displayStage.icon;
+          return (
+            <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 mb-2 md:mb-3">
+              <CardContent className="p-3">
+                <div className="flex items-start gap-3">
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${displayStage.color} text-white`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {displayStage.title}
+                      </h4>
+                      <Badge variant="outline" className="text-[10px] shrink-0">
+                        当前环节
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
+                      {displayStage.description}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {displayStage.features.map((feature, idx) => (
+                        <span key={idx} className="inline-flex items-center gap-1 text-[10px] bg-white/70 dark:bg-slate-800/70 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full">
+                          <span className="text-blue-500">•</span>
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         {/* 历史记录入口 - 放在四个模块下方 */}
         <div className="mb-2 md:mb-3">
           <Button
