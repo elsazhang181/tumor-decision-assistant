@@ -249,30 +249,68 @@ export async function GET(request: NextRequest) {
     const test = searchParams.get('test');
     
     if (test === 'connection') {
-      // 测试 API 连接 - 使用正确的端点
-      const testResponse = await fetch(`${COZE_API_BASE}/v3/chat/list`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${COZE_API_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          bot_id: COZE_BOT_ID,
-          page_num: 1,
-          page_size: 1,
-        }),
-      });
+      // 测试两个 API 的连接
+      const results = [];
       
-      const status = testResponse.status;
-      const body = await testResponse.text();
+      // 测试 coze.cn
+      try {
+        const cnResponse = await fetch('https://api.coze.cn/v3/chat', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${COZE_API_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            bot_id: COZE_BOT_ID,
+            user_id: 'test',
+            stream: false,
+            additional_messages: [{ role: 'user', content: 'test', content_type: 'text' }],
+          }),
+          signal: AbortSignal.timeout(10000),
+        });
+        const cnBody = await cnResponse.text();
+        results.push({
+          platform: 'coze.cn',
+          status: cnResponse.status,
+          ok: cnResponse.ok,
+          body: cnBody.substring(0, 500),
+        });
+      } catch (e) {
+        results.push({ platform: 'coze.cn', error: (e as Error).message });
+      }
+      
+      // 测试 coze.com
+      try {
+        const comResponse = await fetch('https://api.coze.com/v3/chat', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${COZE_API_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            bot_id: COZE_BOT_ID,
+            user_id: 'test',
+            stream: false,
+            additional_messages: [{ role: 'user', content: 'test', content_type: 'text' }],
+          }),
+          signal: AbortSignal.timeout(10000),
+        });
+        const comBody = await comResponse.text();
+        results.push({
+          platform: 'coze.com',
+          status: comResponse.status,
+          ok: comResponse.ok,
+          body: comBody.substring(0, 500),
+        });
+      } catch (e) {
+        results.push({ platform: 'coze.com', error: (e as Error).message });
+      }
       
       return NextResponse.json({
-        success: testResponse.ok,
-        status,
         baseUrl: COZE_API_BASE,
         botId: COZE_BOT_ID,
         tokenLength: COZE_API_TOKEN.length,
-        responseBody: body.substring(0, 1000),
+        results,
       });
     }
     
