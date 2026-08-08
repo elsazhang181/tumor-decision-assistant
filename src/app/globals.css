@@ -169,29 +169,31 @@ input, textarea, select {
 .markdown-content h6 {
   font-weight: 600;
   line-height: 1.4;
-  margin-top: 1.2em;
-  margin-bottom: 0.6em;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
   color: inherit;
 }
 
 .markdown-content h1 {
-  font-size: 1.5em;
+  font-size: 1.25em;
   border-bottom: 1px solid var(--border, #e5e7eb);
-  padding-bottom: 0.3em;
+  padding-bottom: 0.2em;
 }
 
 .markdown-content h2 {
-  font-size: 1.3em;
+  font-size: 1.15em;
   border-bottom: 1px solid var(--border, #e5e7eb);
-  padding-bottom: 0.3em;
+  padding-bottom: 0.2em;
 }
 
 .markdown-content h3 {
-  font-size: 1.15em;
+  font-size: 1.05em;
 }
 
-.markdown-content h4 {
-  font-size: 1.05em;
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-size: 1em;
 }
 
 .markdown-content p {
@@ -304,4 +306,40 @@ input, textarea, select {
 .markdown-content li a,
 .markdown-content li span {
   display: inline;
+}
+
+/* 移动端响应式样式 */
+@media (max-width: 640px) {
+  .markdown-content h2 {
+    font-size: 1.15em;
+    margin: 1em 0 0.4em 0;
+  }
+  
+  .markdown-content h3 {
+    font-size: 1.05em;
+    margin: 0.8em 0 0.3em 0;
+  }
+  
+  .markdown-content h4 {
+    font-size: 0.95em;
+  }
+  
+  .markdown-content ul,
+  .markdown-content ol {
+    padding-left: 1.2em;
+    margin: 0.3em 0;
+  }
+  
+  .markdown-content li {
+    margin: 0.2em 0;
+  }
+  
+  .markdown-content p {
+    margin: 0.4em 0;
+  }
+  
+  .markdown-content blockquote {
+    padding: 0.4em 0.8em;
+    margin: 0.6em 0;
+  }
 }

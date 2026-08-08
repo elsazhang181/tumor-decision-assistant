@@ -904,7 +904,11 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
 
   // 11. 将 Markdown 转换为 HTML（标题、粗体、列表等）
   try {
-    const htmlContent = marked.parse(processedContent) as string;
+    // 配置 marked 选项，确保标题大小适中
+    const htmlContent = marked.parse(processedContent, {
+      breaks: true,  // 将换行符转换为 <br>
+      gfm: true,     // 启用 GitHub Flavored Markdown
+    }) as string;
     return htmlContent;
   } catch {
     // 如果 Markdown 解析失败，返回原始内容
@@ -1108,6 +1112,7 @@ function generateWelcomeMessage(targetStage: Stage): string {
 export default function Home() {
   // ============== 对话模式状态 ==============
   const [chatMode, setChatMode] = useState<ChatMode>('instant');
+  const [selectedInstantStage, setSelectedInstantStage] = useState<string | null>(null);
   const [patientSessions, setPatientSessions] = useState<PatientSession[]>([]);
   const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
   const [showPatientSidebar, setShowPatientSidebar] = useState(false);
@@ -2569,73 +2574,115 @@ export default function Home() {
 
           {/* Mobile: Help info below chat */}
           <div className="lg:hidden space-y-3">
-            {/* 本环节可帮助您 */}
-            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
-              <CardContent className="p-3 space-y-3">
-                {/* 即时问答模式：显示所有四个模块 */}
-                {chatMode === 'instant' ? (
-                  <div className="space-y-3">
-                    {STAGES.map((stage) => {
-                      const Icon = stage.icon;
-                      return (
-                        <div key={stage.id} className="flex items-start gap-2">
-                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {/* 即时问答模式：显示四个可点击模块 */}
+            {chatMode === 'instant' ? (
+              <>
+                <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
+                  <CardContent className="p-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      {STAGES.map((stage) => {
+                        const Icon = stage.icon;
+                        const isSelected = selectedInstantStage === stage.id;
+                        return (
+                          <button
+                            key={stage.id}
+                            onClick={() => setSelectedInstantStage(isSelected ? null : stage.id)}
+                            className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all ${
+                              isSelected
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-700/50 hover:border-blue-300'
+                            }`}
+                          >
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white mb-2`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white text-center">
                               {stage.title}
                             </h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
                               {stage.description}
                             </p>
-                            <ul className="space-y-1">
-                              {stage.features.map((feature, idx) => (
-                                <li key={idx} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-300">
-                                  <span className="text-blue-500 mt-0.5">•</span>
-                                  <span>{feature}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <>
-                    {/* 患者随访模式：显示当前环节 */}
-                    <div className="flex items-center gap-2">
-                      {currentStageInfo && (
-                        <>
-                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
-                            <currentStageInfo.icon className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                              {currentStageInfo.title}
-                            </h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {currentStageInfo.description}
-                            </p>
-                          </div>
-                        </>
-                      )}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
-                      <ul className="space-y-1">
-                        {currentStageInfo?.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
-                            <span className="text-blue-500 mt-0.5">•</span>
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </>
+                  </CardContent>
+                </Card>
+
+                {/* 显示选中模块的详细说明 */}
+                {selectedInstantStage && (
+                  <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
+                    <CardContent className="p-4">
+                      {(() => {
+                        const stage = STAGES.find(s => s.id === selectedInstantStage);
+                        if (!stage) return null;
+                        const Icon = stage.icon;
+                        return (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
+                                <Icon className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                                  {stage.title}
+                                </h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {stage.description}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                              <ul className="space-y-2">
+                                {stage.features.map((feature, idx) => (
+                                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                    <span className="text-blue-500 mt-0.5">•</span>
+                                    <span>{feature}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </CardContent>
+                  </Card>
                 )}
-              </CardContent>
-            </Card>
+              </>
+            ) : (
+              /* 患者随访模式：显示当前环节 */
+              <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
+                <CardContent className="p-3 space-y-3">
+                  <div className="flex items-center gap-2">
+                    {currentStageInfo && (
+                      <>
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
+                          <currentStageInfo.icon className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {currentStageInfo.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {currentStageInfo.description}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
+                    <ul className="space-y-1">
+                      {currentStageInfo?.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* 免责声明 */}
             <Card className="border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800/50">
@@ -2658,35 +2705,70 @@ export default function Home() {
                 <CardTitle className="text-sm font-semibold">本环节可帮助您</CardTitle>
               </CardHeader>
               <CardContent className="p-3 space-y-3">
-                {/* 即时问答模式：显示所有四个模块 */}
+                {/* 即时问答模式：显示四个模块卡片，点击显示详情 */}
                 {chatMode === 'instant' ? (
                   <div className="space-y-3">
-                    {STAGES.map((stage) => {
+                    {/* 模块卡片网格 */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {STAGES.map((stage) => {
+                        const Icon = stage.icon;
+                        const isSelected = selectedInstantStage === stage.id;
+                        return (
+                          <button
+                            key={stage.id}
+                            onClick={() => setSelectedInstantStage(isSelected ? null : stage.id)}
+                            className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                              isSelected
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                          >
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white mb-1.5`}>
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <span className="text-xs font-medium text-gray-900 dark:text-white text-center">
+                              {stage.title}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* 选中模块的详细说明 */}
+                    {selectedInstantStage && (() => {
+                      const stage = STAGES.find(s => s.id === selectedInstantStage);
+                      if (!stage) return null;
                       const Icon = stage.icon;
                       return (
-                        <div key={stage.id} className="flex items-start gap-3">
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
-                            <Icon className="h-5 w-5" />
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                {stage.title}
+                              </h3>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {stage.description}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                              {stage.title}
-                            </h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                              {stage.description}
-                            </p>
-                            <ul className="space-y-1">
-                              {stage.features.map((feature, idx) => (
-                                <li key={idx} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-300">
-                                  <span className="text-blue-500 mt-0.5">•</span>
-                                  <span>{feature}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                          <ul className="space-y-1.5">
+                            {stage.features.map((feature, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                                <span className="text-blue-500 mt-0.5">•</span>
+                                <span>{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       );
-                    })}
+                    })()}
+                    {!selectedInstantStage && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
+                        点击模块查看详情
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <>
