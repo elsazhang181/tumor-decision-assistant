@@ -1254,74 +1254,66 @@ export default function Home() {
     if ((!content.trim() && attachedFiles.length === 0) || isLoading) return;
 
     // 智能判断问题类型并自动切换环节（所有环节适用）
+    // 使用评分机制，对每个环节计算匹配分数，选择最高分的环节
     const lowerContent = content.toLowerCase();
     
-    // 定义各环节的专属关键词（按优先级排序：更具体的关键词放前面）
-    const symptomExclusiveKeywords = ['症状', '难受', '不舒服', '指标异常', '报告解读', 
-      'ca125', 'ca153', 'afp', '血红蛋白', '白细胞', '血小板', '肝功能', '肾功能', '血糖'];
-    
-    // 就医指导专属关键词（药物购买、医保、挂号等）- 优先级最高
-    const guidanceExclusiveKeywords = ['医保', '报销', '费用', '特药', '双通道', '门特', '门规', 
-      '异地就医', '临床试验', '大病保险', '价格', '多少钱', '花费', '原研药', '仿制药', 
-      '开药', '医生不让', '药占比', '医院没有', '买不到', '怎么开', '哪里买', '哪里能买',
-      '政策', '新农合', '城乡居民', '挂号', '预约', '北肿', '北京肿瘤', '就诊', '转诊', '床位',
-      '奥沙利铂', '进口', '国产', '集采', '药', '靶向药', '买药', '开药', '取药', '药房', '药店'];
-    
-    const treatmentExclusiveKeywords = ['化疗', '放疗', '手术', '靶向', '免疫治疗', '免疫', 
-      '耐药', '疗程', '方案', 'cea', 'ca199', 'ca724', 'ca242', '治疗效果', 
-      '副作用', '不良反应', '效果', '起效', '没效果', '降低', '上升',
-      '内镜', 'esd', 'emr', '切除', '抑酸', '胃镜', '肠镜', '结肠镜', '胃部', '肠道',
-      '术前', '术后', '恢复', '息肉', '溃疡', '肿块', '良性', '恶性', '恶性'];
-    
-    // 判断问题是否与各环节相关
-    const isSymptomRelated = symptomExclusiveKeywords.some(k => lowerContent.includes(k));
-    const isTreatmentRelated = treatmentExclusiveKeywords.some(k => lowerContent.includes(k));
-    const isGuidanceRelated = guidanceExclusiveKeywords.some(k => lowerContent.includes(k));
-    
-    // 医保相关问题优先判断：报销应在就医指导范畴内
-    // 药物购买问题也应在就医指导范畴内（优先级高于治疗相关）
-    if (isGuidanceRelated && currentStage !== 'guidance' && currentStage !== 'department') {
-      // 医保/药物购买相关问题：切换到就医指导环节
-      setCurrentStage('guidance');
-      toast.info('已切换至「就医指导」环节', {
-        description: '根据您的问题内容，将为您提供医保和费用相关信息',
-        duration: 3000,
-      });
-    } else if (isTreatmentRelated && !isGuidanceRelated && currentStage !== 'treatment' && currentStage !== 'department') {
-      // 治疗相关问题（且非药物购买）：切换到治疗相关环节
-      setCurrentStage('treatment');
-      toast.info('已切换至「治疗相关」环节', {
-        description: '根据您的问题内容，将为您提供针对性的治疗指导',
-        duration: 3000,
-      });
-    } else if (isSymptomRelated && !isGuidanceRelated && !isTreatmentRelated && currentStage === 'guidance') {
-      // 只有在就医指导环节时，症状问题才切换到症状自查
-      setCurrentStage('symptom');
-      toast.info('已切换至「症状自查」环节', {
-        description: '根据您的问题内容，将为您提供针对性的症状解读',
-        duration: 3000,
-      });
-    } else if (currentStage === 'department') {
-      // 科室推荐环节的切换逻辑
-      if (isSymptomRelated) {
-        setCurrentStage('symptom');
-        toast.info('已切换至「症状自查」环节', {
-          description: '根据您的问题内容，将为您提供针对性的症状解读',
-          duration: 3000,
-        });
-      } else if (isTreatmentRelated) {
-        setCurrentStage('treatment');
-        toast.info('已切换至「治疗相关」环节', {
-          description: '根据您的问题内容，将为您提供针对性的治疗指导',
-          duration: 3000,
-        });
-      } else if (isGuidanceRelated) {
-        setCurrentStage('guidance');
-        toast.info('已切换至「就医指导」环节', {
-          description: '根据您的问题内容，将为您提供医保和费用相关信息',
-          duration: 3000,
-        });
+    // 各环节关键词及权重
+    const keywordScores: Record<string, { keywords: string[]; weight: number }[]> = {
+      symptom: [
+        { keywords: ['症状', '难受', '不舒服', '疼痛', '痛', '痒', '肿', '胀', '晕', '吐', '咳', '喘', '发热', '发烧', '乏力', '疲倦', '恶心', '呕吐', '腹泻', '便秘', '出血', '肿块', '结节', '指标异常', '报告解读', 'ca125', 'ca153', 'afp', 'cea', 'ca199', '血红蛋白', '白细胞', '血小板', '肝功能', '肾功能', '血糖', '肿瘤标志物', '病理', '活检', '分期', '分级', '转移', '扩散', '复发'], weight: 2 },
+        { keywords: ['是什么病', '什么病', '得了什么', '严重吗', '危险吗', '要不要紧', '什么情况', '怎么回事', '正常吗', '异常', '阳性', '阴性'], weight: 1 },
+      ],
+      department: [
+        { keywords: ['挂什么科', '看什么科', '哪个科', '科室', '门诊', '专家', '医生推荐', '找谁看', '应该看', '就诊科室', '专科'], weight: 2 },
+        { keywords: ['医院', '哪家医院', '哪个医院', '三甲', '排名', '推荐医院'], weight: 1 },
+      ],
+      treatment: [
+        { keywords: ['化疗', '放疗', '手术', '靶向', '免疫治疗', '免疫', '耐药', '疗程', '方案', '治疗效果', '副作用', '不良反应', '效果', '起效', '没效果', '降低', '上升', '内镜', 'esd', 'emr', '切除', '抑酸', '胃镜', '肠镜', '结肠镜', '术前', '术后', '恢复', '息肉', '溃疡', '肿块', '良性', '恶性', '肿瘤', '癌症', '癌', 'cea', 'ca199', 'ca724', 'ca242'], weight: 2 },
+        { keywords: ['治疗', '吃药', '用药', '药物', '处方', '剂量', '用法', '疗程', '周期', '几个疗程', '第几疗程'], weight: 1 },
+      ],
+      guidance: [
+        { keywords: ['医保', '报销', '费用', '特药', '双通道', '门特', '门规', '异地就医', '临床试验', '大病保险', '价格', '多少钱', '花费', '原研药', '仿制药', '开药', '药占比', '医院没有', '买不到', '怎么开', '哪里买', '哪里能买', '政策', '新农合', '城乡居民', '挂号', '预约', '北肿', '北京肿瘤', '就诊', '转诊', '床位', '奥沙利铂', '进口', '国产', '集采', '靶向药', '买药', '取药', '药房', '药店', '安宁疗护', '临终关怀', ' hospice', '病房', '社区服务', '社区卫生服务中心', '护理院', '养老院', '康复', '护理', '照护', ' hospice care', 'palliative'], weight: 2 },
+        { keywords: ['保险', '社保', '商业保险', '理赔', '救助', '基金', '援助', '免费', '补贴', '减免', '哪里可以', '怎么申请', '流程', '手续', '材料', '证明', '备案', ' referral', '转院', '异地', '外地', '跨省'], weight: 1 },
+      ],
+    };
+
+    // 计算每个环节的匹配分数
+    const scores: Record<string, number> = { symptom: 0, department: 0, treatment: 0, guidance: 0 };
+    for (const [stage, groups] of Object.entries(keywordScores)) {
+      for (const group of groups) {
+        for (const keyword of group.keywords) {
+          if (lowerContent.includes(keyword)) {
+            scores[stage] += group.weight;
+          }
+        }
       }
+    }
+
+    // 找出最高分的环节
+    let bestStage = '';
+    let bestScore = 0;
+    for (const [stage, score] of Object.entries(scores)) {
+      if (score > bestScore) {
+        bestScore = score;
+        bestStage = stage;
+      }
+    }
+
+    // 如果有明确匹配且与当前环节不同，则切换
+    const stageNames: Record<string, string> = { symptom: '症状自查', department: '科室推荐', treatment: '治疗相关', guidance: '就医指导' };
+    const stageDescriptions: Record<string, string> = {
+      symptom: '根据您的问题内容，将为您提供症状评估和信号识别指导',
+      department: '根据您的问题内容，将为您提供科室匹配和就医选择建议',
+      treatment: '根据您的问题内容，将为您提供治疗相关的专业指导',
+      guidance: '根据您的问题内容，将为您提供就医流程和医保政策指导',
+    };
+
+    if (bestStage && bestStage !== currentStage && bestScore >= 2) {
+      setCurrentStage(bestStage as typeof currentStage);
+      toast.info(`已切换至「${stageNames[bestStage]}」环节`, {
+        description: stageDescriptions[bestStage],
+        duration: 3000,
+      });
     }
 
     isSendingRef.current = true; // 标记正在发送，防止初始化清空消息
