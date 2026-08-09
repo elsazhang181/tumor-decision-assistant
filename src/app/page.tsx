@@ -2075,12 +2075,11 @@ export default function Home() {
             </p>
           </div>
         )}
-        {/* Stage Navigation - Mobile Optimized (所有模式显示) */}
-        <div className="mb-2 md:mb-4">
+        {/* Stage Navigation - 横向单行紧凑布局（所有模式统一） */}
+        <div className="mb-2 md:mb-3">
           <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
-            <CardContent className="p-2 md:p-4">
-              {/* Desktop: horizontal layout */}
-              <div className="hidden md:flex items-center justify-between">
+            <CardContent className="p-2">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
                 {STAGES.map((stage, index) => {
                   const isCompleted = chatMode !== 'instant' && completedStages.includes(stage.id);
                   const isCurrent = chatMode === 'instant' 
@@ -2089,18 +2088,18 @@ export default function Home() {
                   const Icon = stage.icon;
                   
                   return (
-                    <div key={stage.id} className="flex items-center flex-1">
+                    <React.Fragment key={stage.id}>
                       <button
                         onClick={() => chatMode === 'instant' ? setSelectedInstantStage(stage.id) : handleStageChange(stage.id)}
-                        className={`flex items-center gap-3 flex-1 p-3 rounded-lg transition-all ${
+                        className={`flex items-center gap-2 rounded-lg border-2 px-2.5 py-1.5 transition-all shrink-0 ${
                           isCurrent 
-                            ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-blue-500 dark:border-blue-400'
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                             : isCompleted
-                            ? 'bg-green-50 dark:bg-green-900/20 border-2 border-green-500 dark:border-green-400'
-                            : 'bg-gray-50 dark:bg-slate-700/50 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                            ? 'border-green-400 dark:border-green-600 bg-green-50 dark:bg-green-900/20'
+                            : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-700/50 hover:border-blue-300'
                         }`}
                       >
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
                           isCurrent
                             ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white'
                             : isCompleted
@@ -2108,122 +2107,32 @@ export default function Home() {
                             : 'bg-gray-300 dark:bg-slate-600 text-gray-600 dark:text-gray-300'
                         }`}>
                           {isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5" />
+                            <CheckCircle2 className="h-3.5 w-3.5" />
                           ) : (
-                            <Icon className="h-4 w-4" />
+                            <Icon className="h-3.5 w-3.5" />
                           )}
                         </div>
-                        <div className="flex-1 text-left">
-                          <div className={`text-xs font-semibold ${isCurrent ? 'text-blue-700 dark:text-blue-400' : isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                        <div className="text-left">
+                          <div className={`text-xs font-semibold leading-tight ${isCurrent ? 'text-blue-700 dark:text-blue-400' : isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
                             {stage.title}
                           </div>
-                          <div className={`text-[10px] ${isCurrent ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                          <div className={`text-[10px] leading-tight ${isCurrent ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
                             {stage.description}
                           </div>
                         </div>
                       </button>
                       {index < STAGES.length - 1 && (
-                        <div className="flex items-center justify-center px-1">
-                          <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-600" />
-                        </div>
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-600" />
                       )}
-                    </div>
+                    </React.Fragment>
                   );
                 })}
-              </div>
-              
-              {/* Mobile: 2x2 grid layout */}
-              <div className="md:hidden">
-                <div className="grid grid-cols-2 gap-2">
-                  {STAGES.map((stage) => {
-                    const isCompleted = chatMode !== 'instant' && completedStages.includes(stage.id);
-                    const isCurrent = chatMode === 'instant' 
-                      ? selectedInstantStage === stage.id 
-                      : currentStage === stage.id;
-                    const Icon = stage.icon;
-                    
-                    return (
-                      <button
-                        key={stage.id}
-                        onClick={() => chatMode === 'instant' ? setSelectedInstantStage(stage.id) : handleStageChange(stage.id)}
-                        className={`flex flex-col items-center p-3 rounded-xl transition-all ${
-                          isCurrent 
-                            ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white shadow-lg'
-                            : isCompleted
-                            ? 'bg-green-50 dark:bg-green-900/30 border-2 border-green-400 dark:border-green-600'
-                            : 'bg-gray-50 dark:bg-slate-700/50 border-2 border-gray-200 dark:border-slate-600'
-                        }`}
-                      >
-                        <div className={`flex h-10 w-10 items-center justify-center rounded-full mb-2 ${
-                          isCurrent
-                            ? 'bg-white/20'
-                            : isCompleted
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-300 dark:bg-slate-600 text-gray-600 dark:text-gray-300'
-                        }`}>
-                          {isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5" />
-                          ) : (
-                            <Icon className="h-5 w-5" />
-                          )}
-                        </div>
-                        <div className={`text-sm font-semibold text-center ${isCurrent ? 'text-white' : isCompleted ? 'text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                          {stage.title}
-                        </div>
-                        <div className={`text-[10px] text-center mt-1 line-clamp-2 ${isCurrent ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-                          {stage.description}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* 当前模块说明 - 在所有模式下都可见 */}
-        {(() => {
-          const displayStage = chatMode === 'instant' 
-            ? STAGES.find(s => s.id === selectedInstantStage) || STAGES[0]
-            : currentStageInfo;
-          if (!displayStage) return null;
-          const Icon = displayStage.icon;
-          return (
-            <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 mb-2 md:mb-3">
-              <CardContent className="p-3">
-                <div className="flex items-start gap-3">
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${displayStage.color} text-white`}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {displayStage.title}
-                      </h4>
-                      <Badge variant="outline" className="text-[10px] shrink-0">
-                        当前环节
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">
-                      {displayStage.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {displayStage.features.map((feature, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 text-[10px] bg-white/70 dark:bg-slate-800/70 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full">
-                          <span className="text-blue-500">•</span>
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })()}
-
-        {/* 历史记录入口 - 放在四个模块下方 */}
+        {/* 历史记录入口 */}
         <div className="mb-2 md:mb-3">
           <Button
             variant="ghost"
@@ -2388,7 +2297,7 @@ export default function Home() {
                                 </div>
                               )}
                               <div 
-                                className="text-sm sm:text-base md:text-base leading-relaxed prose prose-sm dark:prose-invert max-w-none break-words markdown-content"
+                                className="text-[13px] sm:text-sm leading-relaxed max-w-none break-words markdown-content"
                                 dangerouslySetInnerHTML={{ 
                                   __html: renderContentWithSources(
                                     message.content.includes('【用户上传文件') 
@@ -2610,150 +2519,56 @@ export default function Home() {
                     支持多文件上传，txt、word、excel、pdf、图片格式，总大小最大 10MB
                   </p>
                 </form>
-              </CardContent>
-            </Card>
-          </div>
 
-          {/* Mobile: Help info below chat */}
-          <div className="lg:hidden space-y-3">
-            {/* 即时问答模式：显示四个模块导航（与患者随访统一设计） */}
-            {chatMode === 'instant' ? (
-              <>
-                <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                      {STAGES.map((stage, idx) => {
-                        const Icon = stage.icon;
-                        const isActive = selectedInstantStage === stage.id;
-                        return (
-                          <React.Fragment key={stage.id}>
-                            <button
-                              onClick={() => setSelectedInstantStage(stage.id)}
-                              className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 transition-all shrink-0 ${
-                                isActive
-                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                  : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-700/50 hover:border-blue-300'
-                              }`}
-                            >
-                              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
-                                <Icon className="h-4 w-4" />
-                              </div>
-                              <div className="text-left">
-                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {stage.title}
-                                </h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {stage.description}
-                                </p>
-                              </div>
-                            </button>
-                            {idx < STAGES.length - 1 && (
-                              <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" />
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* 显示选中模块的详细说明 */}
-                {selectedInstantStage && (
-                  <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
-                    <CardContent className="p-4">
-                      {(() => {
-                        const stage = STAGES.find(s => s.id === selectedInstantStage);
-                        if (!stage) return null;
-                        const Icon = stage.icon;
-                        return (
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${stage.color} text-white`}>
-                                <Icon className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                                  {stage.title}
-                                </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  {stage.description}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                              <ul className="space-y-2">
-                                {stage.features.map((feature, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
-                                    <span className="text-blue-500 mt-0.5">•</span>
-                                    <span>{feature}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
+                {/* 模块说明面板 - 所有模式统一显示 */}
+                {(() => {
+                  const displayStage = chatMode === 'instant' 
+                    ? STAGES.find(s => s.id === selectedInstantStage) || STAGES[0]
+                    : currentStageInfo;
+                  if (!displayStage) return null;
+                  const Icon = displayStage.icon;
+                  return (
+                    <div className="border-t border-gray-200 dark:border-gray-700 p-3 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10">
+                      <div className="flex items-start gap-2.5">
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${displayStage.color} text-white`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {displayStage.title}
+                            </h4>
+                            <Badge variant="outline" className="text-[10px] shrink-0 h-4 px-1.5">
+                              当前环节
+                            </Badge>
                           </div>
-                        );
-                      })()}
-                    </CardContent>
-                  </Card>
-                )}
-              </>
-            ) : (
-              /* 患者随访模式：显示当前环节 */
-              <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
-                <CardContent className="p-3 space-y-3">
-                  <div className="flex items-center gap-2">
-                    {currentStageInfo && (
-                      <>
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${currentStageInfo.color} text-white`}>
-                          <currentStageInfo.icon className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {currentStageInfo.title}
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {currentStageInfo.description}
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1.5">
+                            {displayStage.description}
                           </p>
+                          <div className="flex flex-wrap gap-1">
+                            {displayStage.features.map((feature, idx) => (
+                              <span key={idx} className="inline-flex items-center text-[10px] bg-white/80 dark:bg-slate-800/80 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">
+                                <span className="text-blue-500 mr-0.5">•</span>
+                                {feature}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </>
-                    )}
-                  </div>
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
-                    <ul className="space-y-1">
-                      {currentStageInfo?.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
-                          <span className="text-blue-500 mt-0.5">•</span>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* 免责声明 */}
-            <Card className="border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800/50">
-              <CardContent className="p-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    <strong className="block mb-0.5 text-gray-700 dark:text-gray-300">就医决策辅助声明</strong>
-                    本助手不提供疾病诊断、治疗方案制定、药品处方或医疗决策替代，所有回答仅供参考，不能替代专业医生的面诊判断。
-                  </div>
-                </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>
 
-          {/* Sidebar - Hidden on mobile */}
+          {/* Sidebar - Desktop only */}
           <div className="hidden lg:block lg:col-span-1 space-y-3">
             <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
               <CardHeader className="border-b border-gray-200 dark:border-gray-700 py-3">
                 <CardTitle className="text-sm font-semibold">本环节可帮助您</CardTitle>
               </CardHeader>
               <CardContent className="p-3 space-y-3">
-                {/* 统一显示当前环节信息（即时问答和患者随访模式共用） */}
                 {(() => {
                   const displayStage = chatMode === 'instant' 
                     ? STAGES.find(s => s.id === selectedInstantStage) || STAGES[0]
@@ -2776,7 +2591,6 @@ export default function Home() {
                         </div>
                       </div>
                       
-                      {/* 功能列表 */}
                       <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                         <ul className="space-y-1.5">
                           {displayStage.features.map((feature, idx) => (
@@ -2791,7 +2605,6 @@ export default function Home() {
                   );
                 })()}
                 
-                {/* 依据指南 */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline" className="text-xs">
@@ -2800,7 +2613,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* 完成进度（仅患者随访模式显示） */}
                 {chatMode !== 'instant' && (
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                     <div className="flex items-center justify-between mb-1">
@@ -2818,7 +2630,6 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* 免责声明 */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                   <div className="flex items-start gap-2 text-[10px] text-gray-500 dark:text-gray-400">
                     <AlertCircle className="h-3 w-3 shrink-0 mt-0.5" />
