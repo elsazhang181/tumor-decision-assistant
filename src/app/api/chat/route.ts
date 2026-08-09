@@ -68,6 +68,12 @@ export async function POST(request: NextRequest) {
         finalUserId = 'anonymous';
     }
 
+    // 为即时问答模式添加来源引用要求，确保结论有据可依
+    let finalMessage = message;
+    if (mode === 'instant') {
+      finalMessage = message + '\n\n【回答要求】请在结论部分引用具体的数据来源（如国家医保局官网、卫健委文件、医院官网、权威医学指南、行业媒体等），给出明确的具体数字或比例。如果无法确定具体数据，请明确说明"暂无官方公开数据"，不要给出模糊的泛泛建议。';
+    }
+
     // 构建请求体
     const requestBody: Record<string, unknown> = {
       bot_id: targetBotId,
@@ -77,7 +83,7 @@ export async function POST(request: NextRequest) {
       additional_messages: [
         {
           role: 'user',
-          content: message,
+          content: finalMessage,
           content_type: 'text',
         },
       ],
