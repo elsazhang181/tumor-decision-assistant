@@ -929,7 +929,7 @@ const STAGES: Array<{
     title: '症状自查',
     description: '状况评估，信号识别',
     icon: Stethoscope,
-    color: 'from-blue-500 to-blue-600',
+    color: 'from-orange-500 to-orange-600',
     features: ['系统性评估症状特征', '识别紧急危险信号', '整理关键信息供就诊参考', '生成医患沟通提问清单']
   },
   {
@@ -937,7 +937,7 @@ const STAGES: Array<{
     title: '科室推荐',
     description: '对症匹配，就近择优',
     icon: Hospital,
-    color: 'from-purple-500 to-purple-600',
+    color: 'from-blue-500 to-blue-600',
     features: ['匹配合适的就诊科室', '推荐权威医院', '列出就诊准备清单', '生成医患沟通提问清单']
   },
   {
@@ -945,7 +945,7 @@ const STAGES: Array<{
     title: '治疗相关',
     description: '问诊检查，医患沟通',
     icon: Activity,
-    color: 'from-orange-500 to-orange-600',
+    color: 'from-green-500 to-green-600',
     features: ['术前检查清单和数据解读', '标准治疗顺序', '化疗副作用应对', '生成医患沟通提问清单']
   },
   {
@@ -953,7 +953,7 @@ const STAGES: Array<{
     title: '就医指导',
     description: '异地医保，转诊保险',
     icon: FileText,
-    color: 'from-green-500 to-green-600',
+    color: 'from-purple-500 to-purple-600',
     features: ['异地就医流程指导', '医保报销政策', '转诊须知和材料准备', '生成综合就医提问清单']
   }
 ];
@@ -2148,35 +2148,76 @@ export default function Home() {
         {/* Chat Area - Mobile Optimized */}
         {/* 模式B/C：未选择患者时显示提示 */}
         {(chatMode === 'patient' || chatMode === 'multi-patient') && !currentPatientId ? (
-          <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg">
-            <CardContent className="p-8 text-center">
-              <Users className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                请先选择或创建患者会话
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                患者随访模式需要绑定患者身份，以便保留完整的对话上下文。
-              </p>
-              <div className="flex justify-center gap-3">
-                <Button
-                  onClick={() => setShowNewPatientDialog(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  创建新患者
-                </Button>
-                {patientSessions.length > 0 && (
+          <div className="space-y-3">
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 shadow-lg">
+              <CardContent className="p-8 text-center">
+                <Users className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  请先选择或创建患者会话
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  患者随访模式需要绑定患者身份，以便保留完整的对话上下文。
+                </p>
+                <div className="flex justify-center gap-3">
                   <Button
-                    variant="outline"
-                    onClick={() => setShowPatientSidebar(true)}
+                    onClick={() => setShowNewPatientDialog(true)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
                   >
-                    <Users className="h-4 w-4 mr-2" />
-                    选择已有患者
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    创建新患者
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  {patientSessions.length > 0 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowPatientSidebar(true)}
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      选择已有患者
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 未选择患者时也显示模块说明面板 */}
+            <Card className="border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
+              <CardContent className="p-3">
+                {(() => {
+                  const displayStage = currentStageInfo;
+                  if (!displayStage) return null;
+                  const Icon = displayStage.icon;
+                  return (
+                    <div className="flex items-start gap-2.5">
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${displayStage.color} text-white`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {displayStage.title}
+                          </h4>
+                          <Badge variant="outline" className="text-[10px] shrink-0 h-4 px-1.5">
+                            当前环节
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1.5">
+                          {displayStage.description}
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {displayStage.features.map((feature, idx) => (
+                            <span key={idx} className="inline-flex items-center text-[10px] bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">
+                              <span className="text-blue-500 mr-0.5">•</span>
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </div>
         ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 md:gap-4">
           <div className="lg:col-span-3">
