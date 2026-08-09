@@ -68,10 +68,10 @@ export async function POST(request: NextRequest) {
         finalUserId = 'anonymous';
     }
 
-    // 为即时问答模式添加来源引用要求，确保结论有据可依
+    // 为即时问答模式添加来源引用要求，确保结论有据可依且回答一致
     let finalMessage = message;
     if (mode === 'instant') {
-      finalMessage = message + '\n\n【回答要求】请在结论部分引用具体的数据来源（如国家医保局官网、卫健委文件、医院官网、权威医学指南、行业媒体等），给出明确的具体数字或比例。如果无法确定具体数据，请明确说明"暂无官方公开数据"，不要给出模糊的泛泛建议。';
+      finalMessage = message + '\n\n【严格回答要求】\n1. 结论必须引用具体权威来源（如：国家医保局官网、国家卫健委文件、各省市医保局官网、医院官网公告、中华医学会指南、CSCO指南、NCCN指南、柳叶刀/NEJM等权威期刊、人民日报/新华社等官方媒体）。\n2. 必须给出明确的具体数字、比例、时间等关键信息，不要模糊表述。\n3. 如果无法从权威来源确认具体数据，必须明确说明"根据XX来源，目前暂无公开的具体数据"，并给出查询建议（如拨打12393医保热线、登录国家医保服务平台APP等）。\n4. 回答必须基于事实和权威来源，不要编造数据。';
     }
 
     // 构建请求体
@@ -88,6 +88,11 @@ export async function POST(request: NextRequest) {
         },
       ],
     };
+
+    // 即时问答模式设置 temperature=0 确保相同问题回答一致
+    if (mode === 'instant') {
+      requestBody.temperature = 0;
+    }
 
     // 仅在模式 B/C 时传入 conversation_id
     if (finalConversationId) {
