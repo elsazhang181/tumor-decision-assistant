@@ -38,7 +38,11 @@ import {
   Image as ImageIcon,
   Copy,
   Download,
-  RefreshCw
+  RefreshCw,
+  Pill,
+  Heart,
+  ClipboardList,
+  Syringe
 } from 'lucide-react';
 import Image from 'next/image';
 import hospitalsQRData from '@/lib/hospitals-qrcode.json';
@@ -193,10 +197,10 @@ interface ChatHistoryItem {
 const STAGE_MESSAGES_KEY = 'cancer-assistant-stage-messages';
 
 const getStageMessages = (): Record<Stage, Message[]> => {
-  if (typeof window === 'undefined') return { symptom: [], department: [], treatment: [], guidance: [] };
+  if (typeof window === 'undefined') return { 'symptom-check': [], 'treatment-plan': [], medication: [], 'chronic-disease': [], 'medical-guidance': [] };
   try {
     const data = localStorage.getItem(STAGE_MESSAGES_KEY);
-    if (!data) return { symptom: [], department: [], treatment: [], guidance: [] };
+    if (!data) return { 'symptom-check': [], 'treatment-plan': [], medication: [], 'chronic-disease': [], 'medical-guidance': [] };
     const messages = JSON.parse(data) as Record<Stage, Message[]>;
     // 恢复 timestamp
     Object.keys(messages).forEach(stage => {
@@ -207,7 +211,7 @@ const getStageMessages = (): Record<Stage, Message[]> => {
     });
     return messages;
   } catch {
-    return { symptom: [], department: [], treatment: [], guidance: [] };
+    return { 'symptom-check': [], 'treatment-plan': [], medication: [], 'chronic-disease': [], 'medical-guidance': [] };
   }
 };
 
@@ -419,7 +423,7 @@ function HistoryPanel({ history, onClose, onSelectHistory, onRefresh }: HistoryP
   );
 }
 
-type Stage = 'symptom' | 'department' | 'treatment' | 'guidance';
+type Stage = 'symptom-check' | 'treatment-plan' | 'medication' | 'chronic-disease' | 'medical-guidance';
 
 // 医院二维码数据
 const HOSPITALS_QR = hospitalsQRData;
@@ -926,31 +930,39 @@ const STAGES: Array<{
   features: string[];
 }> = [
   {
-    id: 'symptom',
-    title: '症状自查',
-    description: '状况评估，信号识别',
+    id: 'symptom-check',
+    title: '健康自查',
+    description: '症状评估，信号识别',
     icon: Stethoscope,
     color: 'from-orange-500 to-orange-600',
-    features: ['系统性评估症状特征', '识别紧急危险信号', '整理关键信息供就诊参考', '生成医患沟通提问清单']
+    features: ['评估健康信号', '识别就医需求', '整理关键信息供就诊参考', '生成医患沟通提问清单']
   },
   {
-    id: 'department',
-    title: '科室推荐',
-    description: '对症匹配，就近择优',
-    icon: Hospital,
-    color: 'from-blue-500 to-blue-600',
-    features: ['匹配合适的就诊科室', '推荐权威医院', '列出就诊准备清单', '生成医患沟通提问清单']
-  },
-  {
-    id: 'treatment',
-    title: '治疗相关',
-    description: '问诊检查，医患沟通',
+    id: 'treatment-plan',
+    title: '检查治疗',
+    description: '检查解读，治疗方案',
     icon: Activity,
-    color: 'from-green-500 to-green-600',
-    features: ['术前检查清单和数据解读', '标准治疗顺序', '化疗副作用应对', '生成医患沟通提问清单']
+    color: 'from-blue-500 to-blue-600',
+    features: ['检查报告解读', '治疗方案参考', '就诊准备', '生成医患沟通提问清单']
   },
   {
-    id: 'guidance',
+    id: 'medication',
+    title: '用药咨询',
+    description: '药物信息，医保报销',
+    icon: Pill,
+    color: 'from-green-500 to-green-600',
+    features: ['药物作用说明', '医保甲类乙类查询', '用药须知', '生成医患沟通提问清单']
+  },
+  {
+    id: 'chronic-disease',
+    title: '慢病管理',
+    description: '长期管理，日常监测',
+    icon: Heart,
+    color: 'from-cyan-500 to-cyan-600',
+    features: ['日常监测指导', '预警信号识别', '复查节奏建议', '生成医患沟通提问清单']
+  },
+  {
+    id: 'medical-guidance',
     title: '就医指导',
     description: '异地医保，转诊保险',
     icon: FileText,
@@ -960,52 +972,51 @@ const STAGES: Array<{
 ];
 
 const WELCOME_MESSAGES: Record<Stage, string> = {
-  symptom: `您好！我是您的健康就医决策助手，全程陪伴您的就医过程。
+  'symptom-check': `您好！我是您的就医决策陪伴助手，帮您理清就医思路、做好就医准备。
 
-## 📋 第一步：症状自查
+## 📋 症状评估
 
 请告诉我您的主要症状，我将帮助您：
-• 🔍 系统性评估症状特征
+•  系统性评估症状特征
 • ⚠️ 识别紧急危险信号
 • 📝 整理关键信息供就诊参考
-• 📋 **生成医患沟通提问清单**（帮您整理见医生时要问的问题）
+• 📋 **生成医患沟通提问清单**
 
 请描述您的症状（部位、性质、持续时间等），例如："右侧乳房有一个不痛的肿块，发现约2周了..."`,
 
-  department: `## 🏥 第二步：科室匹配
-
-基于您刚才的症状描述，我将为您：
-• 🎯 匹配合适的就诊科室
-• 🏥 推荐权威医院（引用熊猫群专家信息库）
-• 📋 列出就诊准备清单
-• 📝 **生成医患沟通提问清单**（帮您问清楚诊断和检查安排）
-
-⚠️ 提醒：仅提供决策辅助信息，不涉及具体诊疗方案。
-
-您可以直接询问，或回复"推荐医院和科室"开始。`,
-
-  treatment: `## 💊 第三步：治疗相关
+  'treatment-plan': `## 📋 治疗方案咨询
 
 请告诉我您想了解的治疗相关问题，我将帮助您：
-• 📝 术前检查清单和关键数据解读
-• 🔄 标准治疗顺序（基于2025 CSCO结直肠癌诊疗指南）
-• 💊 化疗副作用及应对措施
+• 📝 治疗方案解读（基于 CSCO 临床指南）
+• 🔄 不同治疗选项对比
 • 📋 **生成医患沟通提问清单**
-
-⚠️ 仅提供决策辅助信息，不涉及具体诊疗方案。
 
 请描述您想了解的内容，例如："术前需要做哪些检查？"`,
 
-  guidance: `## 📝 第四步：就医指导
+  medication: `## 💊 用药咨询
 
-请告诉我您想了解的就医相关问题，我将帮助您：
-• 🗺️ 异地就医流程和医保报销
-• 🛡️ 带病投保和保险相关
-• 📄 转诊须知和材料准备
-• 💰 经济压力应对
+请告诉我您想了解的用药相关问题，我将帮助您：
+• 💊 药物作用和医保状态
+• ⚠️ 用药须知和副作用说明
 • 📋 **生成医患沟通提问清单**
 
-⚠️ 以上信息仅供参考，不构成任何医疗或法律建议。
+请描述您想了解的内容，例如："这个药是甲类还是乙类？"`,
+
+  'chronic-disease': `##  慢病管理
+
+请告诉我您想了解的慢病管理问题，我将帮助您：
+• 📝 日常监测项目和频率
+•  预警信号识别
+• 📋 **生成复查问诊清单**
+
+请描述您想了解的内容，例如："糖尿病日常需要注意什么？"`,
+
+  'medical-guidance': `## 📝 就医流程指导
+
+请告诉我您想了解的就医流程问题，我将帮助您：
+• 🗺️ 异地就医流程和医保报销
+• 📄 转诊须知和材料准备
+• 📋 **生成就医准备清单**
 
 请描述您想了解的内容，例如："异地就医需要准备什么？"`,
 };
@@ -1044,7 +1055,7 @@ function extractContextFromMessages(
   // 收集所有已完成环节的上下文
   const previousSummary = Object.entries(allPreviousContexts)
     .filter(([stage]) => {
-      const stageOrder = ['symptom', 'department', 'treatment', 'guidance'];
+      const stageOrder = ['symptom-check', 'treatment-plan', 'medication', 'chronic-disease', 'medical-guidance'];
       return stageOrder.indexOf(stage) < stageOrder.indexOf(fromStage);
     })
     .map(([stage, summary]) => `[${stage}] ${summary}`)
@@ -1121,17 +1132,18 @@ export default function Home() {
   const [newPatientName, setNewPatientName] = useState('');
   const [newPatientStage, setNewPatientStage] = useState('');
 
-  const [currentStage, setCurrentStage] = useState<Stage>('symptom');
+  const [currentStage, setCurrentStage] = useState<Stage>('symptom-check');
   const [completedStages, setCompletedStages] = useState<Stage[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false); // 移动端键盘状态
   const [stageConclusions, setStageConclusions] = useState<Record<Stage, string>>({
-    symptom: '',
-    department: '',
-    treatment: '',
-    guidance: ''
+    'symptom-check': '',
+    'treatment-plan': '',
+    medication: '',
+    'chronic-disease': '',
+    'medical-guidance': ''
   });
   const scrollRef = useRef<HTMLDivElement>(null);
   const assistantContentRef = useRef<string>('');
@@ -1218,15 +1230,16 @@ export default function Home() {
     if (typeof window !== 'undefined') {
       return getStageMessages();
     }
-    return { symptom: [], department: [], treatment: [], guidance: [] };
+    return { 'symptom-check': [], 'treatment-plan': [], medication: [], 'chronic-disease': [], 'medical-guidance': [] };
   });
 
   // 使用 ref 跟踪初始化状态
   const initializedRef = useRef<Record<Stage, boolean>>({
-    symptom: false,
-    department: false,
-    treatment: false,
-    guidance: false
+    'symptom-check': false,
+    'treatment-plan': false,
+    medication: false,
+    'chronic-disease': false,
+    'medical-guidance': false
   });
 
   // 使用 ref 跟踪最新消息（用于在 async 函数中获取最新状态）
@@ -1260,7 +1273,7 @@ export default function Home() {
     
     // 各环节关键词及权重
     const keywordScores: Record<string, { keywords: string[]; weight: number }[]> = {
-      symptom: [
+      'symptom-check': [
         { keywords: ['症状', '难受', '不舒服', '疼痛', '痛', '痒', '肿', '胀', '晕', '吐', '咳', '喘', '发热', '发烧', '乏力', '疲倦', '恶心', '呕吐', '腹泻', '便秘', '出血', '肿块', '结节', '指标异常', '报告解读', 'ca125', 'ca153', 'afp', 'cea', 'ca199', '血红蛋白', '白细胞', '血小板', '肝功能', '肾功能', '血糖', '肿瘤标志物', '病理', '活检', '分期', '分级', '转移', '扩散', '复发'], weight: 2 },
         { keywords: ['是什么病', '什么病', '得了什么', '严重吗', '危险吗', '要不要紧', '什么情况', '怎么回事', '正常吗', '异常', '阳性', '阴性'], weight: 1 },
       ],
@@ -1279,7 +1292,7 @@ export default function Home() {
     };
 
     // 计算每个环节的匹配分数
-    const scores: Record<string, number> = { symptom: 0, department: 0, treatment: 0, guidance: 0 };
+    const scores: Record<string, number> = { 'symptom-check': 0, 'treatment-plan': 0, medication: 0, 'chronic-disease': 0, 'medical-guidance': 0 };
     for (const [stage, groups] of Object.entries(keywordScores)) {
       for (const group of groups) {
         for (const keyword of group.keywords) {
@@ -1301,9 +1314,9 @@ export default function Home() {
     }
 
     // 如果有明确匹配且与当前环节不同，则切换
-    const stageNames: Record<string, string> = { symptom: '症状自查', department: '科室推荐', treatment: '治疗相关', guidance: '就医指导' };
+    const stageNames: Record<string, string> = { 'symptom-check': '症状评估', 'treatment-plan': '治疗方案', medication: '用药咨询', 'chronic-disease': '慢病管理', 'medical-guidance': '就医指导' };
     const stageDescriptions: Record<string, string> = {
-      symptom: '根据您的问题内容，将为您提供症状评估和信号识别指导',
+      'symptom-check': '根据您的问题内容，将为您提供症状评估和信号识别指导',
       department: '根据您的问题内容，将为您提供科室匹配和就医选择建议',
       treatment: '根据您的问题内容，将为您提供治疗相关的专业指导',
       guidance: '根据您的问题内容，将为您提供就医流程和医保政策指导',
@@ -2079,7 +2092,7 @@ export default function Home() {
         {chatMode === 'instant' && (
           <div className="mb-2 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
             <p className="text-xs text-amber-700 dark:text-amber-300">
-              <strong>即时问答模式</strong>：每次提问独立处理，不保留上下文。适合快速查询指南条款、医保政策等。
+              <strong>即时问答模式</strong>：每次提问独立处理，不保留上下文。适合快速查询指南条款、医保政策、症状评估等。
             </p>
           </div>
         )}
@@ -2088,7 +2101,7 @@ export default function Home() {
         {(chatMode === 'patient' || chatMode === 'multi-patient') && !currentPatientId && (
           <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <p className="text-xs text-green-700 dark:text-green-300">
-              <strong>患者随访模式</strong>：请先创建或选择一个患者会话，系统将保留完整对话上下文。
+              <strong>患者随访模式</strong>：请先创建或选择一个患者会话，系统将保留完整对话上下文，适合长期管理和随访。
             </p>
           </div>
         )}
@@ -2263,7 +2276,7 @@ export default function Home() {
                         size="sm"
                         variant="ghost"
                         onClick={handlePrevStage}
-                        disabled={currentStage === 'symptom'}
+                        disabled={currentStage === 'symptom-check'}
                         className="h-7 md:h-8 px-1 md:px-2 text-xs"
                       >
                         <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
@@ -2272,7 +2285,7 @@ export default function Home() {
                       <Button
                         size="sm"
                         onClick={handleNextStage}
-                        disabled={currentStage === 'guidance'}
+                        disabled={currentStage === 'medical-guidance'}
                         className="h-7 md:h-8 px-1 md:px-2 text-xs bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
                       >
                         <span className="hidden md:inline">下一环节</span>
