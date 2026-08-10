@@ -37,7 +37,8 @@ import {
   FileSpreadsheet,
   Image as ImageIcon,
   Copy,
-  Download
+  Download,
+  RefreshCw
 } from 'lucide-react';
 import Image from 'next/image';
 import hospitalsQRData from '@/lib/hospitals-qrcode.json';
@@ -1455,13 +1456,23 @@ export default function Home() {
         }
       }
       
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      });
+      // 添加超时控制（60秒）
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
-      if (!response.ok) throw new Error('请求失败');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: '请求失败' }));
+        throw new Error(errorData.error || '请求失败');
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -1566,24 +1577,32 @@ export default function Home() {
         setMessages(prev => 
           prev.map(m => 
             m.id === assistantMessage.id 
-              ? { ...m, content: '抱歉，服务暂时不可用，请稍后再试。如问题持续，请联系管理员检查 API 配置。', isThinking: false }
+              ? { ...m, content: '⚠️ 未收到回复，可能是网络超时或 API 连接问题。请点击下方「重新生成」按钮重试。', isThinking: false }
               : m
           )
         );
+      } else if (assistantContentRef.current && !assistantContentRef.current.trim().endsWith('。') && !assistantContentRef.current.trim().endsWith('！') && !assistantContentRef.current.trim().endsWith('？') && assistantContentRef.current.length < 500) {
+        // 内容可能不完整（不以句号/感叹号/问号结尾，且长度较短）
+        console.warn('Response may be incomplete:', assistantContentRef.current.slice(-100));
       }
       
       // 注意：关键结论会在环节切换时自动携带到下一个环节
       // 不再在此处自动保存，避免覆盖对话内容
     } catch (error) {
       console.error('Error:', error);
+      let errorMsg = '抱歉，服务暂时不可用，请稍后再试。';
+      if (error instanceof Error && error.name === 'AbortError') {
+        errorMsg = '响应超时，请检查网络连接后重试。';
+      }
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '抱歉，服务暂时不可用，请稍后再试。',
+        content: errorMsg,
         timestamp: new Date(),
         stage: currentStage
       }]);
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
       // 保存当前环节的消息到历史（使用messagesRef获取最新值，包含用户消息和AI回复）
       const latestMessages = messagesRef.current;
@@ -1608,7 +1627,13 @@ export default function Home() {
       // 清除发送标记
       isSendingRef.current = false;
     }
-  };
+  } catch (error) {
+    // 错误已在上面处理
+  } finally {
+    // 确保状态重置
+    isSendingRef.current = false;
+  }
+};
 
   // 文件上传处理 - 支持多文件
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2260,6 +2285,7 @@ export default function Home() {
               <CardContent className="p-0 flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="flex-1 overflow-y-auto p-2 md:p-4" ref={scrollRef}>
                     <div className="space-y-3 md:space-y-4">
+                    {/* eslint-disable-next-line react-hooks/refs */}
                     {messages.map((message, msgIndex) => {
                       // 找到当前AI回复之前的用户问题
                       const currentIndex = msgIndex;
@@ -2434,6 +2460,22 @@ export default function Home() {
                                       <Download className="h-3 w-3" />
                                       <span>下载</span>
                                     </button>
+                                    {/* 重新生成按钮 - 仅在回复可能不完整时显示 */}
+                                    {(message.content.includes('⚠️') || message.content.includes('抱歉，服务暂时不可用') || message.content.includes('响应超时')) && prevUserMessage && (
+                                      <button
+                                        onClick={() => {
+                                          // 删除当前失败的回复，重新发送问题
+                                          const userQuestion = prevUserMessage.content;
+                                          setMessages(prev => prev.filter(m => m.id !== message.id));
+                                          sendMessage(userQuestion);
+                                        }}
+                                        className="flex items-center gap-1 px-2 py-1 text-xs text-orange-500 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                                        title="重新生成回复"
+                                      >
+                                        <RefreshCw className="h-3 w-3" />
+                                        <span>重新生成</span>
+                                      </button>
+                                    )}
                                   </div>
                                 );
                               })()}
