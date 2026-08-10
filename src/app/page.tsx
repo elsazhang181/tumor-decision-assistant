@@ -201,13 +201,24 @@ const getStageMessages = (): Record<Stage, Message[]> => {
   try {
     const data = localStorage.getItem(STAGE_MESSAGES_KEY);
     if (!data) return { 'symptom-check': [], 'treatment-plan': [], medication: [], 'chronic-disease': [], 'medical-guidance': [] };
-    const messages = JSON.parse(data) as Record<Stage, Message[]>;
-    // 恢复 timestamp
-    Object.keys(messages).forEach(stage => {
-      messages[stage as Stage] = messages[stage as Stage].map(msg => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp)
-      }));
+    const raw = JSON.parse(data) as Record<string, Message[]>;
+    // 迁移旧 key 到新 key
+    const keyMap: Record<string, Stage> = {
+      'symptom': 'symptom-check',
+      'department': 'treatment-plan',
+      'treatment': 'treatment-plan',
+      'guidance': 'medical-guidance',
+      'chronic': 'chronic-disease'
+    };
+    const messages: Record<Stage, Message[]> = { 'symptom-check': [], 'treatment-plan': [], medication: [], 'chronic-disease': [], 'medical-guidance': [] };
+    Object.keys(raw).forEach(key => {
+      const newKey = keyMap[key] || key as Stage;
+      if (newKey in messages) {
+        messages[newKey] = (raw[key] || []).map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+      }
     });
     return messages;
   } catch {
@@ -1255,7 +1266,7 @@ export default function Home() {
     // 如果正在发送消息，不初始化，避免清空正在显示的用户消息
     if (isSendingRef.current) return;
     
-    const history = stageMessages[currentStage];
+    const history = stageMessages[currentStage] || [];
     
     // 使用条件更新，避免不必要的setState
     if (history.length > 0) {
