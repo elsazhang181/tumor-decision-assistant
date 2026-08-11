@@ -1344,6 +1344,9 @@ export default function Home() {
 
     if (bestStage && bestStage !== currentStage && bestScore >= 2) {
       setCurrentStage(bestStage as typeof currentStage);
+      if (chatMode === 'instant') {
+        setSelectedInstantStage(bestStage);
+      }
       toast.info(`已切换至「${stageNames[bestStage]}」环节`, {
         description: stageDescriptions[bestStage],
         duration: 3000,
