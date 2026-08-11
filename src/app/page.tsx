@@ -1519,11 +1519,12 @@ export default function Home() {
       }
 
       const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+      const decoder = new TextDecoder('utf-8', { fatal: false });
       // 重置 refs
       assistantContentRef.current = '';
       reasoningContentRef.current = '';
       let assistantSources: SourceItem[] = [];
+      let buffer = '';  // 用于处理不完整的行
 
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
@@ -1536,30 +1537,41 @@ export default function Home() {
 
       setMessages(prev => [...prev, assistantMessage]);
 
+      let currentEvent = '';
+      let hasError = false;
+      let chunkCount = 0;
+      let lastUpdateTime = Date.now();
+
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        chunkCount++;
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        
+        // 按行分割，但保留最后一行（可能不完整）
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';  // 保留最后一行到缓冲区
 
-        let currentEvent = '';
-        let hasError = false;
         for (const line of lines) {
-          // 解析 event 行 (Coze返回格式: event:xxx 无空格)
-          if (line.startsWith('event:')) {
-            currentEvent = line.slice(6).trim();
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+          
+          // 解析 event 行
+          if (trimmedLine.startsWith('event:')) {
+            currentEvent = trimmedLine.slice(6).trim();
             continue;
           }
           // 解析 data 行
-          if (line.startsWith('data:')) {
-            const data = line.slice(5);
+          if (trimmedLine.startsWith('data:')) {
+            const data = trimmedLine.slice(5).trim();
             if (data === '[DONE]') continue;
             
             try {
               const parsed = JSON.parse(data);
               
-              // 检测 Coze API 错误响应（非 SSE 格式的错误 JSON）
+              // 检测 Coze API 错误响应
               if (parsed.code && parsed.code !== 0 && parsed.msg) {
                 hasError = true;
                 console.error('Coze API error:', parsed.msg);
@@ -1575,44 +1587,66 @@ export default function Home() {
               }
               
               // Coze API 流式响应格式
-              // Bot 启用深度思考模式时，先返回 reasoning_content（思考过程），然后返回 content（最终回答）
               if (currentEvent === 'conversation.message.delta') {
-                // 如果有 reasoning_content，说明还在思考阶段
                 if (parsed.reasoning_content !== undefined) {
                   reasoningContentRef.current += parsed.reasoning_content;
-                  setMessages(prev => 
-                    prev.map(m => 
-                      m.id === assistantMessage.id 
-                        ? { ...m, content: reasoningContentRef.current, isThinking: true }
-                        : m
-                    )
-                  );
-                } 
-                // 如果有 content（即使是空字符串），说明思考结束，开始输出最终回答
-                else if (parsed.content !== undefined) {
-                  // 如果之前有思考内容，最终回答时需要合并或直接替换
-                  // Coze 的最终回答会完整输出，所以直接用 content
-                  if (parsed.content) {
-                    assistantContentRef.current += parsed.content;
-                  }
-                  // 当 content 非空时，说明最终回答开始，更新消息
-                  if (parsed.content) {
+                  // 限制更新频率，避免移动端渲染过载
+                  const now = Date.now();
+                  if (now - lastUpdateTime > 100) {
                     setMessages(prev => 
                       prev.map(m => 
                         m.id === assistantMessage.id 
-                          ? { ...m, content: assistantContentRef.current, isThinking: false }
+                          ? { ...m, content: reasoningContentRef.current, isThinking: true }
                           : m
                       )
                     );
+                    lastUpdateTime = now;
+                  }
+                } 
+                else if (parsed.content !== undefined) {
+                  if (parsed.content) {
+                    assistantContentRef.current += parsed.content;
+                  }
+                  if (parsed.content) {
+                    const now = Date.now();
+                    if (now - lastUpdateTime > 100) {
+                      setMessages(prev => 
+                        prev.map(m => 
+                          m.id === assistantMessage.id 
+                            ? { ...m, content: assistantContentRef.current, isThinking: false }
+                            : m
+                        )
+                      );
+                      lastUpdateTime = now;
+                    }
                   }
                 }
               }
-            } catch {
-              // 忽略解析错误
+            } catch (e) {
+              // 忽略解析错误，可能是 JSON 不完整
+              console.debug('JSON parse error:', e);
             }
           }
         }
         if (hasError) break;
+      }
+      
+      // 处理缓冲区中剩余的数据
+      if (buffer.trim()) {
+        const trimmedLine = buffer.trim();
+        if (trimmedLine.startsWith('data:')) {
+          const data = trimmedLine.slice(5).trim();
+          if (data !== '[DONE]') {
+            try {
+              const parsed = JSON.parse(data);
+              if (currentEvent === 'conversation.message.delta' && parsed.content) {
+                assistantContentRef.current += parsed.content;
+              }
+            } catch {
+              // 忽略
+            }
+          }
+        }
       }
       
       // 检查是否收到了有效内容
