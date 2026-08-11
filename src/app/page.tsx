@@ -1355,9 +1355,11 @@ export default function Home() {
       if (chatMode === 'instant') {
         setSelectedInstantStage(bestStage);
       }
+      // 移动端使用更长的 toast 显示时间
+      const toastDuration = isMobile ? 5000 : 3000;
       toast.info(`已切换至「${stageNames[bestStage]}」环节`, {
         description: stageDescriptions[bestStage],
-        duration: 3000,
+        duration: toastDuration,
       });
     }
 
@@ -1500,9 +1502,10 @@ export default function Home() {
         }
       }
       
-      // 添加超时控制（60秒）
+      // 添加超时控制（移动端90秒，桌面端60秒）
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const timeoutDuration = isMobile ? 90000 : 60000;
+      const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
       
       try {
         const response = await fetch('/api/chat', {
