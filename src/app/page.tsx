@@ -2700,18 +2700,6 @@ export default function Home() {
                   );
                 })()}
                 
-                {/* 来源引用标签 - 动态显示AI回复中引用的来源 */}
-                {sources.length > 0 && (
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {sources.map((source, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
-                          📖 {source}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {chatMode !== 'instant' && (
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
