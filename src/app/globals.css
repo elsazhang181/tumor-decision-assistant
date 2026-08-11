@@ -330,3 +330,41 @@ input, textarea, select {
     font-size: 1em;
   }
 }
+
+/* 移动端优化 */
+@media (max-width: 767px) {
+  .markdown-content {
+    font-size: 14px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    -webkit-hyphens: none;
+    hyphens: none;
+  }
+  
+  /* 防止长URL溢出 */
+  .markdown-content a {
+    word-break: break-all;
+  }
+  
+  /* 确保数字和符号正常显示 */
+  .markdown-content code,
+  .markdown-content pre {
+    font-size: 0.85em;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  
+  /* 列表项间距优化 */
+  .markdown-content li {
+    margin-bottom: 0.3em;
+  }
+  
+  /* 标题间距优化 */
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3 {
+    margin-top: 0.8em;
+    margin-bottom: 0.4em;
+  }
+}
