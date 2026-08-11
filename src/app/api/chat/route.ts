@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Coze API 配置 - 优先从环境变量读取，否则使用默认值
 const COZE_API_BASE = process.env.COZE_API_BASE_URL || 'https://api.coze.cn';
-const COZE_API_TOKEN = process.env.COZE_API_TOKEN || 'pat_XGRZfUI7AZvh8ulwyMrf3p537rx4eny8gRIhuw2VdGpm74NiJNVqpdwWANJWIliK';
+const COZE_API_TOKEN = process.env.COZE_API_TOKEN || process.env.COZE_API_TOKEN || "";
 const COZE_BOT_ID = process.env.COZE_BOT_ID || '7633265670037323818';
 
 // 使用 Node.js 运行时以确保外部 API 调用兼容性
