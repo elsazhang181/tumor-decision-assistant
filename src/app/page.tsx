@@ -2402,34 +2402,23 @@ export default function Home() {
                                   <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">
                                     <span>【信息来源声明】本回答参考了以下来源，点击数字可查看原文：</span>
                                   </div>
-                                  <ul className="space-y-1.5">
+                                  <div className="flex flex-wrap gap-2">
                                     {message.sources.map((source, idx) => {
                                       const linkUrl = source.url || '#';
-                                      const displayTitle = source.title || source.snippet || '查看原文';
                                       return (
-                                        <li key={source.index} className="flex items-start gap-2 text-xs">
-                                          <a
-                                            href={linkUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none hover:bg-blue-600 transition-colors cursor-pointer"
-                                            title={`点击查看来源：${linkUrl}`}
-                                          >
-                                            {source.index || idx + 1}
-                                          </a>
-                                          <a
-                                            href={linkUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-500 hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300 transition-colors line-clamp-2 flex-1"
-                                            title={linkUrl}
-                                          >
-                                            {displayTitle}
-                                          </a>
-                                        </li>
+                                        <a
+                                          key={source.index || idx}
+                                          href={linkUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 transition-colors cursor-pointer"
+                                          title={`点击查看来源`}
+                                        >
+                                          {source.index || idx + 1}
+                                        </a>
                                       );
                                     })}
-                                  </ul>
+                                  </div>
                                 </div>
                               )}
                               {/* 复制和下载按钮 - 仅在assistant回复时显示 */}
