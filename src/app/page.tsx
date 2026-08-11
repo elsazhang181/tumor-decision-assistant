@@ -716,6 +716,10 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   filteredContent = filteredContent
     .replace(new RegExp(`(?:^|\\n)(?:\\*\\*)?[⚠️]*\\s*重要提示[^\\n]*(?:\\n(?!\\s*(?:${sectionTitlePattern}]))[^\\n]*)*`, 'gi'), '');
 
+  // 4.5. 过滤 📚 依据来源 段落（整段删除，包括带编号的列表项）
+  filteredContent = filteredContent
+    .replace(new RegExp(`(?:^|\\n)(?:📚\\s*)?依据来源[^\\n]*(?:\\n(?!\\s*(?:${sectionTitlePattern}]))[^\\n]*)*`, 'gi'), '');
+
   // 5. 清理多余的空行和分隔符
   filteredContent = filteredContent
     // 删除连续的多余分隔符
