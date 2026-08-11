@@ -720,6 +720,14 @@ const renderContentWithSources = (content: string, sources: SourceItem[] = []) =
   filteredContent = filteredContent
     .replace(new RegExp(`(?:^|\\n)(?:📚\\s*)?依据来源[^\\n]*(?:\\n(?!\\s*(?:${sectionTitlePattern}]))[^\\n]*)*`, 'gi'), '');
 
+  // 4.6. 移除来源引用中的书名号标题《title》
+  filteredContent = filteredContent
+    .replace(/(\d+\.\s*(?:📚|️||📋|)[^\n]*?)《[^》]*》/g, '$1');
+  
+  // 4.7. 移除时效性标签后的描述文字（：description）
+  filteredContent = filteredContent
+    .replace(/(时效性：[高中低])：[^\n]*/g, '$1');
+
   // 5. 清理多余的空行和分隔符
   filteredContent = filteredContent
     // 删除连续的多余分隔符
