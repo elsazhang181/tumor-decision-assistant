@@ -47,6 +47,9 @@ import {
 import Image from 'next/image';
 import hospitalsQRData from '@/lib/hospitals-qrcode.json';
 
+// 检测是否为移动端设备
+const isMobile = typeof window !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 // ============== 对话模式类型 ==============
 type ChatMode = 'instant' | 'patient' | 'multi-patient';
 
