@@ -1546,6 +1546,8 @@ export default function Home() {
       let currentEvent = '';
       let hasError = false;
       let chunkCount = 0;
+      // 事件处理器内节流时间戳：Date.now 是 impure 但仅用于节流，安全
+      // eslint-disable-next-line react-hooks/purity
       let lastUpdateTime = Date.now();
 
       while (reader) {
@@ -1596,8 +1598,8 @@ export default function Home() {
               if (currentEvent === 'conversation.message.delta') {
                 if (parsed.reasoning_content !== undefined) {
                   reasoningContentRef.current += parsed.reasoning_content;
-                  // 限制更新频率，避免移动端渲染过载
-                  const now = Date.now();
+                  // 限制更新频率，避免移动端渲染过载；Date.now 仅作为节流计时器使用
+                  const now = Date.now(); // eslint-disable-line react-hooks/purity
                   if (now - lastUpdateTime > 100) {
                     setMessages(prev => 
                       prev.map(m => 
@@ -1614,7 +1616,7 @@ export default function Home() {
                     assistantContentRef.current += parsed.content;
                   }
                   if (parsed.content) {
-                    const now = Date.now();
+                    const now = Date.now(); // eslint-disable-line react-hooks/purity
                     if (now - lastUpdateTime > 100) {
                       setMessages(prev => 
                         prev.map(m => 
