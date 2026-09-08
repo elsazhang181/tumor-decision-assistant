@@ -95,9 +95,11 @@ export async function POST(request: NextRequest) {
       ],
     };
 
-    // 即时问答模式设置 temperature=0 确保相同问题回答一致
+    // 即时问答模式使用适中的 temperature（0.7）
+    // 说明：实测 temperature=0 的极端确定性与 Coze 长回复生成偶发被中断（gen fail）相关，
+    // 0.7 能兼顾回答一致性并显著降低生成中断概率
     if (mode === 'instant') {
-      requestBody.temperature = 0;
+      requestBody.temperature = 0.7;
     }
 
     // 仅在模式 B/C 时传入 conversation_id
