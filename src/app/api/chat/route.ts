@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Coze API 配置 - 优先从环境变量读取，否则使用默认值
-// 说明：Coze 部署平台的生产环境变量禁止使用 COZE_ 前缀，
-// 因此生产用 MEDAI_ 前缀的变量名，本地 .env 仍可用 COZE_ 前缀（此处做回退兼容）。
-const COZE_API_BASE = process.env.MEDAI_API_BASE_URL || process.env.COZE_API_BASE_URL || 'https://api.coze.cn';
-const COZE_API_TOKEN = process.env.MEDAI_API_TOKEN || process.env.COZE_API_TOKEN || "";
-const COZE_BOT_ID = process.env.MEDAI_BOT_ID || process.env.COZE_BOT_ID || '7633265670037323818';
+// Coze API 配置 - 按优先级从环境变量读取，否则使用内置默认值。
+// 说明：Coze 部署平台禁止生产环境变量使用 COZE_ 前缀，
+// 因此兼容多种命名：MEDAI_*（推荐）/ 裸名 API_TOKEN 等（平台配置）/ COZE_*（本地 .env）。
+// 规范化：Bot ID 必须是纯数字（Coze Bot ID 为 19 位），异常则回退默认值
+const RAW_BOT_ID = process.env.MEDAI_BOT_ID || process.env.BOT_ID || process.env.COZE_BOT_ID || '';
+const COZE_BOT_ID = /^\d{10,}$/.test(RAW_BOT_ID.trim()) ? RAW_BOT_ID.trim() : '7633265670037323818';
+
+// 规范化：Base URL 必须是 coze.cn/coze.com 官方域名，异常则回退默认值
+const RAW_BASE_URL = (process.env.MEDAI_API_BASE_URL || process.env.API_BASE_URL || process.env.COZE_API_BASE_URL || '').trim();
+const COZE_API_BASE = /^https:\/\/api\.coze\.(cn|com)/.test(RAW_BASE_URL) ? RAW_BASE_URL.replace(/\/+$/, '') : 'https://api.coze.cn';
+
+// 令牌：任意可用前缀的变量，去除空白
+const COZE_API_TOKEN = (process.env.MEDAI_API_TOKEN || process.env.API_TOKEN || process.env.COZE_API_TOKEN || '').trim();
 
 // 使用 Node.js 运行时以确保外部 API 调用兼容性
 export const runtime = 'nodejs';
