@@ -2789,6 +2789,58 @@ export default function Home() {
           </div>
         </div>
         )}
+
+        {/* ========== 扫码访问 · 对外宣传跳转区 ========== */}
+        <section className="mt-6 md:mt-8 mb-2">
+          <Card className="overflow-hidden border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-blue-950/40 dark:via-slate-900 dark:to-purple-950/40">
+            <div className="flex flex-col md:flex-row items-center gap-6 p-6 md:p-8">
+              {/* 左侧：文案宣传区 */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="inline-flex items-center gap-2 rounded-full bg-blue-500 text-white text-xs font-medium px-3 py-1 mb-4">
+                  <QrCode className="h-3.5 w-3.5" />
+                  扫码访问 · 即刻使用
+                </div>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  健康就医决策助手
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                  用手机扫码，随时随地查询治疗方案、医保政策、就医流程；也可转发给家人朋友，让 TA 们在手机上直接使用。
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 break-all select-all mb-4">
+                  https://healthcareassistant.coze.site
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center md:justify-start text-xs text-gray-500 dark:text-gray-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" /> 无需登录，打开即用
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" /> 任意时间，稳定在线
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" /> 支持转发分享
+                  </span>
+                </div>
+              </div>
+
+              {/* 右侧：二维码展示区 */}
+              <div className="shrink-0 flex flex-col items-center">
+                <div className="rounded-2xl bg-white dark:bg-slate-800 p-3 shadow-lg ring-1 ring-gray-200 dark:ring-gray-700">
+                  <Image
+                    src="/qrcode-healthcareassistant.png"
+                    alt="健康就医决策助手二维码"
+                    width={240}
+                    height={240}
+                    className="h-48 w-48 md:h-60 md:w-60"
+                    unoptimized
+                  />
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  长按识别二维码，或截图保存后微信扫码
+                </p>
+              </div>
+            </div>
+          </Card>
+        </section>
       </main>
 
       {/* 医院二维码弹窗 */}
