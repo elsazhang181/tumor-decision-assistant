@@ -16,7 +16,35 @@ const COZE_API_TOKEN = (process.env.MEDAI_API_TOKEN || process.env.API_TOKEN || 
 
 // 使用 Node.js 运行时以确保外部 API 调用兼容性
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
+
+// 判断 Coze 最终 answer 是否为「有效回答」。
+// 无效即触发自动重试，避免把工具报错或敷衍兜底暴露给用户。
+function isAnswerValid(answerText: string, rawSse: string): boolean {
+  const a = (answerText || '').trim();
+
+  // 1) 空答案
+  if (a.length < 2) return false;
+
+  // 2) 插件/工具失败直接泄漏
+  if (/gen fail|rpc\s*error|ocean\.cloud\.plugin|doaction/i.test(a)) return false;
+
+  // 3) 原始流中出现工具调用失败事件
+  if (/gen fail|ocean\.cloud\.plugin/i.test(rawSse || '')) return false;
+
+  // 4) 敷衍兜底式回答（未真正按人设作答）
+  const evasivePatterns = [
+    /暂未?找到.{0,12}(权威|相关).{0,6}信息/,
+    /(抱歉|对不起)?(，|,)?\s*(我)?(知识库|资料|数据库)?(中|里)?\s*(没有|未|暂无).{0,20}(相关|对应)?(信息|内容|资料|数据|答案)/,
+    /^(抱歉|对不起)[，,。\s]*.{0,30}(无法|未能|不能).{0,20}(回答|解答|提供)/,
+    /无法(为您|为你)?(提供|给出).{0,20}(答案|回答|信息)/,
+  ];
+  for (const re of evasivePatterns) {
+    if (re.test(a)) return false;
+  }
+
+  return true;
+}
 
 // 对话模式类型
 type ChatMode = 'instant' | 'patient' | 'multi-patient';
@@ -112,139 +140,137 @@ export async function POST(request: NextRequest) {
       requestBody.meta_data = metaData;
     }
 
-    // 构建 Coze API 请求 - 使用 v3/chat 端点，添加超时控制
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 50000); // 50 秒超时
+    // ============ 带自动重试的 Coze 流式调用 ============
+    // 背景：Bot 后台「联网问答(免费版)」插件间歇性失败（gen fail / RPCError / 敷衍兜底）。
+    // 策略：先完整拉取一次 SSE 响应，解析最终 answer；若答案无效则自动重试（最多 3 次），
+    // 拿到有效结果后再以 SSE 流式回放给前端，前端仍呈现打字机效果。
+    const MAX_ATTEMPTS = 3;
+    const RETRY_BACKOFF = [0, 800, 1600];
 
-    let cozeResponse;
-    try {
-      cozeResponse = await fetch(`${COZE_API_BASE}/v3/chat`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal,
-      });
-    } catch (fetchError: unknown) {
-      clearTimeout(timeoutId);
-      const errorMsg = fetchError instanceof Error ? fetchError.message : 'Unknown error';
-      console.error('Coze API fetch error:', errorMsg);
+    // 调用一次 Coze 并把完整 SSE 文本收集回来，同时解析出最终答案内容
+    const callCozeOnce = async (attempt: number): Promise<{ ok: boolean; sseText: string; answerText: string; conversationId: string; status?: number; errText?: string }> => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 45000);
+      try {
+        // 重试时使用不同的 user_id 后缀，避免复用坏会话
+        const retryBody = { ...requestBody };
+        if (attempt > 0) retryBody.user_id = `${finalUserId}-r${attempt}-${Date.now()}`;
+        const resp = await fetch(`${COZE_API_BASE}/v3/chat`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(retryBody),
+          signal: ctrl.signal,
+        });
+
+        if (!resp.ok) {
+          const errText = await resp.text();
+          console.error(`Coze API error response (attempt ${attempt}):`, resp.status, errText);
+          return { ok: false, sseText: '', answerText: '', conversationId: '', status: resp.status, errText };
+        }
+
+        const contentType = resp.headers.get('content-type') || '';
+        if (!contentType.includes('text/event-stream')) {
+          const errText = await resp.text();
+          console.error(`Coze non-stream response (attempt ${attempt}):`, errText);
+          // 非流式但可能是业务错误，允许重试
+          return { ok: false, sseText: '', answerText: '', conversationId: '', status: resp.status, errText };
+        }
+
+        const raw = await resp.text();
+
+        // 解析 conversation_id 与最终 answer
+        let conversationId = '';
+        let answerText = '';
+        for (const line of raw.split('\n')) {
+          const t = line.trim();
+          if (!t.startsWith('data:')) continue;
+          const payload = t.slice(5).trim();
+          if (!payload || payload === '[DONE]') continue;
+          try {
+            const obj = JSON.parse(payload);
+            if (obj.conversation_id && !conversationId) conversationId = obj.conversation_id;
+            // answer 类型消息：最终给用户看的答案
+            if (obj.type === 'answer' && typeof obj.content === 'string') {
+              answerText += obj.content;
+            }
+          } catch {
+            // 忽略不完整 JSON
+          }
+        }
+
+        const valid = isAnswerValid(answerText, raw);
+        if (!valid) {
+          console.warn(`Coze answer invalid (attempt ${attempt}), will retry. answer="${answerText.slice(0, 80)}"`);
+        }
+        return { ok: valid, sseText: raw, answerText, conversationId };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        console.error(`Coze fetch error (attempt ${attempt}):`, msg);
+        return { ok: false, sseText: '', answerText: '', conversationId: '', errText: msg };
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+
+    let result: Awaited<ReturnType<typeof callCozeOnce>> | null = null;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      if (RETRY_BACKOFF[attempt] > 0) {
+        await new Promise(r => setTimeout(r, RETRY_BACKOFF[attempt]));
+      }
+      result = await callCozeOnce(attempt);
+      if (result.ok) break;
+    }
+
+    // 所有重试都失败
+    if (!result || !result.ok) {
+      console.error('Coze 全部重试失败:', result?.errText || 'unknown');
       return NextResponse.json(
-        { error: `无法连接 Coze API: ${errorMsg}` },
+        { error: '生成服务暂时繁忙，请稍后点击「重新生成」再试一次。' },
         { status: 503 }
       );
     }
-    clearTimeout(timeoutId);
 
-    if (!cozeResponse.ok) {
-      const error = await cozeResponse.text();
-      console.error('Coze API error response:', cozeResponse.status, error);
-      return NextResponse.json(
-        { error: `Coze API error: ${error}` },
-        { status: cozeResponse.status }
-      );
-    }
-
-    // 检查响应类型 - 如果不是流式响应，可能是错误响应
-    const contentType = cozeResponse.headers.get('content-type') || '';
-    console.log('Coze API response content-type:', contentType);
-    if (!contentType.includes('text/event-stream')) {
-      // 非流式响应，可能是错误 JSON
-      const responseBody = await cozeResponse.text();
-      console.error('Coze API non-stream response:', responseBody);
-      try {
-        const errorJson = JSON.parse(responseBody);
-        if (errorJson.code && errorJson.code !== 0) {
-          return NextResponse.json(
-            { error: errorJson.msg || 'Coze API 返回错误', code: errorJson.code },
-            { status: 400 }
-          );
-        }
-      } catch {
-        // 非 JSON 响应
-      }
-      return NextResponse.json(
-        { error: '意外的响应格式' },
-        { status: 500 }
-      );
-    }
-
-    // 解析流式响应
-    const reader = cozeResponse.body?.getReader();
-    if (!reader) {
-      return NextResponse.json(
-        { error: 'Failed to get response stream' },
-        { status: 500 }
-      );
-    }
-
-    // 创建转换流：转发 Coze API 数据到客户端，同时提取 conversation_id
-    let extractedConversationId = '';
-    let isClosed = false;
-    const transformStream = new TransformStream({
-      async start(controller) {
-        const decoder = new TextDecoder();
-        const encoder = new TextEncoder();
-        let buffer = '';
-
+    // 将有效的完整 SSE 文本流式回放给前端（保持打字机效果）
+    const sseText = result.sseText;
+    const convId = result.conversationId;
+    const encoder = new TextEncoder();
+    const replayStream = new ReadableStream({
+      start(controller) {
         try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (isClosed) break;
-
-            // 转发数据块到客户端
-            try {
-              controller.enqueue(value);
-            } catch {
-              isClosed = true;
-              break;
-            }
-
-            // 解析 SSE 事件，提取 conversation_id
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            for (const line of lines) {
-              if (line.startsWith('data:') && !isClosed) {
-                try {
-                  const data = JSON.parse(line.slice(5).trim());
-                  if (data.conversation_id && !extractedConversationId) {
-                    extractedConversationId = data.conversation_id;
-                    // 通过自定义 SSE 事件发送给客户端
-                    try {
-                      controller.enqueue(
-                        encoder.encode(
-                          `data: ${JSON.stringify({ type: 'conversation_id', conversation_id: extractedConversationId })}\n\n`
-                        )
-                      );
-                    } catch {
-                      isClosed = true;
-                    }
-                  }
-                } catch {
-                  // 忽略解析错误
-                }
-              }
-            }
+          // 先注入 conversation_id（B/C 模式需要）
+          if (convId) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'conversation_id', conversation_id: convId })}\n\n`));
           }
+          // 按 SSE 事件块切分回放，块间轻微间隔，前端能逐段渲染
+          const chunks = sseText.split(/\n\n+/).filter(c => c.trim().length > 0);
+          let i = 0;
+          const pump = () => {
+            if (i >= chunks.length) {
+              controller.close();
+              return;
+            }
+            try {
+              controller.enqueue(encoder.encode(chunks[i] + '\n\n'));
+            } catch {
+              try { controller.close(); } catch { /* ignore */ }
+              return;
+            }
+            i++;
+            // 用微任务/短延时回放，避免一次性塞入，保留流式观感
+            setTimeout(pump, 8);
+          };
+          pump();
         } catch (err) {
-          console.error('Stream processing error:', err);
-        } finally {
-          if (!isClosed) {
-            try {
-              controller.terminate();
-            } catch {
-              // 忽略关闭错误
-            }
-          }
+          console.error('Replay stream error:', err);
+          try { controller.close(); } catch { /* ignore */ }
         }
       },
     });
 
-    // 返回流式响应（立即返回，不阻塞等待流完成）
-    return new Response(transformStream.readable, {
+    return new Response(replayStream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
