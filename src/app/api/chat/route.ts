@@ -233,7 +233,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 将有效的完整 SSE 文本流式回放给前端（保持打字机效果）
+    // 移除回答中的图片/附件引用，仅保留纯文本与文本URL。
+// 兜底：即使提示词未同步到后端，线上也不会向用户输出图片。
+function stripImageRefs(input: string): string {
+  const lines = (input || '').split('\n');
+  const out: string[] = [];
+  for (const line of lines) {
+    const t = line.trim();
+    // 整行就是图片/附件引用 → 直接丢弃该行
+    if (
+      /^!\[.*\]\(.*\)$/.test(t) ||          // ![alt](url)
+      /^\[Image\]\(.*\)$/i.test(t) ||        // [Image](url)
+      /^https?:\/\/\S*\/assets\//i.test(t) ||// 裸 assets URL
+      /^https?:\/\/\S*\/api\/sandbox/i.test(t)
+    ) {
+      continue;
+    }
+    // 行内混有图片语法 → 仅移除图片片段，保留正文
+    const inline = t
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+      .replace(/\[Image\]\([^)]*\)/gi, '');
+    out.push(inline.trim());
+  }
+  // 合并连续空行
+  const joined = out.filter(Boolean).join('\n').replace(/\n{3,}/g, '\n\n');
+  return joined;
+}
+
+// 将有效的完整 SSE 文本流式回放给前端（保持打字机效果）
     const sseText = result.sseText;
     const convId = result.conversationId;
     const encoder = new TextEncoder();
@@ -245,7 +272,21 @@ export async function POST(request: NextRequest) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'conversation_id', conversation_id: convId })}\n\n`));
           }
           // 按 SSE 事件块切分回放，块间轻微间隔，前端能逐段渲染
-          const chunks = sseText.split(/\n\n+/).filter(c => c.trim().length > 0);
+          const rawChunks = sseText.split(/\n\n+/).filter(c => c.trim().length > 0);
+          // 每块仅对 answer 文本做图片过滤，其余事件（conversation_id 等）原样保留
+          const chunks = rawChunks.map((c) => {
+            const m = c.match(/^data:\s*([\s\S]*)$/);
+            if (m) {
+              try {
+                const obj = JSON.parse(m[1].trim());
+                if (obj && typeof obj.content === 'string' && obj.type === 'answer') {
+                  const cleaned = stripImageRefs(obj.content);
+                  return `data: ${JSON.stringify({ ...obj, content: cleaned })}\n\n`;
+                }
+              } catch { /* 非 JSON 事件原样保留 */ }
+            }
+            return c + '\n\n';
+          });
           let i = 0;
           const pump = () => {
             if (i >= chunks.length) {
