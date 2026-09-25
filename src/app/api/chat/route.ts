@@ -38,9 +38,19 @@ function isAnswerValid(answerText: string, rawSse: string): boolean {
     /(抱歉|对不起)?(，|,)?\s*(我)?(知识库|资料|数据库)?(中|里)?\s*(没有|未|暂无).{0,20}(相关|对应)?(信息|内容|资料|数据|答案)/,
     /^(抱歉|对不起)[，,。\s]*.{0,30}(无法|未能|不能).{0,20}(回答|解答|提供)/,
     /无法(为您|为你)?(提供|给出).{0,20}(答案|回答|信息)/,
+    /^(这个问题|该问题)?(需要|建议|应由|需).{0,12}(咨询|问|求教|交给|由).{0,12}(医生|主治|医师)/,
   ];
   for (const re of evasivePatterns) {
     if (re.test(a)) return false;
+  }
+
+  // 5) 必须以"结论先行"作答：若回答是"先推责给医生/先要求就诊"的大整段，而全文没有任何
+  //    实质结论段（【结论】【核心结论】），说明模型没有按人设先给可直接参考的判断，判为失败重试。
+  const conclusionPresent = /【结论】|【核心结论】|【核心信息】|【核心回答】|【紧急程度】|【核心方向】/.test(a);
+  if (!conclusionPresent) {
+    const startsWithDutyShifting =
+      /^(这个问题|该问题|关于|针对)?(需要|建议|应由|需|请您|请先|第一|首先|原则上是).{0,20}(咨询|问医|面诊|就诊|医生|主管|遵医嘱|以医嘱)/.test(a.slice(0, 80));
+    if (startsWithDutyShifting) return false;
   }
 
   return true;
